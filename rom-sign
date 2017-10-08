@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2017 Albert I (krasCGQ)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Notes for AICP:
+# 1) AICP has the lovely oldy signing tools, causing issues, so fallback 
+#    to LineageOS tools instead.
+# 2) Skip signing of AICP Memo for now, otherwise tools won't run.
+if [[ ! -z $(pwd | grep aicp-n) ]]; then
+  execdir="$HOME/KudProject/los-n";
+  extraargs="-e AICP-memo.apk=";
+  ln -sf {../../lineage-os/,}vendor/cm;
+else
+  execdir=".";
+fi;
+
+${execdir}/build/tools/releasetools/sign_target_files_apks ${extraargs} \
+  -o -d ~/.android-certs out/dist/*-target_files-*.zip signed-target_files.zip \
+  || exit 1;
+${execdir}/build/tools/releasetools/ota_from_target_files --block --backup=true \
+  -k ~/.android-certs/releasekey signed-target_files.zip signed-ota_update.zip \
+  || exit 1;
+
+# Mostly for AICP, remove vendor/cm symlink after process finished.
+rm -f vendor/cm;
+
+exit 0;
