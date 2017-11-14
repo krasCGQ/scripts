@@ -1,0 +1,108 @@
+# Copyright (C) 2017 Albert I (krasCGQ)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Set up aliases
+alias caddy="caddy -quic -quiet &";
+alias echo="echo -e";
+alias hostname="echo KudProject";
+alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
+alias nano="nano -EFIKSWadiuwx";
+alias wget="wget -c -t 0 --retry-connrefused";
+alias whoami="echo krasCGQ";
+
+# Export local binary paths
+export PATH="$HOME/.local/bin:$HOME/KudProject/src/tc/out/aarch64-cortex_a53-linux-android/bin:$PATH";
+
+# Required for GPG signing
+export GPG_TTY="$(tty)";
+
+# Use Central Indonesia Time
+export TZ="Asia/Makassar";
+
+# GNU nano for text editor
+export EDITOR="nano";
+
+# Use ccache for faster compiling
+export USE_CCACHE="1";
+
+# My identity in nutshell (kernel)
+export KBUILD_BUILD_USER="krasCGQ";
+export KBUILD_BUILD_HOST="KudProject";
+
+# crosstool-ng
+source $HOME/KudProject/src/crosstool-ng/ct-ng.comp;
+
+# transfer.sh
+source $HOME/KudFiles/transfer.sh;
+
+# Parse current branch in git repository
+function parse_git_branch() {
+	BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`;
+	[[ ! -z ${BRANCH} ]] && echo " (${BRANCH})";
+}
+
+# Shortcuts for ssh-agent setup
+function ssh_setup () {
+    # Refuse to run if ~/.ssh/id_rsa doesn't exist
+    [[ ! -f ~/.ssh/id_rsa ]] && echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && return 1;
+
+    # The actual setup is here
+    eval "$(ssh-agent -s)";
+    ssh-add ~/.ssh/id_rsa;
+}
+
+# Sign ROM zips before release
+function rom_sign () {
+    # Special treatment for AICP 12.1 ROM sign
+    if [[ ! -z $(pwd | grep aicp-n) ]]; then
+        execdir="$HOME/KudProject/los-n";
+        extraargs="-e AICP-memo.apk=";
+        ln -sf {../../lineage-os/,}vendor/cm;
+        aicp="1";
+    else
+        execdir=".";
+    fi;
+
+    # Refuse to run outside ROM source directory or not having one created target files package
+    if [[ ! -d ${execdir}/build/tools ]] || [[ $(ls ${execdir}/out/dist | grep target-files | wc -l) -ne 1 ]]; then
+        echo "${BLD}rom_sign:${RST} There's nothing to do." && return 1;
+    fi;
+
+    # Sign target files package
+    ${execdir}/build/tools/releasetools/sign_target_files_apks \
+        ${extraargs} \
+        -o -d ~/.android-certs \
+        out/dist/*-target_files-*.zip \
+        signed-target_files.zip \
+        || return 1;
+
+    # Convert signed target files package to signed OTA package
+    ${execdir}/build/tools/releasetools/ota_from_target_files \
+        --block --backup=true \
+        -k ~/.android-certs/releasekey \
+        signed-target_files.zip \
+        signed-ota_update.zip \
+        || return 1;
+
+    # Cleanup
+    [[ ${aicp} -eq 1 ]] && rm -f vendor/cm;
+    rm -f signed-target_files.zip
+
+    # Act like nothing happens
+    unset aicp execdir extraargs;
+}
+
+# Last, but my most convenient part
+export PS1="\[\e[1;32m\][\`whoami\`@\`hostname\`\[\e[1;37m\] \W\[\e[1;33m\]\`parse_git_branch\`\[\e[1;32m\]]\$\[\e[0m\] ";
