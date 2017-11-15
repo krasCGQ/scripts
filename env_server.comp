@@ -13,12 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# Bold & resetting text styles
+BLD="\033[1m";
+RST="\033[0m";
+
 # Set up aliases
 alias caddy="caddy -quic -quiet &";
 alias echo="echo -e";
 alias hostname="echo KudProject";
 alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
-alias nano="nano -EFIKSWadiuwx";
+alias nano="nano -EFISWaiuwx";
 alias wget="wget -c -t 0 --retry-connrefused";
 alias whoami="echo krasCGQ";
 
@@ -49,11 +53,20 @@ source $HOME/KudFiles/transfer.sh;
 
 # Parse current branch in git repository
 function parse_git_branch() {
-	BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`;
-	[[ ! -z ${BRANCH} ]] && echo " (${BRANCH})";
+    BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`;
+    if [[ ! -z ${BRANCH} ]]; then
+        # Don't give extra brackets if project isn't at any branch or is currently detached
+        [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && BRANCH="(${BRANCH})";
+
+        # This is what we want to stdout
+        echo " ${BRANCH}";
+    fi;
+
+    # Act like nothing happens
+    unset BRANCH;
 }
 
-# Shortcuts for ssh-agent setup
+# Shortcut for ssh-agent setup
 function ssh_setup () {
     # Refuse to run if ~/.ssh/id_rsa doesn't exist
     [[ ! -f ~/.ssh/id_rsa ]] && echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && return 1;
@@ -76,7 +89,7 @@ function rom_sign () {
     fi;
 
     # Refuse to run outside ROM source directory or not having one created target files package
-    if [[ ! -d ${execdir}/build/tools ]] || [[ $(ls ${execdir}/out/dist | grep target-files | wc -l) -ne 1 ]]; then
+    if [[ ! -d ${execdir}/build/tools ]] || [[ $(ls ${execdir}/out/dist | grep target_files | wc -l) -ne 1 ]]; then
         echo "${BLD}rom_sign:${RST} There's nothing to do." && return 1;
     fi;
 
@@ -98,7 +111,8 @@ function rom_sign () {
 
     # Cleanup
     [[ ${aicp} -eq 1 ]] && rm -f vendor/cm;
-    rm -f signed-target_files.zip
+    rm -f signed-target_files.zip;
+    rm -rf out/dist/*;
 
     # Act like nothing happens
     unset aicp execdir extraargs;
