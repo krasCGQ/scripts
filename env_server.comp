@@ -23,6 +23,7 @@ alias echo="echo -e";
 alias hostname="echo KudProject";
 alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
 alias nano="nano -EFISWaiuwx";
+alias ss-server="ss-server -c $HOME/KudFiles/shadowsocks.json --plugin obfs-server --plugin-opts "\"obfs=http"\" 2> /dev/null &";
 alias wget="wget -c -t 0 --retry-connrefused";
 alias whoami="echo krasCGQ";
 
