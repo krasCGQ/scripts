@@ -27,8 +27,11 @@ alias ss-server="ss-server -c $HOME/KudFiles/shadowsocks.json --plugin obfs-serv
 alias wget="wget -c -t 0 --retry-connrefused";
 alias whoami="echo krasCGQ";
 
+# Export Go source codes path
+export GOPATH=$HOME/KudProject/src/go;
+
 # Export local binary paths
-export PATH="$HOME/.local/bin:$HOME/KudProject/src/tc/out/aarch64-cortex_a53-linux-android/bin:$PATH";
+export PATH="$HOME/.local/bin:$HOME/KudProject/src/tc/out/aarch64-cortex_a53-linux-android/bin:$GOPATH/src/github.com/mholt/caddy/caddy:$PATH";
 
 # Required for GPG signing
 export GPG_TTY="$(tty)";
@@ -47,7 +50,7 @@ export KBUILD_BUILD_USER="krasCGQ";
 export KBUILD_BUILD_HOST="KudProject";
 
 # crosstool-ng
-source $HOME/KudProject/src/crosstool-ng/ct-ng.comp;
+source $HOME/KudProject/src/ct-ng/ct-ng.comp;
 
 # transfer.sh
 source $HOME/KudFiles/transfer.sh;
@@ -75,6 +78,29 @@ function ssh_setup () {
     # The actual setup is here
     eval "$(ssh-agent -s)";
     ssh-add ~/.ssh/id_rsa;
+}
+
+# Run (including restarting every 5 minutes) TeleSeed bot
+function teleseed () {
+    # TeleSeed bot source path
+    SRC="$HOME/KudFiles/TeleSeed";
+
+    # Refuse to run if the defined path doesn't exist
+    [[ ! -d ${SRC} ]] && echo "${BLD}teleseed:${RST} Make sure your defined path exists and run the command again." && return 1;
+
+    # TeleSeed no yokosou!
+    echo "${BLD}teleseed:${RST} Starting bot...";
+
+    # The actual commands
+    while sleep 1; do
+        CUR=`pwd`;
+        PID=`pidof -s telegram-cli`;
+        cd ${SRC};
+        [[ ! -z ${PID} ]] && kill -9 ${PID} && echo "${BLD}teleseed:${RST} Restarting bot after 5 minutes uptime...";
+        ./launch.sh >> /dev/null 2>&1;
+        cd ${CUR};
+        sleep 299;
+    done;
 }
 
 # Sign ROM zips before release
