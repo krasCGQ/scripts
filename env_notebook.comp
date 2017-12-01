@@ -13,44 +13,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# Import common bash completion
+source $HOME/KudProject/scripts/env_common.comp;
+
 # Set up aliases
-alias echo="echo -e";
 alias telegram="telegram % --u 2> /dev/null &";
 alias update="pacaur -Syu";
-alias wget="wget -c -t 0 --retry-connrefused";
 
 # Export local binary path
 export PATH="$HOME/.local/bin:$HOME/Public/toolchains/aarch64-cortex_a53-linux-android-7.x/bin:$PATH:$HOME/.npm-global/bin";
 
-# Required for GPG signing
-export GPG_TTY="$(tty)";
-
 # Required for npm to work properly
 export NPM_CONFIG_PREFIX=$HOME/.npm-global;
-
-# GNU nano for text editor
-export EDITOR="nano";
-
-# Use ccache for faster compiling
-export USE_CCACHE="1";
-
-# My identity in nutshell (kernel)
-export KBUILD_BUILD_USER="krasCGQ";
-export KBUILD_BUILD_HOST="KudProject";
-
-# Text styles
-BLD="\033[1m";
-RST="\033[0m";
-
-# Shortcuts for ssh-agent setup
-function ssh_setup () {
-    # Do an unconditional check
-    [[ ! -f ~/.ssh/id_rsa ]] && echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && return 1;
-
-    # The actual setup is here
-    eval "$(ssh-agent -s)";
-    ssh-add ~/.ssh/id_rsa;
-}
 
 #function tmpfs_setup () {
 #    # Set temporary variable

@@ -1,0 +1,46 @@
+# Copyright (C) 2017 Albert I (krasCGQ)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Text styles
+BLD="\033[1m";
+RST="\033[0m";
+
+# Set up common aliases
+alias echo="echo -e";
+alias nano="nano -EFISWaiuwx";
+alias wget="wget -c -t 0 --retry-connrefused";
+
+# Required for GPG signing
+export GPG_TTY="$(tty)";
+
+# GNU nano for text editor
+export EDITOR="nano";
+
+# Use ccache for faster compiling
+export USE_CCACHE="1";
+
+# My identity in nutshell (kernel)
+export KBUILD_BUILD_USER="krasCGQ";
+export KBUILD_BUILD_HOST="KudProject";
+
+# Shortcuts for ssh-agent setup
+function ssh_setup () {
+    # Do an unconditional check
+    [[ ! -f ~/.ssh/id_rsa ]] && echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && return 1;
+
+    # The actual setup is here
+    eval "$(ssh-agent -s)";
+    ssh-add ~/.ssh/id_rsa;
+}

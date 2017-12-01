@@ -13,18 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Bold & resetting text styles
-BLD="\033[1m";
-RST="\033[0m";
+# Import common bash completion
+source $HOME/KudProject/scripts/env_common.comp;
 
 # Set up aliases
 alias caddy="caddy -quic -quiet &";
-alias echo="echo -e";
 alias hostname="echo KudProject";
 alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
-alias nano="nano -EFISWaiuwx";
 alias ss-server="ss-server -c $HOME/KudFiles/shadowsocks.json --plugin obfs-server --plugin-opts "\"obfs=http"\" 2> /dev/null &";
-alias wget="wget -c -t 0 --retry-connrefused";
 alias whoami="echo krasCGQ";
 
 # Export Go source codes path
@@ -33,21 +29,8 @@ export GOPATH=$HOME/KudProject/src/go;
 # Export local binary paths
 export PATH="$HOME/.local/bin:$HOME/KudProject/src/tc/out/aarch64-cortex_a53-linux-android/bin:$GOPATH/src/github.com/mholt/caddy/caddy:$PATH";
 
-# Required for GPG signing
-export GPG_TTY="$(tty)";
-
 # Use Central Indonesia Time
 export TZ="Asia/Makassar";
-
-# GNU nano for text editor
-export EDITOR="nano";
-
-# Use ccache for faster compiling
-export USE_CCACHE="1";
-
-# My identity in nutshell (kernel)
-export KBUILD_BUILD_USER="krasCGQ";
-export KBUILD_BUILD_HOST="KudProject";
 
 # crosstool-ng
 source $HOME/KudProject/src/ct-ng/ct-ng.comp;
@@ -68,16 +51,6 @@ function parse_git_branch() {
 
     # Act like nothing happens
     unset BRANCH;
-}
-
-# Shortcut for ssh-agent setup
-function ssh_setup () {
-    # Refuse to run if ~/.ssh/id_rsa doesn't exist
-    [[ ! -f ~/.ssh/id_rsa ]] && echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && return 1;
-
-    # The actual setup is here
-    eval "$(ssh-agent -s)";
-    ssh-add ~/.ssh/id_rsa;
 }
 
 # Run (including restarting every 5 minutes) TeleSeed bot
