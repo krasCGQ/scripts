@@ -14,7 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import common bash completion
-source $HOME/KudProject/scripts/env_common.comp;
+source ${HOME}/KudProject/scripts/env_common.comp;
 
 # Set up aliases
 alias caddy="caddy -quic -quiet &";
@@ -24,19 +24,19 @@ alias ss-server="ss-server -c $HOME/KudFiles/shadowsocks.json --plugin obfs-serv
 alias whoami="echo krasCGQ";
 
 # Export Go source codes path
-export GOPATH=$HOME/KudProject/src/go;
+export GOPATH=${HOME}/KudProject/src/go;
 
 # Export local binary paths
-export PATH="$HOME/.local/bin:$HOME/KudProject/src/tc/out/aarch64-cortex_a53-linux-android/bin:$GOPATH/src/github.com/mholt/caddy/caddy:$PATH";
+export PATH="${HOME}/.local/bin:${HOME}/KudProject/src/tc/out/aarch64-cortex_a53-linux-android/bin:${GOPATH}/src/github.com/mholt/caddy/caddy:${PATH}";
 
 # Use Central Indonesia Time
 export TZ="Asia/Makassar";
 
 # crosstool-ng
-source $HOME/KudProject/src/ct-ng/ct-ng.comp;
+source ${HOME}/KudProject/src/ct-ng/ct-ng.comp;
 
 # transfer.sh
-source $HOME/KudFiles/transfer.sh;
+source ${HOME}/KudFiles/transfer.sh;
 
 # Parse current branch in git repository
 function parse_git_branch() {
@@ -56,7 +56,7 @@ function parse_git_branch() {
 # Run (including restarting every 5 minutes) TeleSeed bot
 function teleseed () {
     # TeleSeed bot source path
-    SRC="$HOME/KudFiles/TeleSeed";
+    SRC="${HOME}/KudFiles/TeleSeed";
 
     # Refuse to run if the defined path doesn't exist
     [[ ! -d ${SRC} ]] && echo "${BLD}teleseed:${RST} Make sure your defined path exists and run the command again." && return 1;

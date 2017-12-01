@@ -14,17 +14,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import common bash completion
-source $HOME/KudProject/scripts/env_common.comp;
+source ${HOME}/KudProject/scripts/env_common.comp;
 
 # Set up aliases
 alias telegram="telegram % --u 2> /dev/null &";
 alias update="pacaur -Syu";
 
 # Export local binary path
-export PATH="$HOME/.local/bin:$HOME/Public/toolchains/aarch64-cortex_a53-linux-android-7.x/bin:$PATH:$HOME/.npm-global/bin";
+export PATH="${HOME}/.local/bin:${HOME}/Public/toolchains/aarch64-cortex_a53-linux-android-7.x/bin:${PATH}:${HOME}/.npm-global/bin";
 
 # Required for npm to work properly
-export NPM_CONFIG_PREFIX=$HOME/.npm-global;
+export NPM_CONFIG_PREFIX=${HOME}/.npm-global;
 
 #function tmpfs_setup () {
 #    # Set temporary variable
