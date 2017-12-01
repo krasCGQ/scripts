@@ -1,0 +1,124 @@
+# Copyright (C) 2017 Albert I (krasCGQ)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Set up aliases
+alias echo="echo -e";
+alias telegram="telegram % --u 2> /dev/null &";
+alias update="pacaur -Syu";
+alias wget="wget -c -t 0 --retry-connrefused";
+
+# Export local binary path
+export PATH="$HOME/.local/bin:$HOME/Public/toolchains/aarch64-cortex_a53-linux-android-7.x/bin:$PATH:$HOME/.npm-global/bin";
+
+# Required for GPG signing
+export GPG_TTY="$(tty)";
+
+# Required for npm to work properly
+export NPM_CONFIG_PREFIX=$HOME/.npm-global;
+
+# GNU nano for text editor
+export EDITOR="nano";
+
+# Use ccache for faster compiling
+export USE_CCACHE="1";
+
+# My identity in nutshell (kernel)
+export KBUILD_BUILD_USER="krasCGQ";
+export KBUILD_BUILD_HOST="KudProject";
+
+# Text styles
+BLD="\033[1m";
+RST="\033[0m";
+
+# Shortcuts for ssh-agent setup
+function ssh_setup () {
+    # Do an unconditional check
+    [[ ! -f ~/.ssh/id_rsa ]] && echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && return 1;
+
+    # The actual setup is here
+    eval "$(ssh-agent -s)";
+    ssh-add ~/.ssh/id_rsa;
+}
+
+#function tmpfs_setup () {
+#    # Set temporary variable
+#    DIR="/mnt/build";
+#
+#    # Do some unconditional checks
+#    [[ $(sudo -v 2> /dev/null; echo $?) -eq 1 ]] && echo "${BLD}tmpfs_setup:${RST} This command requires account with sudo access." &&  return 1;
+#    [[ ! -d ${DIR} ]] && sudo su -c "mkdir -p ${DIR} && chown -R $(whoami):$(whoami) ${DIR}";
+#
+#    # The actual commands are here
+#    [[ $(mount | grep ${DIR} | wc -l) -eq 1 ]] && sudo umount ${DIR};
+#    [[ ${1} != "umount" ]] && sudo mount -t tmpfs -o rw none ${DIR};
+#
+#    # Unset temporary variable
+#    DIR="";
+#}
+
+# Install/Update Telegram Desktop in a more simple way
+function telegram_update () {
+    # Some variables to start with
+    TEMPDIR="/tmp/tsetup.tar.xz";
+    TARGET="$HOME/.local/bin";
+    PID=`pidof telegram`;
+
+    # Kill any active instances of Telegram before proceeding
+    [[ ! -z ${PID} ]] && kill ${PID};
+
+    # Initial cleanup
+    rm -f ${TEMPDIR};
+
+    # Do some architecture checks
+    for i in i386 i586 i686; do
+        [ $(uname -m) == $i ] && OS="32" && break;
+    done;
+
+    # Download and extract the binary tarball
+    wget -q -O ${TEMPDIR} https://tdesktop.com/linux${OS}/;
+    tar -xf ${TEMPDIR} -C /tmp/ --strip-components=1;
+
+    # Put Telegram Desktop binary into target directory and set correct permissions
+    mv -f /tmp/Telegram ${TARGET}/telegram;
+    chmod 755 ${TARGET}/telegram;
+
+    # Act like nothing happens
+    unset TEMPDIR TARGET;
+}
+
+# Repack FLAC files with maximum compression and ReplayGain applied
+function flac_repack () {
+    # Do some unconditional checks
+    [[ -z $(command -v flac) ]] && echo "${BLD}flac_repack:${RST} Please install FLAC package before continuing." && return 1;
+    [[ $(ls | grep .flac | wc -l) -eq 0 ]] && echo "${BLD}flac_repack:${RST} There's nothing to do." && return 1;
+
+    # The actual commmand is here
+    flac --delete-input-file --totally-silent -d *.flac || return 1;
+    ls | egrep '\.wav|\.aiff' | while read i; do
+        flac --delete-input-file --totally-silent --replay-gain -V8 "${i}" || return 1;
+    done;
+}
+
+# Convert all FLAC, WAV, and/or AIFF files to OPUS
+function opus_convert () {
+    # Do some unconditional checks
+    [[ -z $(command -v opusenc) ]] && echo "${BLD}opus_convert:${RST} Please install opus-tools package before continuing." && return 1;
+    [[ $(ls | egrep '\.flac|\.wav|\.aiff' | wc -l) -eq 0 ]] && echo "${BLD}opus_convert:${RST} There's nothing to do." && return 1;
+
+    # Not supporting wildcards for converting
+    ls | egrep '\.flac|\.wav|\.aiff' | while read i; do
+        opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 "${i}" "$(echo ${i} | sed 's/\(.*\)\..*/\1/').ogg";
+    done;
+}
