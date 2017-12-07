@@ -20,8 +20,8 @@ source ${HOME}/KudProject/scripts/env_common.comp;
 
 # Set up aliases
 alias flushdns="sudo su -c 'nscd -K && nscd'";
-alias unbound="sudo systemctl restart unbound";
 alias telegram="telegram % --u 2> /dev/null &";
+alias unbound="sudo systemctl restart unbound";
 alias update="pacaur -Syu";
 
 # Export local binary path
