@@ -17,11 +17,13 @@
 source ${HOME}/KudProject/scripts/env_common.comp;
 
 # Set up aliases
+alias flushdns="sudo su -c 'nscd -K && nscd'";
+alias unbound="sudo systemctl restart unbound";
 alias telegram="telegram % --u 2> /dev/null &";
 alias update="pacaur -Syu";
 
 # Export local binary path
-export PATH="${HOME}/.local/bin:${HOME}/Public/toolchains/aarch64-cortex_a53-linux-android-7.x/bin:${PATH}:${HOME}/.npm-global/bin";
+export PATH="${HOME}/.local/bin:${HOME}/Public/toolchains/aarch64-cortex_a53-linux-android-7.x/bin:${HOME}/KudProject/build-tools-gcc/x86_64-linux-gnu/bin:${PATH}:${HOME}/.npm-global/bin";
 
 # Required for npm to work properly
 export NPM_CONFIG_PREFIX=${HOME}/.npm-global;
@@ -41,6 +43,25 @@ export NPM_CONFIG_PREFIX=${HOME}/.npm-global;
 #    # Unset temporary variable
 #    DIR="";
 #}
+
+# Update initramfs for a certain kernel
+function initramfs_update () {
+    # sudo users only
+    [[ $(sudo -v 2> /dev/null; echo $?) -eq 1 ]] && echo "${BLD}initramfs_update:${RST} This command requires account with sudo access." &&  return 1;
+
+    # Variables
+    NAME="${1}";
+    TARGET="${2}";
+
+    # Make sure the given kernel name exists in /usr/lib/modules, abort if it doesn't
+    [[ ! -d /usr/lib/modules/${NAME} ]] && echo "${BLD}initramfs_update:${RST} No modules found for the specified kernel - ${NAME}." && return 1;
+
+    # Run initramfs update
+    sudo mkinitcpio -k ${NAME} -g /boot/initramfs-${TARGET}-x86_64.img;
+
+    # Act like nothing happens
+    unset NAME TARGET;
+}
 
 # Install/Update Telegram Desktop in a more simple way
 function telegram_update () {
