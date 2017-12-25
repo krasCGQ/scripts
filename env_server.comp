@@ -20,10 +20,8 @@ source ${HOME}/KudProject/scripts/env_common.comp;
 
 # Set up aliases
 alias caddy="caddy -quic -quiet &";
-alias hostname="echo KudProject";
 alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
 alias ss-server="ss-server -c $HOME/KudFiles/shadowsocks.json --plugin obfs-server --plugin-opts "\"obfs=http"\" 2> /dev/null &";
-alias whoami="echo krasCGQ";
 
 # Export Go source codes path
 export GOPATH=${HOME}/KudProject/src/go;
@@ -121,4 +119,4 @@ function rom_sign () {
 }
 
 # Last, but my most convenient part
-export PS1="\[\e[1;32m\][\`whoami\`@\`hostname\`\[\e[1;37m\] \W\[\e[1;33m\]\`parse_git_branch\`\[\e[1;32m\]]\$\[\e[0m\] ";
+export PS1="\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]\`parse_git_branch\`\[\e[1;32m\] \$\[\e[0m\] ";
