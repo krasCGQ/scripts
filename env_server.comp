@@ -16,12 +16,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import common bash completion
-source ${HOME}/KudProject/scripts/env_common.comp;
+source ${HOME}/misc/scripts/env_common.comp;
 
 # Set up aliases
 alias caddy="caddy -quic -quiet &";
 alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
-alias ss-server="ss-server -c $HOME/KudFiles/shadowsocks.json --plugin obfs-server --plugin-opts "\"obfs=http"\" 2> /dev/null &";
+alias ss-server="ss-server -c $HOME/misc/shadowsocks.json --plugin obfs-server --plugin-opts "\"obfs=http"\" 2> /dev/null &";
 
 # Export Go source codes path
 export GOPATH=${HOME}/KudProject/src/go;
@@ -36,7 +36,7 @@ export TZ="Asia/Makassar";
 source ${HOME}/KudProject/src/ct-ng/ct-ng.comp;
 
 # transfer.sh
-source ${HOME}/KudFiles/transfer.sh;
+source ${HOME}/misc/transfer.sh;
 
 # Parse current branch in git repository
 function parse_git_branch() {
