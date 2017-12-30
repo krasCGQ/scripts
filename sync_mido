@@ -78,8 +78,10 @@ fi;
 if [[ -d ${device} ]]; then
     cd ${device};
     mv -f lineage.mk aim.mk;
-    sed -i s/lineage/aim/g aim.mk;
+    sed -i "s/lineage/aim/g" aim.mk;
     printf "\nTARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-cortex_a53-linux-android-" >> BoardConfig.mk;
     printf "\nKERNEL_TOOLCHAIN := /home/aimrom/aim/${toolchain}/bin" >> BoardConfig.mk;
+    sed -i "161s/ -->//" overlay/frameworks/base/core/res/res/values/config.xml
+    sed -i "162s/l>/l> -->/" overlay/frameworks/base/core/res/res/values/config.xml
     cd ../../..;
 fi;
