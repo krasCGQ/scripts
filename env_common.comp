@@ -46,3 +46,21 @@ function ssh_setup () {
     eval "$(ssh-agent -s)";
     ssh-add ~/.ssh/id_rsa;
 }
+
+# Parse current branch in git repository
+function parse_git_branch() {
+    BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`;
+    if [[ ! -z ${BRANCH} ]]; then
+        # Don't give extra brackets if project isn't at any branch or is currently detached
+        [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && BRANCH="(${BRANCH})";
+
+        # This is what we want to stdout
+        echo " ${BRANCH}";
+    fi;
+
+    # Act like nothing happens
+    unset BRANCH;
+}
+
+# Last, but my most convenient part
+export PS1="\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]\`parse_git_branch\`\[\e[1;32m\] \$\[\e[0m\] ";
