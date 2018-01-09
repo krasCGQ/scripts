@@ -24,14 +24,15 @@ vendor="vendor/xiaomi";
 # HALs
 audio="hardware/qcom/audio-caf/msm8996";
 display="hardware/qcom/display-caf/msm8996";
+media="hardware/qcom/media-caf/msm8996";
 
 # Toolchain
 toolchain="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-7.x";
 
 # Clone
 [[ ! -d ${device} ]] && git clone git://github.com/KudProject/device_xiaomi_mido -b lineage-15.1 ${device};
-[[ ! -d ${kernel} ]] && git clone git://github.com/KudProject/kernel_xiaomi_msm8953 -b oreo ${kernel};
-[[ ! -d ${vendor} ]] && git clone https://gitlab.com/krasCGQ/proprietary_vendor_xiaomi.git -b oreo-mr1 ${vendor} --depth=1;
+[[ ! -d ${kernel} ]] && git clone git://github.com/KudProject/kernel_xiaomi_msm8953 -b oreo-mr1 ${kernel};
+[[ ! -d ${vendor} ]] && git clone git://github.com/KudProject/proprietary_vendor_xiaomi -b oreo-mr1 ${vendor} --depth=1;
 [[ ! -d ${toolchain} ]] && git clone git://github.com/krasCGQ/aarch64-linux-android -b a53-7.x ${toolchain} --depth=1;
 
 # Update
@@ -73,6 +74,12 @@ if [[ -d ${display} ]]; then
     git reset --hard FETCH_HEAD;
     cd ../../../..;
 fi;
+if [[ -d ${media} ]]; then
+    cd ${media};
+    git fetch git://github.com/KudProject/hardware_qcom_media oreo-mr1-caf-8996;
+    git reset --hard FETCH_HEAD;
+    cd ../../../..;
+fi;
 
 # Device Tree Patch
 if [[ -d ${device} ]]; then
@@ -81,7 +88,5 @@ if [[ -d ${device} ]]; then
     sed -i "s/lineage/aim/g" aim.mk;
     printf "\nTARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-cortex_a53-linux-android-" >> BoardConfig.mk;
     printf "\nKERNEL_TOOLCHAIN := /home/aimrom/aim/${toolchain}/bin" >> BoardConfig.mk;
-    sed -i "161s/ -->//" overlay/frameworks/base/core/res/res/values/config.xml
-    sed -i "162s/l>/l> -->/" overlay/frameworks/base/core/res/res/values/config.xml
     cd ../../..;
 fi;

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2017 Albert I (krasCGQ)
+# Copyright (C) 2017-2018 Albert I (krasCGQ)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,16 +24,16 @@ alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
 alias ss-server="ss-server -c $HOME/misc/shadowsocks.json --plugin obfs-server --plugin-opts "\"obfs=http"\" 2> /dev/null &";
 
 # Export Go source codes path
-export GOPATH=${HOME}/KudProject/src/go;
+export GOPATH=${HOME}/go;
 
 # Export local binary paths
-export PATH="${HOME}/.local/bin:${HOME}/KudProject/src/tc/out/aarch64-cortex_a53-linux-android/bin:${GOPATH}/src/github.com/mholt/caddy/caddy:${PATH}";
+export PATH="${HOME}/.local/bin:${HOME}/KudProject/tc/out/aarch64-linux-android/bin:${GOPATH}/src/github.com/mholt/caddy/caddy:${PATH}";
 
 # Use Central Indonesia Time
 export TZ="Asia/Makassar";
 
 # crosstool-ng
-source ${HOME}/KudProject/src/ct-ng/ct-ng.comp;
+source ${HOME}/src/ct-ng/ct-ng.comp;
 
 # transfer.sh
 source ${HOME}/misc/transfer.sh;
