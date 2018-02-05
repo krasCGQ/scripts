@@ -26,9 +26,9 @@ function variables_list () {
 
 ## List of projects
 # In order:
-# 1) Location of git-cloned GCC source
-# 2) Location of package patches folder within ct-ng sources
-# 3) Branch that we need to grab upstream changes from
+# 1) Location of git-cloned source
+# 2) Branch that we need to grab upstream changes from
+# 3) Location of package patches folder within ct-ng source
 function projects_list () {
     ## GNU GCC
     GCCDIR="${SRCDIR}/gcc";
