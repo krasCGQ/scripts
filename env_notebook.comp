@@ -19,7 +19,7 @@
 source ${HOME}/KudProject/scripts/env_common.comp;
 
 # Set up aliases
-alias update="sudo bauerbill -Syu";
+alias update="sudo su -c \"pacman -Sy && bauerbill -Syu"\";
 
 # Export local binary path
 #export PATH="${HOME}/.local/bin:${PATH}";
