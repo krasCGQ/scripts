@@ -29,16 +29,19 @@ function variables_list () {
 # 1) Location of git-cloned source
 # 2) Branch that we need to grab upstream changes from
 # 3) Location of package patches folder within ct-ng source
+# 4) Patches that we'd like to exclude; must be separated by vertical bar
 function projects_list () {
     ## GNU GCC
     GCCDIR="${SRCDIR}/gcc";
     GCCBRANCH="gcc-7-branch";
     GCCPATCH="${CTDIR}/gcc/7.3.0";
+    GCCEXCL="0020|0021";
 
     ## GNU Binutils
     BINDIR="${SRCDIR}/binutils";
     BINBRANCH="binutils-2_30-branch";
     BINPATCH="${CTDIR}/binutils/2.30";
+    BINEXCL="";
 }
 
 ## Usage: update_projects "<src-dir>" "<src-branch>" "<patch-dir>"
@@ -55,9 +58,16 @@ function update_projects {
     ## Clean it up; we can make mess with it at some point
     git clean -dfx > /dev/null;
 
+    ## Fetch list of patches that we're going to apply
+    if [[ ! -z "${4}" ]];
+    then
+        LIST="$(find "${3}" -name *.patch | egrep -v "${4}" | sort -n)";
+    else
+        LIST="$(find "${3}" -name *.patch | sort -n)";
+    fi;
+
     ## Apply crosstool-ng patches
-    # You can edit 'grep -v' command to exclude already-applied patches
-    for PATCH in $(find "${3}" | grep .patch | sort -n);
+    for PATCH in ${LIST};
     do
         # Output patch name
         # echo -e "${PATCH}";
@@ -74,6 +84,6 @@ function update_projects {
 }
 
 variables_list && projects_list || exit 1;
-update_projects "${GCCDIR}" "${GCCBRANCH}" "${GCCPATCH}" || exit 1;
-update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" || exit 1;
+update_projects "${GCCDIR}" "${GCCBRANCH}" "${GCCPATCH}" "${GCCEXCL}" || exit 1;
+update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}" || exit 1;
 echo -e "Projects updated successfully." && exit 0;
