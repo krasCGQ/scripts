@@ -19,9 +19,9 @@
 
 ## Only modify SRCDIR and CTDIR accordingly
 function variables_list () {
-    ORIDIR=`pwd`;
-    SRCDIR="${HOME}/tc/git";
-    CTDIR="${HOME}/src/ct-ng/packages";
+    ORIDIR=`pwd`
+    SRCDIR="${HOME}/tc/git"
+    CTDIR="${HOME}/src/ct-ng/packages"
 }
 
 ## List of projects
@@ -32,58 +32,63 @@ function variables_list () {
 # 4) Patches that we'd like to exclude; must be separated by vertical bar
 function projects_list () {
     ## GNU GCC
-    GCCDIR="${SRCDIR}/gcc";
-    GCCBRANCH="gcc-7-branch";
-    GCCPATCH="${CTDIR}/gcc/7.3.0";
-    GCCEXCL="0020|0021";
+    GNUDIR="${SRCDIR}/gnu"
+    GNUBRANCH="gcc-7-branch"
+    GNUPATCH="${CTDIR}/gcc/7.3.0"
+    GNUEXCL="0020|0021"
+
+    ## Linaro GCC
+    LNRDIR="${SRCDIR}/linaro"
+    LNRBRANCH="linaro-local/gcc-7-integration-branch"
+    LNRPATCH="${CTDIR}/gcc-linaro/7.2-2017.11"
+    LNREXCL=""
 
     ## GNU Binutils
-    BINDIR="${SRCDIR}/binutils";
-    BINBRANCH="binutils-2_30-branch";
-    BINPATCH="${CTDIR}/binutils/2.30";
-    BINEXCL="";
+    BINDIR="${SRCDIR}/binutils"
+    BINBRANCH="binutils-2_30-branch"
+    BINPATCH="${CTDIR}/binutils/2.30"
+    BINEXCL=""
 }
 
 ## Usage: update_projects "<src-dir>" "<src-branch>" "<patch-dir>"
 function update_projects {
     ## Enter source directory
-    cd "${1}";
+    cd "${1}"
 
     ## Fetch updates from upstream
-    git fetch origin "${2}" --depth=1 2> /dev/null;
+    git fetch origin "${2}" --depth=1 2> /dev/null
 
     ## Hard reset current tree to latest source
-    git reset --hard "origin/${2}" > /dev/null;
+    git reset --hard "origin/${2}" > /dev/null
 
-    ## Clean it up; we can make mess with it at some point
-    git clean -dfx > /dev/null;
+    ## Clean them up as we can make mess with them at some point
+    git clean -dfx > /dev/null
 
     ## Fetch list of patches that we're going to apply
-    if [[ ! -z "${4}" ]];
-    then
-        LIST="$(find "${3}" -name *.patch | egrep -v "${4}" | sort -n)";
+    if [[ ! -z "${4}" ]]; then
+        LIST="$(find "${3}" -name *.patch | egrep -v "${4}" | sort -n)"
     else
-        LIST="$(find "${3}" -name *.patch | sort -n)";
-    fi;
+        LIST="$(find "${3}" -name *.patch | sort -n)"
+    fi
 
     ## Apply crosstool-ng patches
-    for PATCH in ${LIST};
-    do
+    for PATCH in ${LIST}; do
         # Output patch name
-        # echo -e "${PATCH}";
+        # echo -e "${PATCH}"
 
         # Apply every patches with merge strategy
-        patch --merge -N -s -p1 -i "${PATCH}";
-    done;
+        patch --merge -N -s -p1 -i "${PATCH}"
+    done
 
     ## Remove .orig files
-    rm -rf $(find -name *.orig);
+    rm -rf $(find -name *.orig)
 
     ## Go back to the original dir where this script is run
-    cd ${ORIDIR};
+    cd ${ORIDIR}
 }
 
-variables_list && projects_list || exit 1;
-update_projects "${GCCDIR}" "${GCCBRANCH}" "${GCCPATCH}" "${GCCEXCL}" || exit 1;
-update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}" || exit 1;
-echo -e "Projects updated successfully." && exit 0;
+variables_list && projects_list || exit 1
+update_projects "${GNUDIR}" "${GNUBRANCH}" "${GNUPATCH}" "${GNUEXCL}" || exit 1
+update_projects "${LNRDIR}" "${LNRBRANCH}" "${LNRPATCH}" "${LNREXCL}" || exit 1
+update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}" || exit 1
+echo -e "Projects updated successfully." && exit 0
