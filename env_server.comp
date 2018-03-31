@@ -16,66 +16,77 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import common bash completion
-source ${HOME}/misc/scripts/env_common.comp;
-
-# Set up aliases
-alias caddy="caddy -quic -quiet &";
-alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &";
-alias ss-server="ss-server -c $HOME/misc/shadowsocks.json --plugin obfs-server --plugin-opts "\"obfs=http"\" 2> /dev/null &";
-
-# Export Go source codes path
-export GOPATH=${HOME}/go;
-
-# Export local binary paths
-export PATH="${HOME}/.local/bin:${HOME}/KudProject/tc/out/aarch64-linux-android/bin:${GOPATH}/src/github.com/mholt/caddy/caddy:${PATH}";
+source ${HOME}/scripts/env_common.comp
 
 # Use Central Indonesia Time
-export TZ="Asia/Makassar";
+export TZ=Asia/Makassar
+
+# Set GOPATH early for checking
+GOPATH=${HOME}/go
+
+# Other variables used around this script
+CADDYSRC=${GOSRC}/src/github.com/mholt/caddy/caddy
+CTNGCOMP=${HOME}/src/ct-ng/ct-ng.comp
+TRANSFERSH=${HOME}/scripts/transfer.sh
+
+# If 'hostname' returns botstack, set up caddy & http-server aliases
+if [[ `hostname` -eq botstack ]]; then
+    alias caddy="caddy -quic -quiet &"
+    alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &"
+fi
+
+# If GOPATH doesn't exist, unset it
+[[ ! -d ${GOPATH} ]] && unset GOPATH
+
+# Export local binary paths
+export PATH="${HOME}/.local/bin:${PATH}";
+[[ -d ${CADDYSRC} ]] && export PATH=${CADDYSRC}:${PATH}
 
 # crosstool-ng
-source ${HOME}/src/ct-ng/ct-ng.comp;
+[[ -f ${CTNGCOMP} ]] && source ${CTNGCOMP}
 
 # transfer.sh
-source ${HOME}/misc/transfer.sh;
+[[ -f ${TRANSFERSH} ]] && source ${TRANSFERSH}
+
+# All those temporary variables end here
+unset CADDYSRC CTNGCOMP TRANSFERSH
 
 # Sign ROM zips before release
 function rom_sign () {
-    # Special treatment for AICP 12.1 ROM sign
-    if [[ ! -z $(pwd | grep aicp-n) ]]; then
-        execdir="$HOME/KudProject/los-n";
-        extraargs="-e AICP-memo.apk=";
-        ln -sf {../../lineage-os/,}vendor/cm;
-        aicp="1";
-    else
-        execdir=".";
-    fi;
+    # Must be run at root of ROM source
+    [[ ! -d $(pwd)/build/tools ]] && \
+        echo "${BLD}rom_sign:${RST} This function must be run at root of ROM source!" && \
+        return 1
 
-    # Refuse to run outside ROM source directory or not having one created target files package
-    if [[ ! -d ${execdir}/build/tools ]] || [[ $(ls ${execdir}/out/dist | grep target_files | wc -l) -ne 1 ]]; then
-        echo "${BLD}rom_sign:${RST} There's nothing to do." && return 1;
-    fi;
+    # Make sure only one target files package exists prior to running the function
+    [[ $(ls $(pwd)/out/dist | grep target_files | wc -l) -ne 1 ]] && \
+        echo "${BLD}rom_sign:${RST} Less or more than one target files package detected!" && \
+        return 1
+
+    # Must have signing keys in .android-certs at root of home folder before proceeding
+    for SIGNKEYS in {media,platform,releasekey,shared}.{pk8,x509.pem}; do
+        [[ ! -f ${HOME}/.android-certs/${SIGNKEYS} ]] && \
+            echo "${BLD}rom_sign:${RST} Missing one or more signing keys in ${HOME}/.android-certs folder!" && \
+            break && \
+            return 1
+    done
 
     # Sign target files package
-    ${execdir}/build/tools/releasetools/sign_target_files_apks \
-        ${extraargs} \
-        -o -d ~/.android-certs \
+    ./build/tools/releasetools/sign_target_files_apks \
+        -o -d ${HOME}/.android-certs \
         out/dist/*-target_files-*.zip \
         signed-target_files.zip \
-        || return 1;
+        || return 1
 
     # Convert signed target files package to signed OTA package
-    ${execdir}/build/tools/releasetools/ota_from_target_files \
+    ./build/tools/releasetools/ota_from_target_files \
         --block --backup=true \
-        -k ~/.android-certs/releasekey \
+        -k ${HOME}/.android-certs/releasekey \
         signed-target_files.zip \
         signed-ota_update.zip \
-        || return 1;
+        || return 1
 
     # Cleanup
-    [[ ${aicp} -eq 1 ]] && rm -f vendor/cm;
-    rm -f signed-target_files.zip;
-    rm -rf out/dist/*;
-
-    # Act like nothing happens
-    unset aicp execdir extraargs;
+    rm -f signed-target_files.zip
+    rm -rf out/dist/*
 }
