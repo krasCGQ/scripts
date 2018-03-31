@@ -21,11 +21,11 @@ source ${HOME}/scripts/env_common.comp
 # Use Central Indonesia Time
 export TZ=Asia/Makassar
 
-# Set GOPATH early for checking
-GOPATH=${HOME}/go
+# Export GOPATH early for checking
+export GOPATH=${HOME}/go
 
 # Other variables used around this script
-CADDYSRC=${GOSRC}/src/github.com/mholt/caddy/caddy
+CADDYSRC=${GOPATH}/src/github.com/mholt/caddy/caddy
 CTNGCOMP=${HOME}/src/ct-ng/ct-ng.comp
 TRANSFERSH=${HOME}/scripts/transfer.sh
 
@@ -39,7 +39,7 @@ fi
 [[ ! -d ${GOPATH} ]] && unset GOPATH
 
 # Export local binary paths
-export PATH="${HOME}/.local/bin:${PATH}";
+export PATH=${HOME}/.local/bin:${PATH};
 [[ -d ${CADDYSRC} ]] && export PATH=${CADDYSRC}:${PATH}
 
 # crosstool-ng
