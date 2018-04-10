@@ -60,6 +60,8 @@ KAF=""
 KCPPF=""
 ## AnyKernel2
 AK2=../../../AnyKernel2
+## DTB
+DTB=msm8953-qrd-sku3-mido
 
 echo " - Cleaning build directory..."
 sleep 1
@@ -92,8 +94,8 @@ rm -rf ${AK2}/{kernel,treble-*}/*
 
 echo " - Copying kernel image and dtbs to AnyKernel2 folder..."
 cp -rf ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
-cp -rf ${OUT}/arch/arm64/boot/dts/qcom/msm8953-qrd-sku3-mido.dtb ${AK2}/treble-supported/
-cp -rf ${OUT}/arch/arm64/boot/dts/qcom/msm8953-qrd-sku3-mido-nt.dtb ${AK2}/treble-unsupported/
+cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}.dtb ${AK2}/treble-supported/${DTB}.dtb
+cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nt.dtb ${AK2}/treble-unsupported/${DTB}.dtb
 [[ $? != 0 ]] && \
     echo " ${BLD}! Problem occured when copying files.${RST}" && \
     exit 1
