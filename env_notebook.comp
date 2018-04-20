@@ -16,40 +16,50 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import common bash completion
-source ${HOME}/KudProject/scripts/env_common.comp;
+source ${HOME}/KudProject/scripts/env_common.comp
 
 # Set up aliases
-alias update="sudo su -c \"pacman -Sy && bauerbill -Syu"\";
+alias update="sudo su -c \"pacman -Sy && bauerbill -Syu"\"
 
 # Export local binary path
-#export PATH="${HOME}/.local/bin:${PATH}";
-export PATH="${HOME}/KudProject/tc/linaro-7/bin:${PATH}";
-#export PATH="${PATH}:${HOME}/.npm-global/bin";
-
-# Required for npm to work properly
-#export NPM_CONFIG_PREFIX=${HOME}/.npm-global;
+export PATH=${HOME}/KudProject/tc/linaro-7/bin:${PATH}
 
 # Repack FLAC files with maximum compression and ReplayGain applied
 function flac_repack () {
-    # Do some unconditional checks
-    [[ -z $(command -v flac) ]] && echo "${BLD}flac_repack:${RST} Please install FLAC package before continuing." && return 1;
-    [[ $(ls | grep .flac | wc -l) -eq 0 ]] && echo "${BLD}flac_repack:${RST} There's nothing to do." && return 1;
+    # Make sure FLAC package is installed
+    [[ -z $(command -v flac) ]] && \
+        echo "${BLD}flac_repack:${RST} Please install FLAC package before continuing." && \
+        return 1
 
-    # The actual commmand is here
-    flac --delete-input-file --totally-silent -d *.flac || return 1;
+    # Make sure we have FLAC files to repack
+    [[ $(ls | grep .flac | wc -l) -eq 0 ]] && \
+        echo "${BLD}flac_repack:${RST} There's nothing to do." && \
+        return 1
+
+    # First we unpack
+    flac --delete-input-file --totally-silent -d *.flac || \
+        return 1
+
+    # Then we repack with maximum compression and ReplayGain applied
     ls | egrep '\.wav|\.aiff' | while read i; do
-        flac --delete-input-file --totally-silent --replay-gain -V8 "${i}" || return 1;
-    done;
+        flac --delete-input-file --totally-silent --replay-gain -V8 "${i}" || \
+            return 1
+    done
 }
 
 # Convert all FLAC, WAV, and/or AIFF files to OPUS
 function opus_convert () {
-    # Do some unconditional checks
-    [[ -z $(command -v opusenc) ]] && echo "${BLD}opus_convert:${RST} Please install opus-tools package before continuing." && return 1;
-    [[ $(ls | egrep '\.flac|\.wav|\.aiff' | wc -l) -eq 0 ]] && echo "${BLD}opus_convert:${RST} There's nothing to do." && return 1;
+    # Make sure opusenc is available to execute, else ask to install opus-tools package
+    [[ -z $(command -v opusenc) ]] && echo "${BLD}opus_convert:${RST} Please install opus-tools package before continuing." && \
+        return 1
+
+    # Make sure we have supported files to encode
+    [[ $(ls | egrep '\.flac|\.wav|\.aiff' | wc -l) -eq 0 ]] && \
+        echo "${BLD}opus_convert:${RST} There's nothing to do." && \
+        return 1
 
     # Not supporting wildcards for converting
     ls | egrep '\.flac|\.wav|\.aiff' | while read i; do
-        opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 "${i}" "$(echo ${i} | sed 's/\(.*\)\..*/\1/').ogg";
-    done;
+        opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 "${i}" "$(echo ${i} | sed 's/\(.*\)\..*/\1/').ogg"
+    done
 }

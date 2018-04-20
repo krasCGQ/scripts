@@ -39,7 +39,7 @@ fi
 [[ ! -d ${GOPATH} ]] && unset GOPATH
 
 # Export local binary paths
-export PATH=${HOME}/.local/bin:${PATH};
+export PATH=${HOME}/.local/bin:${PATH}
 [[ -d ${CADDYSRC} ]] && export PATH=${CADDYSRC}:${PATH}
 
 # crosstool-ng

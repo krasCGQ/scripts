@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2017 Albert I (krasCGQ)
+# Copyright (C) 2017-2018 Albert I (krasCGQ)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,35 +16,37 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Text styles
-BLD="\033[1m";
-RST="\033[0m";
+BLD="\033[1m"
+RST="\033[0m"
 
 # Set up common aliases
-alias echo="echo -e";
-alias nano="nano -FISWaiuwx";
-alias wget="wget -c -t 0 --retry-connrefused";
+alias echo="echo -e"
+alias nano="nano -FISWaiuwx"
+alias wget="wget -c -t 0 --retry-connrefused"
 
 # Required for GPG signing
-export GPG_TTY="$(tty)";
+export GPG_TTY=$(tty)
 
 # GNU nano for text editor
-export EDITOR="nano";
+export EDITOR=nano
 
 # Use ccache for faster compiling
-export USE_CCACHE="1";
+export USE_CCACHE=true
 
 # My identity in nutshell (kernel)
-export KBUILD_BUILD_USER="krasCGQ";
-export KBUILD_BUILD_HOST="KudProject";
+export KBUILD_BUILD_USER=krasCGQ
+export KBUILD_BUILD_HOST=KudProject
 
 # Shortcuts for ssh-agent setup
 function ssh_setup () {
     # Do an unconditional check
-    [[ ! -f ~/.ssh/id_rsa ]] && echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && return 1;
+    [[ ! -f ~/.ssh/id_rsa ]] && \
+        echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && \
+        return 1
 
     # The actual setup is here
-    eval "$(ssh-agent -s)";
-    ssh-add ~/.ssh/id_rsa;
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_rsa
 }
 
 # Parse current branch in git repository
@@ -52,15 +54,15 @@ function parse_git_branch() {
     BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`;
     if [[ ! -z ${BRANCH} ]]; then
         # Don't give extra brackets if project isn't at any branch or is currently detached
-        [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && BRANCH="(${BRANCH})";
+        [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && BRANCH="(${BRANCH})"
 
         # This is what we want to stdout
-        echo " ${BRANCH}";
-    fi;
+        echo " ${BRANCH}"
+    fi
 
     # Act like nothing happens
-    unset BRANCH;
+    unset BRANCH
 }
 
 # Last, but my most convenient part
-export PS1="\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]\`parse_git_branch\`\[\e[1;32m\] \$\[\e[0m\] ";
+export PS1="\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]\`parse_git_branch\`\[\e[1;32m\] \$\[\e[0m\] "
