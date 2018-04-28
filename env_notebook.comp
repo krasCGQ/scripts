@@ -63,3 +63,6 @@ function opus_convert () {
         opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 "${i}" "$(echo ${i} | sed 's/\(.*\)\..*/\1/').ogg"
     done
 }
+
+# Last, but my most convenient part
+export PS1="\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]\`parse_git_branch\`\[\e[1;36m\] \$\[\e[0m\] "
