@@ -22,7 +22,7 @@ source ${HOME}/KudProject/scripts/env_common.comp
 alias update="sudo su -c \"pacman -Sy && bauerbill -Syu"\"
 
 # Export local binary path
-export PATH=${HOME}/KudProject/tc/linaro-7/bin:${PATH}
+export PATH=${HOME}/.local/bin:${PATH}
 
 # Repack FLAC files with maximum compression and ReplayGain applied
 function flac_repack () {
