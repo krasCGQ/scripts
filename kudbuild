@@ -45,14 +45,14 @@ trap '{
 
 # Whenever errors occured, alert them
 function report_error() {
-    curl -s -X POST https://api.telegram.org/bot544076967:AAEY5W5WAMVFWt0GEF7QDpR3uZIbc8cE3z0/sendMessage \
+    curl -s -X POST https://api.telegram.org/${TOKEN}/sendMessage \
         -d text="${MSG} stopped due to errors." \
         -d chat_id=${CHATID} >> /dev/null
     exit 1
 }
 
 # Alert for script startup
-curl -s -X POST https://api.telegram.org/bot544076967:AAEY5W5WAMVFWt0GEF7QDpR3uZIbc8cE3z0/sendMessage \
+curl -s -X POST https://api.telegram.org/${TOKEN}/sendMessage \
      -d text="${MSG} started by $(whoami)." \
      -d chat_id=${CHATID} >> /dev/null
 
@@ -130,7 +130,7 @@ cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nt.dtb ${AK2}/treble-unsupported/$
     report_error
 
 echo " - You're done, smart boy!"
-curl -s -X POST https://api.telegram.org/bot544076967:AAEY5W5WAMVFWt0GEF7QDpR3uZIbc8cE3z0/sendMessage \
+curl -s -X POST https://api.telegram.org/${TOKEN}/sendMessage \
     -d text="${MSG} completed." \
     -d chat_id=${CHATID} >> /dev/null
 
