@@ -3,6 +3,10 @@
 # Copyright (C) 2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+## Text styles
+BLD=$(tput bold)
+RST=$(tput sgr0)
+
 ## Only modify SRCDIR and CTDIR accordingly
 function variables_list () {
     ORIDIR=`pwd`
@@ -56,6 +60,9 @@ function update_projects {
     else
         LIST="$(find "${3}" -name *.patch | sort -n)"
     fi
+
+    ## Notify that project patching is about to begin
+    echo -e "${BLD}Patching $(echo -e ${1} | sed -e s/.*[/]//)...${RST}"
 
     ## Apply crosstool-ng patches
     for PATCH in ${LIST}; do
