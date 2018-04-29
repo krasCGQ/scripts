@@ -60,7 +60,7 @@ function update_projects {
     ## Apply crosstool-ng patches
     for PATCH in ${LIST}; do
         # Output patch name
-        # echo -e "${PATCH}"
+        # echo -e "Applying patch $(echo -e ${PATCH} | sed -e s/.*[/]// | cut -d '-' -f 1 | tail -c 5)..."
 
         # Apply every patches with merge strategy
         patch --merge -N -s -p1 -i "${PATCH}"
