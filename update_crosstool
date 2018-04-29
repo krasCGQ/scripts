@@ -9,7 +9,7 @@ RST=$(tput sgr0)
 
 ## Only modify SRCDIR and CTDIR accordingly
 function variables_list () {
-    ORIDIR=`pwd`
+    ORIDIR=$(pwd)
     SRCDIR="${HOME}/tc/git"
     CTDIR="${HOME}/src/ct-ng/packages"
 }
