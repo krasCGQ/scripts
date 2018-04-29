@@ -80,7 +80,7 @@ function update_projects {
     cd ${ORIDIR}
 }
 
-variables_list && projects_list || exit 1
+variables_list && projects_list
 update_projects "${GNUDIR}" "${GNUBRANCH}" "${GNUPATCH}" "${GNUEXCL}" || exit 1
 update_projects "${LNRDIR}" "${LNRBRANCH}" "${LNRPATCH}" "${LNREXCL}" || exit 1
 update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}" || exit 1
