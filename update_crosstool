@@ -29,7 +29,7 @@ function projects_list () {
 
     ## Linaro GCC
     LNRDIR="${SRCDIR}/linaro"
-    LNRBRANCH="linaro-local/releases/linaro-7.3-2018.04"
+    LNRBRANCH="linaro-local/gcc-7-integration-branch"
     LNRPATCH="${CTDIR}/gcc-linaro/7.2-2017.11"
     LNREXCL=""
 
