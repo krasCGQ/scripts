@@ -49,7 +49,7 @@ function update_projects {
     git fetch origin "${2}" --depth=1 2> /dev/null
 
     ## Hard reset current tree to latest source
-    git reset --hard "origin/${2}" > /dev/null
+    git reset --hard FETCH_HEAD > /dev/null
 
     ## Clean them up as we can make mess with them at some point
     git clean -dfx > /dev/null
