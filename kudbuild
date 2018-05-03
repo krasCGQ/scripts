@@ -110,8 +110,8 @@ rm -rf ${AK2}/{kernel,treble-*}/*
 
 echo " - Copying kernel image and dtbs to AnyKernel2 folder..."
 cp -rf ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
-cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}.dtb ${AK2}/treble-supported/${DTB}.dtb
-cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nt.dtb ${AK2}/treble-unsupported/${DTB}.dtb
+cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-treble.dtb ${AK2}/treble-supported/${DTB}.dtb
+cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nontreble.dtb ${AK2}/treble-unsupported/${DTB}.dtb
 [[ $? != 0 ]] && \
     echo " ${BLD}! Problem occured when copying files.${RST}" && \
     report_error
