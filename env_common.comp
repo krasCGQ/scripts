@@ -50,3 +50,26 @@ function parse_git_branch() {
     # Act like nothing happens
     unset BRANCH
 }
+
+# Upload a file to a Telegram chat
+# Usage: tg_upload <file>
+function tg_upload() {
+    # Import Telegram bot token and chat ID
+    SCRIPTDIR=${HOME}/KudProject/scripts
+    TOKEN=$(cat ${SCRIPTDIR}/tg_token)
+    CHATID=$(cat ${SCRIPTDIR}/tg_chatid)
+
+    # If no file is about to be uploaded, bail out
+    [[ -z ${1} ]] && \
+        echo "${BLD}tg_upload:${RST} Please provide a file to upload!" && \
+        return 1
+
+    # Upload it!
+    curl -s https://api.telegram.org/bot${TOKEN}/sendDocument \
+        -F chat_id=${CHATID} \
+        -F document=@"${1}" \
+        >> /dev/null
+
+    # Act like nothing happens
+    unset SCRIPTDIR TOKEN CHATID
+}
