@@ -23,9 +23,9 @@ function variables_list () {
 function projects_list () {
     ## GNU GCC
     GNUDIR="${SRCDIR}/gnu"
-    GNUBRANCH="gcc-7-branch"
-    GNUPATCH="${CTDIR}/gcc/7.3.0"
-    GNUEXCL="0020|0021"
+    GNUBRANCH="gcc-8-branch"
+    GNUPATCH="${CTDIR}/gcc/8.1.0"
+    GNUEXCL=""
 
     ## Linaro GCC
     LNRDIR="${SRCDIR}/linaro"
