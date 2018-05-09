@@ -11,6 +11,9 @@ alias update="sudo su -c \"pacman -Sy && bauerbill -Syu"\"
 # Export local binary path
 export PATH=${HOME}/.local/bin:${PATH}
 
+# Export ccache-backed compiler symlinks
+export PATH=/usr/lib/ccache/bin:${PATH}
+
 # Repack FLAC files with maximum compression and ReplayGain applied
 function flac_repack () {
     # Make sure FLAC package is installed
