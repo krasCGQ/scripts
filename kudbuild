@@ -22,26 +22,27 @@ CHATID=$(cat ${SCRIPTDIR}/tg_chatid)
 # Default message
 MSG="KudKernel build from $(hostname) for mido has been"
 
-# Put trap commands after initial check
-trap '{
+# Report progress to a Telegram chat
+function tg_sendinfo() {
     curl -s -X POST https://api.telegram.org/bot${TOKEN}/sendMessage \
-        -d text="${MSG} stopped due to SIGINT." \
-        -d chat_id=${CHATID} >> /dev/null
+         -d text="${1}" \
+         -d chat_id=${CHATID} >> /dev/null
+}
+
+# Whenever build is interrupted by purpose, report it
+trap '{
+    tg_sendinfo "${MSG} stopped due to SIGINT."
     exit -1
 }' INT
 
-# Whenever errors occured, alert them
-function report_error() {
-    curl -s -X POST https://api.telegram.org/bot${TOKEN}/sendMessage \
-        -d text="${MSG} stopped due to errors." \
-        -d chat_id=${CHATID} >> /dev/null
+# Whenever errors occured, report them
+function tg_senderror() {
+    tg_sendinfo "${MSG} stopped due to errors."
     exit 1
 }
 
 # Alert for script startup
-curl -s -X POST https://api.telegram.org/bot${TOKEN}/sendMessage \
-     -d text="${MSG} started by $(whoami)." \
-     -d chat_id=${CHATID} >> /dev/null
+tg_sendinfo "${MSG} started by $(whoami)."
 
 # Begin script
 echo " - Setting up environment variables..."
@@ -59,7 +60,7 @@ if [[ $(which aarch64-linux-gnu-gcc > /dev/null 2>&1; echo $?) -eq 0 ]]; then
     CCOMPILE+=aarch64-linux-gnu-
 else
     echo " ${BLD}! aarch64-linux-gnu-gcc doesn't exist.${RST}"
-    report_error
+    tg_senderror
 fi
 
 ## Always ARM64
@@ -86,7 +87,7 @@ sleep 1
 make ARCH=${ARCH} O=${OUT} clean > /dev/null
 [[ $? != 0 ]] && \
     echo " ${BLD}! Problem occured when cleaning build directory.${RST}" && \
-    report_error
+    tg_senderror
 
 # Let's build!
 echo " - Building kernel image..."
@@ -94,19 +95,19 @@ make ARCH=${ARCH} O=${OUT} CROSS_COMPILE="${CCOMPILE}" KCFLAGS="${KCF}" \
      KAFLAGS="${KAF}" KCPPFLAGS="${KCPPF}" Image.gz -j${THREADS} > /dev/null
 [[ $? != 0 ]] && \
     echo " ${BLD}! Problem occured when building kernel image.${RST}" && \
-    report_error
+    tg_senderror
 
 echo " - Building dtbs..."
 make ARCH=${ARCH} O=${OUT} CROSS_COMPILE="${CCOMPILE}" dtbs -j${THREADS} > /dev/null
 [[ $? != 0 ]] && \
     echo " ${BLD}! Problem occured when building dtbs.${RST}" && \
-    report_error
+    tg_senderror
 
 echo " - Cleaning up AnyKernel2 folder..."
 rm -rf ${AK2}/{kernel,treble-*}/*
 [[ $? != 0 ]] && \
     echo " ${BLD}! Problem occured when cleaning AnyKernel2 folder.${RST}" && \
-    report_error
+    tg_senderror
 
 echo " - Copying kernel image and dtbs to AnyKernel2 folder..."
 cp -rf ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
@@ -114,11 +115,9 @@ cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-treble.dtb ${AK2}/treble-supported
 cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nontreble.dtb ${AK2}/treble-unsupported/${DTB}.dtb
 [[ $? != 0 ]] && \
     echo " ${BLD}! Problem occured when copying files.${RST}" && \
-    report_error
+    tg_senderror
 
 echo " - You're done, smart boy!"
-curl -s -X POST https://api.telegram.org/bot${TOKEN}/sendMessage \
-    -d text="${MSG} completed." \
-    -d chat_id=${CHATID} >> /dev/null
+tg_sendinfo "${MSG} completed."
 
 # TODO: Pack the kernel? How?
