@@ -13,6 +13,11 @@
 #             #
 ###############
 
+# Colors
+GRN="\033[01;32m"
+RED="\033[01;31m"
+RST="\033[0m"
+
 # Folder that will house the source and build files
 MAIN_FOLDER=${HOME}/clang-build
 
@@ -31,6 +36,79 @@ START=$(date +"%s")
 #  FUNCTIONS  #
 #             #
 ###############
+
+# Alias for echo to print escape codes
+function echo() {
+    command echo -e "${@}"
+}
+
+# Prints a formatted header to point out what is being done to the user
+function header() {
+    if [[ -n ${2} ]]; then
+        COLOR=${2}
+    else
+        COLOR=${RED}
+    fi
+    echo "${COLOR}"
+    echo "====$(for i in $(seq ${#1}); do echo "=\c"; done)===="
+    echo "==  ${1}  =="
+    # SC2034: i appears unused. Verify it or export it.
+    # shellcheck disable=SC2034
+    echo "====$(for i in $(seq ${#1}); do echo "=\c"; done)===="
+    echo "${RST}"
+}
+
+# Formats the time
+function format_time() {
+    MINS=$(((${2} - ${1}) / 60))
+    SECS=$(((${2} - ${1}) % 60))
+    if [[ ${MINS} -ge 60 ]]; then
+        HOURS=$((MINS / 60))
+        MINS=$((MINS % 60))
+    fi
+
+    if [[ ${HOURS} -eq 1 ]]; then
+        TIME_STRING+="1 HOUR, "
+    elif [[ ${HOURS} -ge 2 ]]; then
+        TIME_STRING+="${HOURS} HOURS, "
+    fi
+
+    if [[ ${MINS} -eq 1 ]]; then
+        TIME_STRING+="1 MINUTE"
+    else
+        TIME_STRING+="${MINS} MINUTES"
+    fi
+
+    if [[ ${SECS} -eq 1 && -n ${HOURS} ]]; then
+        TIME_STRING+=", AND 1 SECOND"
+    elif [[ ${SECS} -eq 1 && -z ${HOURS} ]]; then
+        TIME_STRING+=" AND 1 SECOND"
+    elif [[ ${SECS} -ne 1 && -n ${HOURS} ]]; then
+        TIME_STRING+=", AND ${SECS} SECONDS"
+    elif [[ ${SECS} -ne 1 && -z ${HOURS} ]]; then
+        TIME_STRING+=" AND ${SECS} SECONDS"
+    fi
+
+    echo "${TIME_STRING}"
+}
+
+# Prints an error in bold red
+function display_error() {
+    echo
+    echo "${RED}${1}${RST}"
+    [[ -z ${2} ]] && echo
+}
+
+# Prints an error in bold red and exits the script
+function die() {
+    display_error "${@}"
+    exit
+}
+
+# Enforces the value needed for two-part flags
+function enforce_value() {
+    [[ ${#} -lt 1 ]] && die "A additional value is needed for one of the flags passed to this script!"
+}
 
 function parse_parameters() {
     PARAMS="${*}"
@@ -192,7 +270,6 @@ function install() {
     echo "${GRN}Time elapsed: ${TIME_STRING,,}${RST}\n"
 }
 
-source common
 parse_parameters "${@}"
 sync_all
 cleanup
