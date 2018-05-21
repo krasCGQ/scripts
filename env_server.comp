@@ -41,7 +41,7 @@ unset CADDYSRC CTNGCOMP TRANSFERSH
 # Shortcuts for ssh-agent setup
 function ssh_setup () {
     # Do an unconditional check
-    [[ ! -f ~/.ssh/id_rsa ]] && \
+    [[ ! -f ~/.ssh/id_ed25519 ]] && \
         echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && \
         return 1
 
