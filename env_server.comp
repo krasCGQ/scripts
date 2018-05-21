@@ -47,7 +47,7 @@ function ssh_setup () {
 
     # The actual setup is here
     eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_rsa
+    ssh-add ~/.ssh/id_ed25519
 }
 
 # Sign ROM zips before release
