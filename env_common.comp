@@ -24,18 +24,6 @@ export USE_CCACHE=true
 export KBUILD_BUILD_USER=krasCGQ
 export KBUILD_BUILD_HOST=KudProject
 
-# Shortcuts for ssh-agent setup
-function ssh_setup () {
-    # Do an unconditional check
-    [[ ! -f ~/.ssh/id_rsa ]] && \
-        echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && \
-        return 1
-
-    # The actual setup is here
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_rsa
-}
-
 # Parse current branch in git repository
 function parse_git_branch() {
     BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`;

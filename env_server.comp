@@ -38,6 +38,18 @@ export PATH=${HOME}/.local/bin:${PATH}
 # All those temporary variables end here
 unset CADDYSRC CTNGCOMP TRANSFERSH
 
+# Shortcuts for ssh-agent setup
+function ssh_setup () {
+    # Do an unconditional check
+    [[ ! -f ~/.ssh/id_rsa ]] && \
+        echo "${BLD}ssh_setup:${RST} Please generate an SSH key before using this command." && \
+        return 1
+
+    # The actual setup is here
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_rsa
+}
+
 # Sign ROM zips before release
 function rom_sign () {
     # Must be run at root of ROM source
