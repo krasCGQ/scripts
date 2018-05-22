@@ -30,6 +30,10 @@ BUILD_FOLDER=${MAIN_FOLDER}/build
 # Start tracking time
 START=$(date +"%s")
 
+# Number of threads
+THREADS=$(nproc --all)
+JOBS_FLAG=-j${THREADS}
+
 
 ###############
 #             #
