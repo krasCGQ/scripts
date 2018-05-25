@@ -76,7 +76,7 @@ THREADS=$(nproc --all)
 ## clang specific values
 CTRIPLE=aarch64-linux-gnu-
 # FIXME
-CC=${HOME}/KudProject/android/kernel/clang/clang-r328903/bin/clang
+CC=/opt/kud/flash-clang-7.x/bin/clang
 ## AnyKernel2
 AK2=../../../AnyKernel2
 ## DTB
