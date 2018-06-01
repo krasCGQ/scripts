@@ -20,7 +20,7 @@ TOKEN=$(cat ${SCRIPTDIR}/tg_token)
 CHATID=$(cat ${SCRIPTDIR}/tg_chatid)
 
 # Default message
-MSG="KudKernel build from $(hostname) for mido has been"
+MSG="KudKernel build:"
 
 # Report progress to a Telegram chat
 function tg_sendinfo() {
@@ -31,18 +31,18 @@ function tg_sendinfo() {
 
 # Whenever build is interrupted by purpose, report it
 trap '{
-    tg_sendinfo "${MSG} stopped due to SIGINT."
+    tg_sendinfo "$(echo -e "${MSG} Interrupted - Signal Interrupt\n@krasCGQ Y u do dis ?? >_<")"
     exit -1
 }' INT
 
 # Whenever errors occured, report them
 function tg_senderror() {
-    tg_sendinfo "${MSG} stopped due to errors."
+    tg_sendinfo "$(echo -e "${MSG} Interrupted - Build Error(s)\n@krasCGQ check console desu !! >_<")"
     exit 1
 }
 
 # Alert for script startup
-tg_sendinfo "${MSG} started by $(whoami)."
+tg_sendinfo "${MSG} Started!"
 
 # Begin script
 echo " - Setting up environment variables..."
@@ -117,6 +117,6 @@ cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nontreble.dtb ${AK2}/treble-unsupp
     tg_senderror
 
 echo " - You're done, smart boy!"
-tg_sendinfo "${MSG} completed."
+tg_sendinfo "${MSG} Completed!"
 
 # TODO: Pack the kernel? How?
