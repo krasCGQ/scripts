@@ -41,6 +41,8 @@ function tg_senderror() {
     exit 1
 }
 
+trap tg_senderror ERR
+
 # Alert for script startup
 tg_sendinfo "${MSG} Started!"
 
@@ -61,7 +63,6 @@ fi
 if [[ $(which aarch64-linux-gnu-gcc > /dev/null 2>&1; echo $?) -eq 0 ]]; then
     CCOMPILE+=aarch64-linux-gnu-
 else
-    echo " ${BLD}! aarch64-linux-gnu-gcc doesn't exist.${RST}"
     tg_senderror
 fi
 
@@ -90,31 +91,19 @@ sleep 1
 
 # TODO: Completely clean build?
 make ARCH=${ARCH} O=${OUT} clean > /dev/null
-[[ $? != 0 ]] && \
-    echo " ${BLD}! Problem occured when cleaning build directory.${RST}" && \
-    tg_senderror
 
 # Let's build!
 echo " - Building kernel..."
 make ARCH=${ARCH} O=${OUT} CC="ccache ${CC}" CLANG_TRIPLE=${CTRIPLE} \
      CROSS_COMPILE="${CCOMPILE}" -j${THREADS} > /dev/null
-[[ $? != 0 ]] && \
-    echo " ${BLD}! Problem occured when building kernel.${RST}" && \
-    tg_senderror
 
 echo " - Cleaning up AnyKernel2 folder..."
 rm -rf ${AK2}/{kernel,treble-*}/*
-[[ $? != 0 ]] && \
-    echo " ${BLD}! Problem occured when cleaning AnyKernel2 folder.${RST}" && \
-    tg_senderror
 
 echo " - Copying kernel image and dtbs to AnyKernel2 folder..."
 cp -rf ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
 cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-treble.dtb ${AK2}/treble-supported/${DTB}.dtb
 cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nontreble.dtb ${AK2}/treble-unsupported/${DTB}.dtb
-[[ $? != 0 ]] && \
-    echo " ${BLD}! Problem occured when copying files.${RST}" && \
-    tg_senderror
 
 echo " - You're done, smart boy!"
 tg_sendinfo "${MSG} Completed!"
