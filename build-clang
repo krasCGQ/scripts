@@ -113,8 +113,6 @@ function enforce_value() {
 }
 
 function parse_parameters() {
-    PARAMS="${*}"
-
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
             "-b"|"--build-only")
