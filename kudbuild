@@ -32,16 +32,21 @@ function tg_sendinfo() {
 # Whenever build is interrupted by purpose, report it
 trap '{
     tg_sendinfo "$(echo -e "${MSG} Interrupted - Signal Interrupt\n@krasCGQ Y u do dis ?? >_<")"
-    exit -1
+    exit 130
 }' INT
 
 # Whenever errors occured, report them
 function tg_senderror() {
     tg_sendinfo "$(echo -e "${MSG} Interrupted - Build Error(s)\n@krasCGQ check console desu !! >_<")"
-    exit 1
+    [[ ! -z ${STATUS} ]] && \
+        exit ${STATUS} || \
+        exit 1
 }
 
-trap tg_senderror ERR
+trap '{
+    STATUS=${?}
+    tg_senderror
+}' ERR
 
 # Alert for script startup
 tg_sendinfo "${MSG} Started!"
