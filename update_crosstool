@@ -14,7 +14,7 @@ trap '{
     exit ${STATUS}
 }' ERR
 
-## Only modify SRCDIR and CTDIR accordingly
+## Modify these variables accordingly
 function variables_list {
     SRCDIR="${HOME}/tc/git"
     CTDIR="${HOME}/src/ct-ng/packages"
@@ -80,7 +80,7 @@ function update_projects {
     done
 
     ## Remove .orig files
-    rm -rf $(find -name *.orig)
+    rm -f $(find -name *.orig)
 
     ## Go back to dir where this script is run
     cd - > /dev/null
