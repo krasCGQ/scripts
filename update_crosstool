@@ -7,16 +7,15 @@
 BLD=$(tput bold)
 RST=$(tput sgr0)
 
-## Abort script when something is going wrong
+## Abort script when something went wrong
 trap '{
     STATUS=${?}
-    echo -e "${BLD}! Failed to patch selected projects.${RST}"
+    echo "${BLD}! Failed to patch selected projects.${RST}"
     exit ${STATUS}
 }' ERR
 
 ## Only modify SRCDIR and CTDIR accordingly
-function variables_list () {
-    ORIDIR=$(pwd)
+function variables_list {
     SRCDIR="${HOME}/tc/git"
     CTDIR="${HOME}/src/ct-ng/packages"
 }
@@ -27,7 +26,7 @@ function variables_list () {
 # 2) Branch that we need to grab upstream changes from
 # 3) Location of package patches folder within ct-ng source
 # 4) Patches that we'd like to exclude; must be separated by vertical bar
-function projects_list () {
+function projects_list {
     ## GNU GCC
     GNUDIR="${SRCDIR}/gnu"
     GNUBRANCH="gcc-8-branch"
@@ -69,12 +68,12 @@ function update_projects {
     fi
 
     ## Notify that project patching is about to begin
-    echo -e "${BLD}Patching $(echo -e ${1} | sed -e s/.*[/]//)...${RST}"
+    echo "${BLD}Patching $(echo ${1} | sed -e s/.*[/]//)...${RST}"
 
     ## Apply crosstool-ng patches
     for PATCH in ${LIST}; do
         # Output patch name
-        # echo -e "Applying patch $(echo -e ${PATCH} | sed -e s/.*[/]// | cut -d '-' -f 1 | tail -c 5)..."
+        # echo "Applying patch $(echo ${PATCH} | sed -e s/.*[/]// | cut -d '-' -f 1 | tail -c 5)..."
 
         # Apply every patches with merge strategy
         patch --merge -N -s -p1 -i "${PATCH}"
@@ -83,12 +82,13 @@ function update_projects {
     ## Remove .orig files
     rm -rf $(find -name *.orig)
 
-    ## Go back to the original dir where this script is run
-    cd ${ORIDIR}
+    ## Go back to dir where this script is run
+    cd - > /dev/null
 }
 
-variables_list && projects_list
+variables_list
+projects_list
 update_projects "${GNUDIR}" "${GNUBRANCH}" "${GNUPATCH}" "${GNUEXCL}"
 update_projects "${LNRDIR}" "${LNRBRANCH}" "${LNRPATCH}" "${LNREXCL}"
 update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}"
-echo -e "Projects updated successfully." && exit 0
+echo "Projects updated successfully."
