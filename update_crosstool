@@ -7,6 +7,13 @@
 BLD=$(tput bold)
 RST=$(tput sgr0)
 
+## Abort script when something is going wrong
+trap '{
+    STATUS=${?}
+    echo -e "${BLD}! Failed to patch selected projects.${RST}"
+    exit ${STATUS}
+}' ERR
+
 ## Only modify SRCDIR and CTDIR accordingly
 function variables_list () {
     ORIDIR=$(pwd)
@@ -81,7 +88,7 @@ function update_projects {
 }
 
 variables_list && projects_list
-update_projects "${GNUDIR}" "${GNUBRANCH}" "${GNUPATCH}" "${GNUEXCL}" || exit 1
-update_projects "${LNRDIR}" "${LNRBRANCH}" "${LNRPATCH}" "${LNREXCL}" || exit 1
-update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}" || exit 1
+update_projects "${GNUDIR}" "${GNUBRANCH}" "${GNUPATCH}" "${GNUEXCL}"
+update_projects "${LNRDIR}" "${LNRBRANCH}" "${LNRPATCH}" "${LNREXCL}"
+update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}"
 echo -e "Projects updated successfully." && exit 0
