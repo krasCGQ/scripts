@@ -65,8 +65,9 @@ if false; then
 fi
 
 # Whenever you're high enough to run this script
-if [[ $(which aarch64-linux-gnu-gcc > /dev/null 2>&1; echo $?) -eq 0 ]]; then
-    CCOMPILE+=aarch64-linux-gnu-
+TCPREFIX=/opt/kud/aarch64-linux-gnu/bin
+if [[ $(find ${TCPREFIX}/aarch64-linux-gnu-gcc > /dev/null 2>&1; echo $?) -eq 0 ]]; then
+    CCOMPILE+=${TCPREFIX}/aarch64-linux-gnu-
 else
     tg_senderror
 fi
