@@ -145,15 +145,15 @@ function sync() {
     FOLDER=${1}
 
     if [[ ${FOLDER} =~ "binutils" ]]; then
-        URL=https://sourceware.org/git/binutils-gdb.git
-        BRANCH=binutils-2_30-branch
+        URL=git://git.linaro.org/toolchain/binutils-gdb
+        BRANCH=master
     elif [[ ${FOLDER} =~ "svn" ]]; then
         case ${VERSION} in
             "7") URL=https://llvm.org/svn/llvm-project/llvm/trunk ;;
             *) URL=https://llvm.org/svn/llvm-project/llvm/branches/"release_${VERSION}0" ;;
         esac
     else
-        URL=https://git.llvm.org/git/$(basename "${FOLDER}")
+        URL=git://github.com/llvm-mirror/$(basename "${FOLDER}")
         case ${VERSION} in
             "7") BRANCH=master ;;
             *) BRANCH="release_${VERSION}0" ;;
