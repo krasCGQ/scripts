@@ -90,7 +90,7 @@ AK2=../../../AnyKernel2
 DTB=msm8953-qrd-sku3-mido
 
 ## Export custom compiler string
-export KBUILD_COMPILER_STRING=$(${CC} --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+export KBUILD_COMPILER_STRING=$(${CC} --version | head -n 1 | perl -pe 's/\(git.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
 echo " - Cleaning build directory..."
 sleep 1
