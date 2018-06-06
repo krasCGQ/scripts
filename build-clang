@@ -239,7 +239,7 @@ function build() {
           -DLLVM_INCLUDE_EXAMPLES=OFF \
           -DLLVM_INCLUDE_TESTS=OFF \
           -DLLVM_BINUTILS_INCDIR="${LLVM_FOLDER}/tools/binutils/include" \
-          -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64" \
+          -DLLVM_TARGETS_TO_BUILD="AArch64" \
           -DLLVM_OPTIMIZED_TABLEGEN=ON \
           -DLLVM_USE_LINKER=gold \
           -DCLANG_VENDOR="Flash " \
