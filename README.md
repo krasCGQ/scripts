@@ -4,6 +4,10 @@ This small repository hosts personal scripts used on my PCs and build server. Th
 
 Enjoy!
 
+## Credits
+
+* [Nathan Chancellor (nathanchance)](https://github.com/nathanchance) - `build-clang` script, which has been modified accordingly on this repository
+
 ## License
 
 ```
