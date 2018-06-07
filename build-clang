@@ -30,8 +30,6 @@ START=$(date +"%s")
 
 # Number of threads
 THREADS=$(nproc --all)
-JOBS_FLAG=-j${THREADS}
-
 
 ###############
 #             #
