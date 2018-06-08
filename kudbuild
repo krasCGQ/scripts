@@ -55,7 +55,7 @@ echo " - Setting up environment variables..."
 sleep 1
 
 # Unset these variables if they're set
-for VAR in CROSS_COMPILE CCPREFIX CLANGPATH; do
+for VAR in CROSS_COMPILE GCCPREFIX CLANGPATH; do
     [[ ! -z ${VAR} ]] && \
         unset ${VAR}
 done
