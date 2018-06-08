@@ -29,13 +29,13 @@ function tg_sendinfo() {
          -d chat_id=${CHATID} >> /dev/null
 }
 
-# Whenever build is interrupted by purpose, report it
+# For signal interrupt (from keyboard)
 trap '{
     tg_sendinfo "$(echo -e "${MSG} Interrupted - Signal Interrupt\n@krasCGQ Y u do dis ?? >_<")"
     exit 130
 }' INT
 
-# Whenever errors occured, report them
+# For any error
 function tg_senderror() {
     tg_sendinfo "$(echo -e "${MSG} Interrupted - Build Error(s)\n@krasCGQ check console desu !! >_<")"
     [[ ! -z ${STATUS} ]] && \
@@ -43,75 +43,76 @@ function tg_senderror() {
         exit 1
 }
 
+# For any non-zero exit status
 trap '{
     STATUS=${?}
     tg_senderror
 }' ERR
 
-# Alert for script startup
-tg_sendinfo "${MSG} Started!"
-
 # Begin script
+tg_sendinfo "${MSG} Started!"
 echo " - Setting up environment variables..."
 sleep 1
 
-# Unset CROSS_COMPILE and CCOMPILE if they're set
-[[ ! -z ${CROSS_COMPILE} ]] && unset CROSS_COMPILE
-[[ ! -z ${CCOMPILE} ]] && unset CCOMPILE
+# Unset these variables if they're set
+for VAR in CROSS_COMPILE CCPREFIX CLANGPATH; do
+    [[ ! -z ${VAR} ]] && \
+        unset ${VAR}
+done
 
-# Use ccache when available
-if false; then
-[[ $(which ccache > /dev/null 2>&1; echo $?) -eq 0 ]] && CCOMPILE+="ccache "
-fi
+# Set these variables early for cross-compilers checking
+GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
 
 # Whenever you're high enough to run this script
-TCPREFIX=/opt/kud/aarch64-linux-gnu/bin
-if [[ $(find ${TCPREFIX}/aarch64-linux-gnu-gcc > /dev/null 2>&1; echo $?) -eq 0 ]]; then
-    CCOMPILE+=${TCPREFIX}/aarch64-linux-gnu-
-else
-    tg_senderror
-fi
+for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
+    if ! find ${VAR} > /dev/null 2>&1; then
+        echo "${BLD}! $(basename ${VAR}) doesn't exist in the defined path."
+        tg_senderror
+    fi
+done
 
-## Always ARM64
-ARCH=arm64
-## Out directory
-OUT=../build/mido
-## Always use all threads
-THREADS=$(nproc --all)
-## Kernel defconfig
-#CONFIG="mido_defconfig"
-## clang specific values
-CTRIPLE=aarch64-linux-gnu-
-# FIXME
-CC=/opt/kud/flash-clang-7.x/bin/clang
-## AnyKernel2
+# Use ccache for faster compiling
+[[ $(which ccache > /dev/null 2>&1; echo $?) -eq 0 ]] && \
+    CC+="ccache "
+
+# Now that we passed the check
+CROSS_COMPILE=${GCCPREFIX}
+CC+=${CLANGPATH}
+
+# Variables
 AK2=../../../AnyKernel2
-## DTB
+ARCH=arm64
+CLANG_TRIPLE=aarch64-linux-gnu-
 DTB=msm8953-qrd-sku3-mido
+OUT=../build/mido
+THREADS=$(nproc --all)
 
 ## Export custom compiler string
 export KBUILD_COMPILER_STRING=$(${CC} --version | head -n 1 | perl -pe 's/\(git.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
+# Clean build directory
 echo " - Cleaning build directory..."
-sleep 1
-
 # TODO: Completely clean build?
 make ARCH=${ARCH} O=${OUT} clean > /dev/null
 
-# Let's build!
+# Let's build the kernel!
 echo " - Building kernel..."
-make ARCH=${ARCH} O=${OUT} CC="ccache ${CC}" CLANG_TRIPLE=${CTRIPLE} \
-     CROSS_COMPILE="${CCOMPILE}" -j${THREADS} > /dev/null
+make ARCH=${ARCH} O=${OUT} CC="${CC}" CLANG_TRIPLE=${CLANG_TRIPLE} \
+     CROSS_COMPILE=${CROSS_COMPILE} -j${THREADS} > /dev/null
 
+# Clean AnyKernel2 directory
 echo " - Cleaning up AnyKernel2 folder..."
 rm -rf ${AK2}/{kernel,treble-*}/*
 
-echo " - Copying kernel image and dtbs to AnyKernel2 folder..."
-cp -rf ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
-cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-treble.dtb ${AK2}/treble-supported/${DTB}.dtb
-cp -rf ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nontreble.dtb ${AK2}/treble-unsupported/${DTB}.dtb
+# Copy kernel image and DTB
+echo " - Copying kernel image and DTBs to AnyKernel2 folder..."
+cp -f ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
+cp -f ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-treble.dtb ${AK2}/treble-supported/${DTB}.dtb
+cp -f ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nontreble.dtb ${AK2}/treble-unsupported/${DTB}.dtb
 
-echo " - You're done, smart boy!"
+# End script
+echo " - That's it. Job well done!"
 tg_sendinfo "${MSG} Completed!"
 
 # TODO: Pack the kernel? How?
