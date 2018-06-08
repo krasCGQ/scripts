@@ -67,7 +67,7 @@ CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
 # Whenever you're high enough to run this script
 for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
     if ! find ${VAR} > /dev/null 2>&1; then
-        echo "${BLD}! $(basename ${VAR}) doesn't exist in the defined path."
+        echo "${BLD}! $(basename ${VAR}) doesn't exist in the defined path.${RST}"
         tg_senderror
     fi
 done
