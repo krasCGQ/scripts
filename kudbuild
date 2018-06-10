@@ -9,10 +9,9 @@ BLD=$(tput bold)
 RST=$(tput sgr0)
 
 # Run this inside kernel source
-if [[ ! -f Makefile ]] || [[ ! -d kernel ]]; then
-    echo " ${BLD}! Please run this script inside kernel source folder.${RST}"
+[[ ! -f Makefile || ! -d kernel ]] && \
+    echo " ${BLD}! Please run this script inside kernel source folder.${RST}" && \
     exit 1
-fi
 
 # Import Telegram bot token & chat ID
 SCRIPTDIR=${HOME}/KudProject/scripts
@@ -83,7 +82,7 @@ CC+=${CLANGPATH}
 # Variables
 AK2=../../../AnyKernel2
 ARCH=arm64
-CLANG_TRIPLE=aarch64-linux-gnu-
+CLANG_TRIPLE=aarch64-linux-gnu
 DTB=msm8953-qrd-sku3-mido
 OUT=../build/mido
 THREADS=$(nproc --all)
@@ -108,8 +107,9 @@ rm -rf ${AK2}/{kernel,treble-*}/*
 # Copy kernel image and DTB
 echo " - Copying kernel image and DTBs to AnyKernel2 folder..."
 cp -f ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
-cp -f ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-treble.dtb ${AK2}/treble-supported/${DTB}.dtb
-cp -f ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-nontreble.dtb ${AK2}/treble-unsupported/${DTB}.dtb
+for VAR in {,non}treble; do
+    cp -f ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-${VAR}.dtb ${AK2}/${VAR}/${DTB}.dtb
+done
 
 # End script
 echo " - That's it. Job well done!"
