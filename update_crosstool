@@ -41,7 +41,7 @@ function projects_list {
 
     ## GNU Binutils
     BINDIR="${SRCDIR}/binutils"
-    BINBRANCH="binutils-2_30-branch"
+    BINBRANCH="master"
     BINPATCH="${CTDIR}/binutils/2.30"
     BINEXCL=""
 }
