@@ -31,7 +31,7 @@ function projects_list {
     GNUDIR="${SRCDIR}/gnu"
     GNUBRANCH="gcc-8-branch"
     GNUPATCH="${CTDIR}/gcc/8.1.0"
-    GNUEXCL=""
+    GNUEXCL="0018"
 
     ## Linaro GCC
     LNRDIR="${SRCDIR}/linaro"
