@@ -80,7 +80,7 @@ function update_projects {
     done
 
     ## Remove .orig files
-    rm -f $(find -name *.orig)
+    rm -f $(find -name "*.orig")
 
     ## Go back to dir where this script is run
     cd - > /dev/null
