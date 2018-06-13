@@ -8,11 +8,12 @@ BLD=$(tput bold)
 RST=$(tput sgr0)
 
 ## Abort script when something went wrong
-trap '{
+function error {
     STATUS=${?}
     echo "${BLD}! Failed to patch selected projects.${RST}"
     exit ${STATUS}
-}' ERR
+}
+trap error ERR
 
 ## Modify these variables accordingly
 function variables_list {
@@ -49,7 +50,7 @@ function projects_list {
 ## Usage: update_projects "<src-dir>" "<src-branch>" "<patch-dir>"
 function update_projects {
     ## Enter source directory
-    cd "${1}"
+    cd "${1}" || error
 
     ## Fetch updates from upstream
     git fetch origin "${2}" --depth=1 2> /dev/null
@@ -62,27 +63,29 @@ function update_projects {
 
     ## Fetch list of patches that we're going to apply
     if [[ ! -z "${4}" ]]; then
-        LIST="$(find "${3}" -name *.patch | egrep -v "${4}" | sort -n)"
+        LIST="$(find "${3}" -name "*.patch" | grep -Ev "${4}" | sort -n)"
     else
-        LIST="$(find "${3}" -name *.patch | sort -n)"
+        LIST="$(find "${3}" -name "*.patch" | sort -n)"
     fi
 
     ## Notify that project patching is about to begin
-    echo "- Patching $(echo ${1} | sed -e s/.*[/]//)..."
+    echo "- Patching $(echo "${1}" | sed -e s/.*[/]//)..."
 
     ## Apply crosstool-ng patches
     for PATCH in ${LIST}; do
         # Output patch name
-        # echo "  - Applying patch $(echo ${PATCH} | sed -e s/.*[/]// | cut -d '-' -f 1 | tail -c 5)..."
+        # echo "  - Applying patch $(echo "${PATCH}" | sed -e s/.*[/]// | cut -d '-' -f 1 | tail -c 5)..."
 
         # Apply every patches with merge strategy
         patch --merge -N -s -p1 -i "${PATCH}"
     done
 
     ## Remove .orig files
-    rm -f $(find -name "*.orig")
+    rm -f "$(find . -name "*.orig")"
 
     ## Go back to dir where this script is run
+    # Disable shellcheck SC2164 warning as in no way this will fail.
+    # shellcheck disable=SC2164
     cd - > /dev/null
 }
 
