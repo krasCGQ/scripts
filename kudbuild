@@ -13,6 +13,14 @@ RST=$(tput sgr0)
     echo " ${BLD}! Please run this script inside kernel source folder.${RST}" && \
     exit 1
 
+# Build with GCC or Clang?
+case ${1} in
+    --clang) CLANG=true ;;
+    --gcc) CLANG=false ;;
+    *) # Assuming clang build
+       CLANG=true ;;
+esac
+
 # Import Telegram bot token & chat ID
 SCRIPTDIR=${HOME}/KudProject/scripts
 TOKEN=$(cat ${SCRIPTDIR}/tg_token)
@@ -61,7 +69,8 @@ done
 
 # Set these variables early for cross-compilers checking
 GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
-CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
+[[ $(${CLANG}; echo $?) -eq 0 ]] && \
+    CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
 
 # Whenever you're high enough to run this script
 for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
@@ -72,12 +81,16 @@ for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
 done
 
 # Use ccache for faster compiling
-[[ $(which ccache > /dev/null 2>&1; echo $?) -eq 0 ]] && \
-    CC+="ccache "
+if [[ $(which ccache > /dev/null 2>&1; echo $?) -eq 0 ]]; then
+    [[ $(${CLANG}; echo $?) -eq 0 ]] && \
+        CC+="ccache " || \
+        CROSS_COMPILE+="ccache "
+fi
 
 # Now that we passed the check
-CROSS_COMPILE=${GCCPREFIX}
-CC+=${CLANGPATH}
+CROSS_COMPILE+=${GCCPREFIX}
+[[ $(${CLANG}; echo $?) -eq 0 ]] && \
+    CC+=${CLANGPATH}
 
 # Variables
 AK2=../../../AnyKernel2
@@ -87,7 +100,8 @@ OUT=../build/mido
 THREADS=$(nproc --all)
 
 ## Export custom compiler string
-export KBUILD_COMPILER_STRING=$(${CC} --version | head -n 1 | perl -pe 's/\(git.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+[[ $(${CLANG}; echo $?) -eq 0 ]] && \
+    export KBUILD_COMPILER_STRING=$(${CC} --version | head -n 1 | perl -pe 's/\(git.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
 # Clean build directory
 echo " - Cleaning build directory..."
@@ -96,9 +110,11 @@ make ARCH=${ARCH} O=${OUT} clean > /dev/null
 
 # Let's build the kernel!
 echo " - Building kernel..."
-make ARCH=${ARCH} O=${OUT} CC="${CC}" \
-     CROSS_COMPILE=${CROSS_COMPILE} \
-     -j${THREADS} > /dev/null
+[[ $(${CLANG}; echo $?) -eq 0 ]] && \
+    make ARCH=${ARCH} O=${OUT} CC="${CC}" CROSS_COMPILE=${CROSS_COMPILE} \
+         -j${THREADS} > /dev/null || \
+    make ARCH=${ARCH} O=${OUT} CROSS_COMPILE="${CROSS_COMPILE}" \
+         -j${THREADS} > /dev/null
 
 # Clean AnyKernel2 directory
 echo " - Cleaning up AnyKernel2 folder..."
