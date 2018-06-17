@@ -82,7 +82,6 @@ CC+=${CLANGPATH}
 # Variables
 AK2=../../../AnyKernel2
 ARCH=arm64
-CLANG_TRIPLE=aarch64-linux-gnu
 DTB=msm8953-qrd-sku3-mido
 OUT=../build/mido
 THREADS=$(nproc --all)
@@ -97,8 +96,9 @@ make ARCH=${ARCH} O=${OUT} clean > /dev/null
 
 # Let's build the kernel!
 echo " - Building kernel..."
-make ARCH=${ARCH} O=${OUT} CC="${CC}" CLANG_TRIPLE=${CLANG_TRIPLE} \
-     CROSS_COMPILE=${CROSS_COMPILE} -j${THREADS} > /dev/null
+make ARCH=${ARCH} O=${OUT} CC="${CC}" \
+     CROSS_COMPILE=${CROSS_COMPILE} \
+     -j${THREADS} > /dev/null
 
 # Clean AnyKernel2 directory
 echo " - Cleaning up AnyKernel2 folder..."
