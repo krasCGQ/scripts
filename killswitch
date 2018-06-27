@@ -14,7 +14,7 @@ if [[ ${#} -le 1 ]]; then
                                "delete allow out on tun0" ) ;;
         -e|--enable)  # Enable VPN kill switch
                       CONFIG=( "default deny outgoing"
-                               "allow out on tun0 from any to any" ) ;;
+                               "allow out on tun0" ) ;;
         *)            # Suicide
                       echo "! No option specified!"
                       exit 1 ;;
