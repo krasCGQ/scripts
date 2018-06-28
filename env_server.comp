@@ -40,7 +40,7 @@ export PATH=${HOME}/.local/bin:${PATH}
 [[ -f ${TRANSFERSH} ]] && \
     . "${TRANSFERSH}"
 
-# Shortcuts for ssh-agent setup
+# Shortcut for ssh-agent setup
 function ssh_setup {
     # Do an unconditional check
     [[ ! -f ${HOME}/.ssh/id_ed25519 ]] && \
@@ -49,10 +49,11 @@ function ssh_setup {
 
     # The actual setup is here
     eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_ed25519
+    ssh-add ${HOME}/.ssh/id_ed25519
 }
 
-# Sign ROM zips before release
+# Sign ROM zip before release
+# Reference and why: https://source.android.com/devices/tech/ota/sign_builds
 function rom_sign {
     # Must be run at root of ROM source
     [[ ! -d $(pwd)/build/tools ]] && \
