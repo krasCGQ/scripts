@@ -23,7 +23,7 @@ export KBUILD_BUILD_HOST=KudProject
 
 # Parse current branch in git repository
 function parse_git_branch() {
-    BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/');
+    BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
     if [[ ! -z ${BRANCH} ]]; then
         # Don't give extra brackets if project isn't at any branch or is currently detached
         [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && \
