@@ -2,17 +2,14 @@
 # Copyright (C) 2017-2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Text styles
-BLD="\033[1m"
-RST="\033[0m"
-
 # Set up common aliases
 alias echo="echo -e"
 alias nano="nano -FISWaiuwx"
 alias wget="wget -c -t 0 --retry-connrefused"
 
 # Required for GPG signing
-export GPG_TTY=$(tty)
+GPG_TTY=$(tty)
+export GPG_TTY
 
 # GNU nano for text editor
 export EDITOR=nano
@@ -26,17 +23,15 @@ export KBUILD_BUILD_HOST=KudProject
 
 # Parse current branch in git repository
 function parse_git_branch() {
-    BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`;
+    BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/');
     if [[ ! -z ${BRANCH} ]]; then
         # Don't give extra brackets if project isn't at any branch or is currently detached
-        [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && BRANCH="(${BRANCH})"
+        [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && \
+            BRANCH="(${BRANCH})"
 
         # This is what we want to stdout
         echo " ${BRANCH}"
     fi
-
-    # Act like nothing happens
-    unset BRANCH
 }
 
 # Upload a file to a Telegram chat
@@ -44,20 +39,17 @@ function parse_git_branch() {
 function tg_upload() {
     # Import Telegram bot token and chat ID
     SCRIPTDIR=${HOME}/KudProject/scripts
-    TOKEN=$(cat ${SCRIPTDIR}/tg_token)
-    CHATID=$(cat ${SCRIPTDIR}/tg_chatid)
+    TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
+    CHATID=$(cat "${SCRIPTDIR}"/tg_chatid)
 
     # If no file is about to be uploaded, bail out
     [[ -z ${1} ]] && \
-        echo "${BLD}tg_upload:${RST} Please provide a file to upload!" && \
+        echo "! Please provide a file to upload!" && \
         return 1
 
     # Upload it!
-    curl -s https://api.telegram.org/bot${TOKEN}/sendDocument \
-        -F chat_id=${CHATID} \
+    curl -s https://api.telegram.org/bot"${TOKEN}"/sendDocument \
+        -F chat_id="${CHATID}" \
         -F document=@"${1}" \
         >> /dev/null
-
-    # Act like nothing happens
-    unset SCRIPTDIR TOKEN CHATID
 }
