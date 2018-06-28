@@ -13,13 +13,12 @@ export TZ=Asia/Makassar
 export GOPATH=${HOME}/go
 
 # Other variables used around this script
-CADDYSRC=${GOPATH}/src/github.com/mholt/caddy/caddy
 CTNGCOMP=${HOME}/src/ct-ng/bash-completion/ct-ng
 TRANSFERSH=${HOME}/scripts/transfer.sh
 
 # If 'hostname' returns botstack, set up caddy & http-server aliases
 if [[ $(hostname) == botstack ]]; then
-    alias caddy="caddy -quic -quiet &"
+    alias caddy="caddy -quic -quiet -conf ${HOME}/Caddyfile &"
     alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &"
 fi
 
@@ -29,8 +28,8 @@ fi
 
 # Export local binary paths
 export PATH=${HOME}/.local/bin:${PATH}
-[[ -d ${CADDYSRC} ]] && \
-    export PATH=${CADDYSRC}:${PATH}
+[[ -d ${GOPATH} ]] && \
+    export PATH=${GOPATH}/bin:${PATH}
 
 # crosstool-ng
 [[ -f ${CTNGCOMP} ]] && \
