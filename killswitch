@@ -16,7 +16,7 @@ if [[ ${#} -le 1 ]]; then
                       CONFIG=( "default deny outgoing"
                                "allow out on tun0" ) ;;
         *)            # Suicide
-                      echo "! No option specified!"
+                      echo "! No valid option specified!"
                       exit 1 ;;
     esac
 else
