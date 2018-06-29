@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1117
 # Clang compilation script
 # Copyright (C) 2018 Nathan Chancellor
 # Copyright (C) 2018 Albert I (krasCGQ)
