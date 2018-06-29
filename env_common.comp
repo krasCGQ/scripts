@@ -39,7 +39,7 @@ function tg_upload() {
     # Import Telegram bot token and chat ID
     SCRIPTDIR=${HOME}/KudProject/scripts
     TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
-    CHATID=$(cat "${SCRIPTDIR}"/tg_chatid)
+    CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14) # KudProject Community
 
     # If no file is about to be uploaded, bail out
     [[ -z ${1} ]] && \
