@@ -3,9 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Set up common aliases
-alias echo="echo -e"
-alias nano="nano -FISWaiuwx"
-alias wget="wget -c -t 0 --retry-connrefused"
+alias nano='nano -FISWaiuwx'
+alias wget='wget -c -t 0 --retry-connrefused'
 
 # Required for GPG signing
 GPG_TTY=$(tty)
