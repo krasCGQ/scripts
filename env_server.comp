@@ -18,8 +18,8 @@ TRANSFERSH=${HOME}/scripts/transfer.sh
 
 # If 'hostname' returns botstack, set up caddy & http-server aliases
 if [[ $(hostname) == botstack ]]; then
-    alias caddy="caddy -quic -quiet -conf ${HOME}/Caddyfile &"
-    alias http-server="http-server -a 0.0.0.0 -p 9001 >> /dev/null &"
+    alias caddy='caddy -quic -quiet -conf ${HOME}/Caddyfile &'
+    alias http-server='http-server -a 0.0.0.0 -p 9001 >> /dev/null &'
 fi
 
 # If GOPATH doesn't exist, unset it
@@ -48,7 +48,7 @@ function ssh_setup {
 
     # The actual setup is here
     eval "$(ssh-agent -s)"
-    ssh-add ${HOME}/.ssh/id_ed25519
+    ssh-add "${HOME}"/.ssh/id_ed25519
 }
 
 # Sign ROM zip before release

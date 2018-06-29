@@ -12,7 +12,7 @@ BLD="\033[1m"
 RST="\033[0m"
 
 # Set up aliases
-alias update="sudo su -c \"pacman -Sy && bauerbill -Su\""
+alias update='sudo su -c "pacman -Sy && bauerbill -Su"'
 
 # Export local binary path
 export PATH=${HOME}/.local/bin:${PATH}
