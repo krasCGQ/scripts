@@ -273,7 +273,8 @@ function install() {
 
     header "SUCCESS!" "${GRN}"
     echo "${GRN}Successfully built and installed Clang toolchain to ${INSTALL_FOLDER}!${GRN}"
-    echo "${GRN}Time elapsed: ${TIME_STRING,,}${RST}\n"
+    echo "${GRN}Time elapsed: ${TIME_STRING,,}${RST}"
+    echo
 }
 
 parse_parameters "${@}"
