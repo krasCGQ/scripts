@@ -15,7 +15,7 @@ RST="\033[0m"
 alias update='sudo su -c "pacman -Sy && bauerbill -Su"'
 
 # Export local binary path
-export PATH=${HOME}/.local/bin:${PATH}
+export PATH=${HOME}/.files/bin:${PATH}
 
 # Export ccache-backed compiler symlinks
 export PATH=/usr/lib/ccache/bin:${PATH}
