@@ -1,4 +1,4 @@
-#!/usr/bin/sudo /usr/bin/sh
+#!/usr/bin/sudo /usr/bin/bash
 # VPN kill switch enabler/disabler script for UFW
 # Copyright (C) 2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
