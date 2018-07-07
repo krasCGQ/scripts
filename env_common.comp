@@ -8,6 +8,7 @@ BLD="\033[1m"
 RST="\033[0m"
 
 # Set up common aliases
+alias echo='echo -e'
 alias nano='nano -FISWaiuwx'
 alias wget='wget -c -t 0 --retry-connrefused'
 
