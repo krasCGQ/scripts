@@ -109,6 +109,90 @@ function check_gmp_date() {
     echo "${DATE}"
 }
 
+# A wrapper to automate crosstool-NG toolchain build
+function ct-ng_build {
+    TARDIR=${CTDIR}/tarballs
+    GITDIR=${CTDIR}/git
+    ISLDIR=${GITDIR}/isl
+    ISLPATCH=${HOME}/patches/isl/0001-isl--Revert-all-troublesome-changes.patch
+
+    [[ -z $(command -v ct-ng) ]] && \
+        echo "! ${BLD}ct-ng${RST} isn't installed." && \
+        echo "  Please build or install crosstool-NG package before continuing." && \
+        return 1
+
+    [[ -z ${CTDIR} ]] && \
+        echo "! ${BLD}CTDIR${RST} variable is empty. Refusing to continue." && \
+        return 1
+
+    (
+        ! cd "${CTDIR}" 2> /dev/null && \
+            echo "! $(basename "${CTDIR}") doesn't exist in defined path." && \
+            return 1
+
+        echo "- Cleaning up work directory..."
+        ! ct-ng clean > /dev/null && \
+            echo "! Failed to clean up work directory." && \
+            return 1
+
+        (
+            ! cd "${TARDIR}" 2> /dev/null && \
+                echo "! $(basename "${CTDIR}")/$(basename "${TARDIR}") doesn't exist in defined path." && \
+                return 1
+
+            [[ ! -f "gmp-6.1.99-$(check_gmp_date).tar.lz" ]] && \
+                echo "- Downloading gmp-6.1.99-$(check_gmp_date).tar.lz..." && \
+                wget -q https://gmplib.org/download/snapshot/"gmp-6.1.99-$(check_gmp_date).tar.lz"
+        )
+        (
+            ! cd "${GITDIR}" 2> /dev/null && \
+                echo "! $(basename "${CTDIR}")/$(basename "${GITDIR}") doesn't exist in defined path." && \
+                return 1
+
+            echo "- Updating git projects..."
+            ./update || \
+                return 1
+        )
+        (
+            ! cd "${ISLDIR}" 2> /dev/null && \
+                echo "! $(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") doesn't exist in defined path." && \
+                return 1
+
+            [[ ! -d .git ]] && \
+                echo "! $(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") isn't a git project." && \
+                echo "  Are you sure the defined path is correct?" && \
+                return 1
+
+            echo "- Updating and patching ISL for toolchain building..."
+            exec 5>&1 6>&2 &> /dev/null
+            git fetch origin master
+            git reset --hard origin/master
+            git clean -dfx
+            exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
+            ! patch --merge -s -N -p1 -i "${ISLPATCH}" && \
+                echo "! Failed to patch ISL. Refusing to continue." && \
+                return 1
+
+            echo "- Generating configuration files..."
+            ! ./autogen.sh && \
+                echo "! Failed to generate configuration files." && \
+                return 1
+        )
+
+        ! ct-ng source && \
+            echo "! Failed to obtain required sources." && \
+            return 1
+
+        if ct-ng build; then
+            echo
+            echo "- Successfully built the toolchain."
+        else
+            echo "! Failed to build the toolchain."
+            return 1
+        fi
+    )
+}
+
 # Last, but my most convenient part
 # shellcheck disable=SC1117
 export PS1="\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]\`parse_git_branch\`\[\e[1;32m\] \$\[\e[0m\] "
