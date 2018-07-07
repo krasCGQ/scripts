@@ -27,7 +27,7 @@ export KBUILD_BUILD_USER=krasCGQ
 export KBUILD_BUILD_HOST=KudProject
 
 # Parse current branch in git repository
-function parse_git_branch() {
+function parse_git_branch {
     BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
     if [[ ! -z ${BRANCH} ]]; then
         # Don't give extra brackets if project isn't at any branch or is currently detached
@@ -41,7 +41,7 @@ function parse_git_branch() {
 
 # Upload a file to a Telegram chat
 # Usage: tg_upload <file>
-function tg_upload() {
+function tg_upload {
     # Import Telegram bot token and chat ID
     SCRIPTDIR=${HOME}/KudProject/scripts
     TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
