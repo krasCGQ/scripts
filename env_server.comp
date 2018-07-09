@@ -94,13 +94,11 @@ function rom_sign {
 
 # Date checking for GMP daily snapshot download
 function check_gmp_date() {
-    DATE=$(date +%s)
-
     [[ $(TZ=Europe/Berlin date +%Z) == CEST ]] && \
-        DATE=$((DATE - 15600)) || \
-        DATE=$((DATE - 19200))
+        GAP=15600 || \
+        GAP=19200
 
-    date --date=@${DATE} -u +%Y%m%d
+    date --date=@$(($(date +%s) - GAP)) -u +%Y%m%d
 }
 
 # A wrapper to automate crosstool-NG toolchain build
