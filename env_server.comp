@@ -96,17 +96,11 @@ function rom_sign {
 function check_gmp_date() {
     DATE=$(date +%s)
 
-    export TZ=Europe/Berlin
-
-    [[ $(date +%Z) == CEST ]] && \
+    [[ $(TZ=Europe/Berlin date +%Z) == CEST ]] && \
         DATE=$((DATE - 15600)) || \
         DATE=$((DATE - 19200))
 
-    DATE=$(date --date=@${DATE} -u +%Y%m%d)
-
-    unset TZ
-
-    echo "${DATE}"
+    date --date=@${DATE} -u +%Y%m%d
 }
 
 # A wrapper to automate crosstool-NG toolchain build
