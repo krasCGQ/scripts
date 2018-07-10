@@ -93,7 +93,7 @@ function rom_sign {
 }
 
 # Date checking for GMP daily snapshot download
-function check_gmp_date() {
+function check_gmp_date {
     [[ $(TZ=Europe/Berlin date +%Z) == CEST ]] && \
         GAP=15600 || \
         GAP=19200
