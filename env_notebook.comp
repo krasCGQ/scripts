@@ -44,10 +44,9 @@ function zipsigner {
     if $(command -v java) -jar "${ZIPSIGNER}" "${1}" "${2}"; then
         echo "i Operation has completed successfully."
     else
-        # shellcheck disable=SC2034
         STATUS=${?}
         echo "! Failed to do defined operation."
-        return ${?}
+        return ${STATUS}
     fi
 }
 
