@@ -128,6 +128,10 @@ function parse_parameters() {
             "-T"|"--test")
                 TEST=true ;;
 
+            "-V"|"--vendor")
+                shift && enforce_value "${@}"
+                VENDOR=${1} ;;
+
             "-v"|"--version")
                 shift && enforce_value "${@}"
                 VERSION=${1} ;;
@@ -141,8 +145,11 @@ function parse_parameters() {
     # Clang 7.x is compiled by default
     [[ -z ${VERSION} ]] && VERSION=7
 
+    # Flash Clang by default
+    [[ -z ${VENDOR} ]] && VENDOR=Flash
+
     # Folder that will hold the final compiled toolchain
-    [[ -z ${INSTALL_FOLDER} ]] && INSTALL_FOLDER=/opt/kud/flash-clang-${VERSION}.x${TEST:+"-test"}
+    [[ -z ${INSTALL_FOLDER} ]] && INSTALL_FOLDER=/opt/kud/${VENDOR,,}-clang-${VERSION}.x${TEST:+"-test"}
 
     # SVN copy of the LLVM folder for revisioning
     SVN_FOLDER=${MAIN_FOLDER}/svn-${VERSION}.x
@@ -261,7 +268,7 @@ function build() {
           -DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-unknown-linux-gnu \
           -DLLVM_OPTIMIZED_TABLEGEN=ON \
           -DLLVM_USE_LINKER=gold \
-          -DCLANG_VENDOR="Flash " \
+          -DCLANG_VENDOR="${VENDOR} " \
           -DLLVM_VERSION_PATCH="$(cd "${SVN_FOLDER}" || die "SVN folder doesn't exist";
                                   svn info -r HEAD --show-item revision)" \
           -DLLVM_VERSION_SUFFIX="" \
