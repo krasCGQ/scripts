@@ -315,6 +315,7 @@ function build() {
     time ninja && SUCCESS=true
     TIME_STRING="$(format_time "${START}" "$(date +"%s")")"
     if [[ -n ${SUCCESS} ]]; then
+        # shellcheck disable=SC2086
         VERSION_STRING=$(${BUILD_FOLDER}/bin/clang --version | head -1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
         header "SUCCESS!" "${GRN}"
         echo "${BOLD}Time elapsed:${RST} ${TIME_STRING,,}"
