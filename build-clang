@@ -314,9 +314,19 @@ function build() {
           -DLLVM_VERSION_SUFFIX="" \
           "${LLVM_FOLDER}"
 
-    if ! time ninja; then
+    ! time ninja && FAILED=true
+    TIME_STRING="$(format_time "${START}" "$(date +"%s")")"
+    if [[ -z ${FAILED} ]]; then
+        VERSION_STRING=$(${BUILD_FOLDER}/bin/clang --version | head -1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+        header "SUCCESS!" "${GRN}"
+        echo "${BOLD}Time elapsed:${RST} ${TIME_STRING,,}"
+        echo
+        echo "${BOLD}Version string:${RST} ${VERSION_STRING}"
+        echo
+    else
         header "ERROR BUILDING!"
-        die "Time elapsed: $(format_time "${START}" "$(date +"%s")")"
+        display_error "Time elapsed: ${TIME_STRING,,}"
+        exit
     fi
 
     [[ -n ${BUILD_ONLY} ]] && exit
@@ -324,21 +334,17 @@ function build() {
 
 # Install the toolchain
 function install() {
-    header "Installing Clang"
-
     if [[ -z ${TEST} ]]; then
         rm -rf "${INSTALL_FOLDER}-old"
         mv "${INSTALL_FOLDER}" "${INSTALL_FOLDER}-old"
     fi
-    TIME_STRING="$(format_time "${START}" "$(date +"%s")")"
-    if ! ninja install; then
+
+    if ! ninja install &>/dev/null; then
         header "ERROR INSTALLING!"
-        die "Time elapsed: ${TIME_STRING,,}"
+        exit
     fi
 
-    header "SUCCESS!" "${GRN}"
-    echo "${GRN}Successfully built and installed Clang toolchain to ${INSTALL_FOLDER}!${GRN}"
-    echo "${GRN}Time elapsed: ${TIME_STRING,,}${RST}"
+    echo "${BOLD}Installation location:${RST} ${INSTALL_FOLDER}"
     echo
 }
 
