@@ -318,6 +318,8 @@ function build() {
         header "ERROR BUILDING!"
         die "Time elapsed: $(format_time "${START}" "$(date +"%s")")"
     fi
+
+    [[ -n ${BUILD_ONLY} ]] && exit
 }
 
 # Install the toolchain
@@ -344,4 +346,4 @@ parse_parameters "${@}"
 sync_all
 cleanup
 build
-[[ -z ${BUILD_ONLY} ]] && install
+install
