@@ -175,7 +175,7 @@ function sync() {
             *) URL=https://llvm.org/svn/llvm-project/llvm/branches/"release_${VERSION}0" ;;
         esac
     else
-        LLVM_ORG=https://git.llvm.org/git/
+        LLVM_ORG=git://github.com/llvm-mirror/
         case ${FOLDER} in
             "clang"|"llvm")
                 [[ $(uname -n) = "flashbox" ]] && URL_PREFIX=git@github.com: || URL_PREFIX=https://github.com/
