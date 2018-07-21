@@ -162,7 +162,7 @@ function sync() {
             *) URL=https://llvm.org/svn/llvm-project/llvm/branches/"release_${VERSION}0" ;;
         esac
     else
-        URL=git://github.com/llvm-mirror/$(basename "${FOLDER}")
+        URL=https://git.llvm.org/git/$(basename "${FOLDER}")
         case ${VERSION} in
             "7") BRANCH=master ;;
             *) BRANCH="release_${VERSION}0" ;;
