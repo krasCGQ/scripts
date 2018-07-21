@@ -175,11 +175,11 @@ function sync() {
             *) URL=https://llvm.org/svn/llvm-project/llvm/branches/"release_${VERSION}0" ;;
         esac
     else
-        LLVM_ORG=git://github.com/llvm-mirror/
+        URL_PREFIX=git://github.com/
+        LLVM_ORG=${URL_PREFIX}llvm-mirror/
         case ${FOLDER} in
             "clang"|"llvm")
-                URL_PREFIX=https://github.com/
-                URL=${URL_PREFIX}nathanchance/$(basename "${FOLDER}").git ;;
+                URL=${URL_PREFIX}nathanchance/$(basename "${FOLDER}") ;;
             *)
                 URL=${LLVM_ORG}$(basename "${FOLDER}") ;;
         esac
