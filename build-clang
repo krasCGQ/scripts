@@ -131,7 +131,7 @@ function parse_parameters() {
             "-T"|"--test")
                 TEST=true ;;
 
-            "-V"|"--vendor")
+            "-v"|"--vendor")
                 shift && enforce_value "${@}"
                 VENDOR=${1} ;;
 
