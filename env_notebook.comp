@@ -98,6 +98,41 @@ function opus_convert {
         return 1
 }
 
+function btg_build {
+    [[ -z ${BTGDIR} || -z ${OPTDIR} ]] && \
+        echo "! ${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue." && \
+        return 1
+
+    (
+        ! cd "${BTGDIR}" && \
+            echo "! $(basename "${BTGDIR}") doesn't exist in defined path." && \
+            return 1
+
+        # FIXME: Command requires sudo :/
+        [[ ! -d ${OPTDIR} ]] && \
+            sudo mkdir -p "${OPTDIR}" && \
+            sudo chown -R "$(whoami)":users "${OPTDIR}"
+
+        ! ./build -a arm64 -s gnu -v 9 -nt && \
+            return 1
+
+        rm -rf "${OPTDIR}"/aarch64-linux-gnu-old
+        [[ -d ${OPTDIR}/aarch64-linux-gnu ]] && \
+            mv -f "${OPTDIR}"/aarch64-linux-gnu{,old}
+        mv -f aarch64-linux-gnu "${OPTDIR}"
+
+        ! ./build -a x86_64 -s gnu -v 9 -nt -nu && \
+            return 1
+
+        rm -rf "${OPTDIR}"/x86_64-linux-gnu-old
+        [[ -d ${OPTDIR}/x86_64-linux-gnu ]] && \
+            mv -f "${OPTDIR}"/x86_64-linux-gnu{,old}
+        mv -f x86_64-linux-gnu "${OPTDIR}"
+
+        rm -rf build-*
+    )
+}
+
 # Last, but my most convenient part
 # shellcheck disable=SC1117
 export PS1="\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]\`parse_git_branch\`\[\e[1;36m\] \$\[\e[0m\] "
