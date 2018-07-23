@@ -111,6 +111,13 @@ function enforce_value() {
     [[ ${#} -lt 1 ]] && die "A additional value is needed for one of the flags passed to this script!"
 }
 
+# Add a remote if it doesn't exist
+function add_remote() {
+    if ! git remote | grep -q -m 1 "${1}"; then
+        git remote add "${1}" "${2}"
+    fi
+}
+
 function parse_parameters() {
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
