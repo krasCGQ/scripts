@@ -98,6 +98,7 @@ function opus_convert {
         return 1
 }
 
+# Wrapper to build both AArch64 and x86_64 GNU toolchains using build-tools-gcc
 function btg_build {
     [[ -z ${BTGDIR} || -z ${OPTDIR} ]] && \
         echo "! ${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue." && \
