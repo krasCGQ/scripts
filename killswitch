@@ -7,6 +7,11 @@
 # https://thetinhat.com/tutorials/misc/linux-vpn-drop-protection-firewall.html
 # Modified to be as dead simple and minimal as possible.
 
+function die {
+    echo "! ${@}"
+    exit 1
+}
+
 if [[ ${#} -le 1 ]]; then
     case ${1} in
         -d|--disable|off)
@@ -19,12 +24,10 @@ if [[ ${#} -le 1 ]]; then
                      "allow out on tun0" ) ;;
         *)
             # Suicide
-            echo "! No valid option specified!"
-            exit 1 ;;
+            die "No valid option specified!" ;;
     esac
 else
-    echo "! More than one option specified!"
-    exit 1
+    die "More than one option specified!"
 fi
 
 for COMMAND in "${CONFIG[@]}"; do
