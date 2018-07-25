@@ -7,7 +7,7 @@
 . "${HOME}"/KudProject/scripts/env_common.comp
 
 # Set up aliases
-alias update='sudo su -c "pacman -Sy && bauerbill -Su"'
+alias update='sudo su -c "pacman -Sy --noprogressbar && bauerbill -Su --noconfirm --noprogressbar"'
 
 # Export local binary path
 export PATH=${HOME}/.files/bin:${PATH}
