@@ -370,6 +370,7 @@ function install() {
 }
 
 
+trap 'echo; die "Manually aborted!"' SIGINT SIGTERM
 parse_parameters "${@}"
 sync_all
 cleanup
