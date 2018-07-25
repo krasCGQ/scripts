@@ -5,6 +5,18 @@
 
 # TODO: Proper build script, this is made solely for mido kernel build for now
 
+# Build with GCC or Clang?
+case ${1} in
+    -c|--clang)
+        CLANG=true ;;
+    -g|--gcc)
+        # Do nothing
+        ;;
+    *)
+        # Assuming clang build
+        CLANG=true ;;
+esac
+
 ## Variables
 
 # Text styles
@@ -22,12 +34,17 @@ MSG="KudKernel build:"
 # Number of threads used
 THREADS=$(nproc --all)
 
+# GCC and clang (if used)
+GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+[[ -n ${CLANG} ]] && \
+    CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
+
 # Kernel build variables
-AK2=../../../AnyKernel2
+AK2=${HOME}/KudProject/AnyKernel2
 ARCH=arm64
 DTB=msm8953-qrd-sku3-mido
 NAME=KudKernel-mido
-OUT=../build/mido
+OUT=$(pwd)/../build/mido
 
 ## Functions
 
@@ -63,10 +80,6 @@ function die {
         STATUS=${?}
 
     echo "! ${1}" >&2
-    while [[ ${#} -ge 2 ]]; do
-        echo "  ${2}" >&2
-        shift
-    done
 
     if [[ -n ${STARTED} ]]; then
         tg_error
@@ -89,21 +102,9 @@ trap '{
 [[ ! -f Makefile || ! -d kernel ]] && \
     die "Please run this script inside kernel source folder!"
 
-# Build with GCC or Clang?
-case ${1} in
-    -c|--clang)
-        CLANG=true ;;
-    -g|--gcc)
-        # Do nothing
-        ;;
-    *)
-        # Assuming clang build
-        CLANG=true ;;
-esac
-
 # Begin script
 tg_post "${MSG} Started!"
-echo "- Setting up environment variables..."
+echo "- Starting build script..."
 
 # Eplicitly declare build script startup
 STARTED=true
@@ -111,15 +112,10 @@ STARTED=true
 sleep 1
 
 # Unset these variables if they're set
-for VAR in CROSS_COMPILE GCCPREFIX CLANGPATH; do
+for VAR in CROSS_COMPILE CC; do
     [[ -n ${VAR} ]] && \
         unset ${VAR}
 done
-
-# Set these variables early for cross-compilers checking
-GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
-[[ -n ${CLANG} ]] && \
-    CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
 
 # Sanity checks
 for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
@@ -152,29 +148,29 @@ fi
 # Clean build directory
 echo "- Cleaning build directory..."
 # TODO: Completely clean build?
-make ARCH=${ARCH} O=${OUT} clean > /dev/null
+make ARCH=${ARCH} O="${OUT}" clean > /dev/null
 
 # TODO: Generate defconfig if it doesn't exist
 
 # Let's build the kernel!
 echo "- Building kernel..."
 if [[ -n ${CLANG} ]]; then
-    make ARCH=${ARCH} O=${OUT} CC="${CC}" CROSS_COMPILE=${CROSS_COMPILE} \
+    make ARCH=${ARCH} O="${OUT}" CC="${CC}" CROSS_COMPILE=${CROSS_COMPILE} \
          -j"${THREADS}" > /dev/null
 else
-    make ARCH=${ARCH} O=${OUT} CROSS_COMPILE="${CROSS_COMPILE}" \
+    make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
          -j"${THREADS}" > /dev/null
 fi
 
 # Clean AnyKernel2 directory
 echo "- Cleaning up AnyKernel2 folder..."
-rm -rf ${AK2}/{kernel,{,non}treble}/*
+rm -rf "${AK2}"/{kernel,{,non}treble}/*
 
 # Copy kernel image and DTB
 echo "- Copying kernel image and DTBs to AnyKernel2 folder..."
-cp -f ${OUT}/arch/arm64/boot/Image.gz ${AK2}/kernel/
+cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel/
 for VAR in {,non}treble; do
-    cp -f ${OUT}/arch/arm64/boot/dts/qcom/${DTB}-${VAR}.dtb ${AK2}/${VAR}/${DTB}.dtb
+    cp -f "${OUT}"/arch/arm64/boot/dts/qcom/${DTB}-${VAR}.dtb "${AK2}"/${VAR}/${DTB}.dtb
 done
 
 # Export here to be picked later
