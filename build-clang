@@ -206,6 +206,8 @@ function git_sync() {(
         case ${FOLDER} in
             "clang"|"llvm")
                 URL=${URL_PREFIX}nathanchance/$(basename "${FOLDER}") ;;
+            "extra")
+                URL=${LLVM_ORG}clang-tools-extra ;;
             *)
                 URL=${LLVM_ORG}$(basename "${FOLDER}") ;;
         esac
@@ -292,6 +294,11 @@ function sync_all() {
     git_sync libcxxabi
     git_sync libunwind
     git_sync openmp
+
+    mkdir -p "${LLVM_FOLDER}/tools/clang/tools"
+    cd "${LLVM_FOLDER}/tools/clang/tools" || die "Error creating tools folder!"
+
+    git_sync extra
 
     [[ -n ${UPDATE_ONLY} ]] && exit
 }
