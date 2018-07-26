@@ -97,8 +97,9 @@ trap '{
 if [[ ${#} -ge 1 ]]; then
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
+            # REQUIRED
             -c|--compiler)
-                # Only Clang or GCC is supported
+                # Only Clang or GCC is supported, case insensitive
                 shift
                 if [[ ${1,,} == clang ]]; then
                     CLANG=true
@@ -108,6 +109,12 @@ if [[ ${#} -ge 1 ]]; then
                 else
                     die "Invalid parameter specified!"
                 fi ;;
+
+            # OPTIONAL
+            -b|--build-only)
+                BUILD_ONLY=true ;;
+
+            # DIE!
             *)
                 die "Invalid option(s) specified!" ;;
         esac
@@ -188,29 +195,31 @@ else
          -j"${THREADS}" > /dev/null
 fi
 
-# Clean AnyKernel2 directory
-info "Cleaning up AnyKernel2 folder..."
-rm -rf "${AK2}"/{kernel,{,non}treble}/*
+if [[ -z ${BUILD_ONLY} ]]; then
+    # Clean AnyKernel2 directory
+    info "Cleaning up AnyKernel2 folder..."
+    rm -rf "${AK2}"/{kernel,{,non}treble}/*
 
-# Copy kernel image and DTB
-info "Copying kernel image and DTBs to AnyKernel2 folder..."
-cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel/
-for VAR in {,non}treble; do
-    cp -f "${OUT}"/arch/arm64/boot/dts/qcom/${DTB}-${VAR}.dtb "${AK2}"/${VAR}/${DTB}.dtb
-done
+    # Copy kernel image and DTB
+    info "Copying kernel image and DTBs to AnyKernel2 folder..."
+    cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel/
+    for VAR in {,non}treble; do
+        cp -f "${OUT}"/arch/arm64/boot/dts/qcom/${DTB}-${VAR}.dtb "${AK2}"/${VAR}/${DTB}.dtb
+    done
 
-# Export here to be picked later
-DATE=$(date +%s)
+    # Export here to be picked later
+    DATE=$(date +%s)
 
-# Make flashable kernel zip
-info "Creating ${NAME}-${DATE}.zip..."
-(
-    cd "${AK2}" || \
-        die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
+    # Make flashable kernel zip
+    info "Creating ${NAME}-${DATE}.zip..."
+    (
+        cd "${AK2}" || \
+            die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
 
-    # TODO: Signed flashable zip
-    zip -qr9 ${NAME}-"${DATE}".zip ./* -x README.md -x ./*.zip
-)
+        # TODO: Signed flashable zip
+        zip -qr9 ${NAME}-"${DATE}".zip ./* -x README.md -x ./*.zip
+    )
+fi
 
 # End script
 info "That's it. Job well done!"
