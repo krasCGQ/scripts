@@ -40,12 +40,7 @@ function set_variables {
 
 # Prints a message with a dash
 function info {
-    if [[ ${#} -eq 2 ]]; then
-        # ${2} are escapes
-        echo -e "- ${1}" "${2}"
-    else
-        echo "- ${1}"
-    fi
+    echo "- ${1}"
 }
 
 # Post a message to a Telegram chat
@@ -218,5 +213,8 @@ info "Creating ${NAME}-${DATE}.zip..."
 )
 
 # End script
-info "That's it. Job well done!" '\a'
+info "That's it. Job well done!"
 tg_post "${MSG} Completed!"
+
+# Alert for script ending
+echo -ne '\a'
