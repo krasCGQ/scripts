@@ -5,48 +5,48 @@
 
 # TODO: Proper build script, this is made solely for mido kernel build for now
 
-# Build with GCC or Clang?
-case ${1} in
-    -c|--clang)
-        CLANG=true ;;
-    -g|--gcc)
-        # Do nothing
-        ;;
-    *)
-        # Assuming clang build
-        CLANG=true ;;
-esac
-
-## Variables
-
 # Text styles
 BLD=$(tput bold)
 RST=$(tput sgr0)
 
-# Import Telegram bot token & chat ID
-SCRIPTDIR=${HOME}/KudProject/scripts
-TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
-CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14)
+## Variables
 
-# Default message for posting
-MSG="KudKernel build:"
+function set_variables {
+    # Import Telegram bot token & chat ID
+    SCRIPTDIR=${HOME}/KudProject/scripts
+    TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
+    CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14)
 
-# Number of threads used
-THREADS=$(nproc --all)
+    # Default message for posting
+    MSG="KudKernel build:"
 
-# GCC and clang (if used)
-GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
-[[ -n ${CLANG} ]] && \
-    CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
+    # Number of threads used
+    THREADS=$(nproc --all)
 
-# Kernel build variables
-AK2=${HOME}/KudProject/AnyKernel2
-ARCH=arm64
-DTB=msm8953-qrd-sku3-mido
-NAME=KudKernel-mido
-OUT=$(pwd)/../build/mido
+    # GCC and Clang (if used)
+    GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+    [[ -n ${CLANG} ]] && \
+        CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
+
+    # Kernel build variables
+    AK2=${HOME}/KudProject/AnyKernel2
+    ARCH=arm64
+    DTB=msm8953-qrd-sku3-mido
+    NAME=KudKernel-mido
+    OUT=$(pwd)/../build/mido
+}
 
 ## Functions
+
+# Prints a message with a dash
+function info {
+    if [[ ${#} -eq 2 ]]; then
+        # ${2} are escapes
+        echo -e "- ${1}" "${2}"
+    else
+        echo "- ${1}"
+    fi
+}
 
 # Post a message to a Telegram chat
 function tg_post {
@@ -98,18 +98,34 @@ trap '{
 
 ## Commands
 
+# Parse parameters
+if [[ ${#} -ge 1 ]]; then
+    while [[ ${#} -ge 1 ]]; do
+        case ${1} in
+            -c|--compiler)
+                # Only Clang or GCC is supported
+                shift
+                if [[ ${1,,} == clang ]]; then
+                    CLANG=true
+                elif [[ ${1,,} == gcc ]]; then
+                    # Do nothing
+                    echo -n
+                else
+                    die "Invalid parameter specified!"
+                fi ;;
+        esac
+        shift
+    done
+else
+    die "No option specified!"
+fi
+
+# Set all required variables
+set_variables
+
 # Run this inside kernel source
 [[ ! -f Makefile || ! -d kernel ]] && \
     die "Please run this script inside kernel source folder!"
-
-# Begin script
-tg_post "${MSG} Started!"
-echo "- Starting build script..."
-
-# Eplicitly declare build script startup
-STARTED=true
-
-sleep 1
 
 # Unset these variables if they're set
 for VAR in CROSS_COMPILE CC; do
@@ -118,12 +134,24 @@ for VAR in CROSS_COMPILE CC; do
 done
 
 # Sanity checks
+info "Running sanity checks..."
+sleep 1
+
 for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
     ! find ${VAR} > /dev/null 2>&1 && \
         die "${BLD}$(basename "${VAR}")${RST} doesn't exist in defined path."
 done
+
 [[ ! -d ${AK2} ]] && \
     die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
+
+# Begin script
+tg_post "${MSG} Started!"
+info "Starting build script..."
+sleep 1
+
+# Explicitly declare build script startup
+STARTED=true
 
 # Always use ccache for faster compiling if exists in PATH
 if [[ -n $(command -v ccache) ]]; then
@@ -135,7 +163,7 @@ fi
 # Append (or set) CROSS_COMPILE
 CROSS_COMPILE+=${GCCPREFIX}
 
-# If clang is used
+# If Clang is used
 if [[ -n ${CLANG} ]]; then
     # Additionally also append (or set) CC
     CC+=${CLANGPATH}
@@ -146,14 +174,14 @@ if [[ -n ${CLANG} ]]; then
 fi
 
 # Clean build directory
-echo "- Cleaning build directory..."
+info "Cleaning build directory..."
 # TODO: Completely clean build?
 make ARCH=${ARCH} O="${OUT}" clean > /dev/null
 
 # TODO: Generate defconfig if it doesn't exist
 
 # Let's build the kernel!
-echo "- Building kernel..."
+info "Building kernel..."
 if [[ -n ${CLANG} ]]; then
     make ARCH=${ARCH} O="${OUT}" CC="${CC}" CROSS_COMPILE=${CROSS_COMPILE} \
          -j"${THREADS}" > /dev/null
@@ -163,11 +191,11 @@ else
 fi
 
 # Clean AnyKernel2 directory
-echo "- Cleaning up AnyKernel2 folder..."
+info "Cleaning up AnyKernel2 folder..."
 rm -rf "${AK2}"/{kernel,{,non}treble}/*
 
 # Copy kernel image and DTB
-echo "- Copying kernel image and DTBs to AnyKernel2 folder..."
+info "Copying kernel image and DTBs to AnyKernel2 folder..."
 cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel/
 for VAR in {,non}treble; do
     cp -f "${OUT}"/arch/arm64/boot/dts/qcom/${DTB}-${VAR}.dtb "${AK2}"/${VAR}/${DTB}.dtb
@@ -177,7 +205,7 @@ done
 DATE=$(date +%s)
 
 # Make flashable kernel zip
-echo "- Creating ${NAME}-${DATE}.zip..."
+info "Creating ${NAME}-${DATE}.zip..."
 (
     cd "${AK2}" || \
         die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
@@ -187,5 +215,5 @@ echo "- Creating ${NAME}-${DATE}.zip..."
 )
 
 # End script
-echo -e "- That's it. Job well done!" '\a'
+info "That's it. Job well done!" '\a'
 tg_post "${MSG} Completed!"
