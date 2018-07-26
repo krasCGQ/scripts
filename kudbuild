@@ -52,8 +52,10 @@ function tg_post {
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
-    tg_post "${MSG} Interrupted - Signal Interrupt" \
-            "@krasCGQ Y u do dis ?? >_<"
+    [[ -n ${STARTED} ]] && \
+        tg_post "${MSG} Interrupted - Signal Interrupt" \
+                "@krasCGQ Y u do dis ?? >_<"
+
     exit 130
 }' INT
 
