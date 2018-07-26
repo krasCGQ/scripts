@@ -113,7 +113,10 @@ if [[ ${#} -ge 1 ]]; then
                 else
                     die "Invalid parameter specified!"
                 fi ;;
+            *)
+                die "Invalid option(s) specified!" ;;
         esac
+
         shift
     done
 else
