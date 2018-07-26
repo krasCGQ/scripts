@@ -25,7 +25,7 @@ function set_variables {
 
     # GCC and Clang (if used)
     GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
-    [[ -n ${CLANG} ]] && \
+    [[ ${COMPILER} == clang ]] && \
         CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
 
     # Kernel build variables
@@ -99,13 +99,11 @@ if [[ ${#} -ge 1 ]]; then
         case ${1} in
             # REQUIRED
             -c|--compiler)
-                # Only Clang or GCC is supported, case insensitive
                 shift
-                if [[ ${1,,} == clang ]]; then
-                    CLANG=true
-                elif [[ ${1,,} == gcc ]]; then
-                    # Do nothing
-                    echo -n
+
+                # Only Clang or GCC is supported, case insensitive
+                if [[ ${1,,} == clang || ${1,,} == gcc ]]; then
+                    COMPILER=${1,,}
                 else
                     die "Invalid parameter specified!"
                 fi ;;
@@ -142,6 +140,9 @@ done
 info "Running sanity checks..."
 sleep 1
 
+[[ -z ${COMPILER} ]] && \
+    die "Missing required option!"
+
 for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
     ! find ${VAR} > /dev/null 2>&1 && \
         die "${BLD}$(basename "${VAR}")${RST} doesn't exist in defined path."
@@ -160,7 +161,7 @@ STARTED=true
 
 # Always use ccache for faster compiling if exists in PATH
 if [[ -n $(command -v ccache) ]]; then
-    [[ -n ${CLANG} ]] && \
+    [[ ${COMPILER} == clang ]] && \
         CC+="ccache " || \
         CROSS_COMPILE+="ccache "
 fi
@@ -169,7 +170,7 @@ fi
 CROSS_COMPILE+=${GCCPREFIX}
 
 # If Clang is used
-if [[ -n ${CLANG} ]]; then
+if [[ ${COMPILER} == clang ]]; then
     # Additionally also append (or set) CC
     CC+=${CLANGPATH}
 
@@ -187,7 +188,7 @@ make ARCH=${ARCH} O="${OUT}" clean > /dev/null
 
 # Let's build the kernel!
 info "Building kernel..."
-if [[ -n ${CLANG} ]]; then
+if [[ ${COMPILER} == clang ]]; then
     make ARCH=${ARCH} O="${OUT}" CC="${CC}" CROSS_COMPILE=${CROSS_COMPILE} \
          -j"${THREADS}" > /dev/null
 else
