@@ -18,23 +18,23 @@ export PATH=/usr/lib/ccache/bin:${PATH}
 # Sign release kernel zip with zipsigner
 function zipsigner {
     [[ -z $(command -v java) ]] && \
-        echo "! Please install any of OpenJDK version before continuing." && \
+        warn "Please install any of OpenJDK version before continuing." && \
         return 1
 
     [[ -z ${ZIPSIGNER} ]] && \
-        echo "! ${BLD}ZIPSIGNER${RST} variable is empty. Refusing to continue." && \
+        warn "${BLD}ZIPSIGNER${RST} variable is empty. Refusing to continue." && \
         return 1
 
     [[ ${#} -lt 2 ]] && \
-        echo "! ${BLD}Usage:${RST} zipsigner <unsigned-zip> <signed-zip>" && \
+        warn "${BLD}Usage:${RST} zipsigner <unsigned-zip> <signed-zip>" && \
         return 1
 
     [[ ! -f ${ZIPSIGNER} ]] && \
-        echo "! ${BLD}$(basename "${ZIPSIGNER}")${RST} doesn't exist in defined path." && \
+        warn "${BLD}$(basename "${ZIPSIGNER}")${RST} doesn't exist in defined path." && \
         return 1
 
     [[ ! -f ${1} ]] && \
-        echo "! ${BLD}$(basename "${1}")${RST} doesn't exist in defined path." && \
+        warn "${BLD}$(basename "${1}")${RST} doesn't exist in defined path." && \
         return 1
 
     [[ ! -d $(dirname "${2}") ]] && \
@@ -42,10 +42,10 @@ function zipsigner {
 
     echo "- Signing $(basename "${1}") as $(basename "${2}")..."
     if $(command -v java) -jar "${ZIPSIGNER}" "${1}" "${2}"; then
-        echo "i Operation has completed successfully."
+        info "Operation has completed successfully."
     else
         STATUS=${?}
-        echo "! Failed to do defined operation."
+        warn "Failed to do defined operation."
         return ${STATUS}
     fi
 }
@@ -54,12 +54,12 @@ function zipsigner {
 function flac_repack {
     # Make sure FLAC package is installed
     [[ -z $(command -v flac) ]] && \
-        echo "! Please install flac package before continuing." && \
+        warn "Please install flac package before continuing." && \
         return 1
 
     # Make sure we have FLAC files to repack
     [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
-        echo "! There's nothing to do." && \
+        warn "There's nothing to do." && \
         return 1
 
     # First we unpack
@@ -78,7 +78,7 @@ function flac_repack {
 function opus_convert {
     # Ask to install opus-tools package if opusenc doesn't exist
     [[ -z $(command -v opusenc) ]] && \
-        echo "! Please install opus-tools package before continuing." && \
+        warn "Please install opus-tools package before continuing." && \
         return 1
 
     for SONG in ./*; do
@@ -94,19 +94,19 @@ function opus_convert {
     done
 
     [[ ! ${SUPPORTED} ]] && \
-        echo "! There's nothing to do." && \
+        warn "There's nothing to do." && \
         return 1
 }
 
 # Wrapper to build both AArch64 and x86_64 GNU toolchains using build-tools-gcc
 function btg_build {
     [[ -z ${BTGDIR} || -z ${OPTDIR} ]] && \
-        echo "! ${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue." && \
+        warn "${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue." && \
         return 1
 
     (
         ! cd "${BTGDIR}" && \
-            echo "! $(basename "${BTGDIR}") doesn't exist in defined path." && \
+            warn "$(basename "${BTGDIR}") doesn't exist in defined path." && \
             return 1
 
         # FIXME: Command requires sudo :/

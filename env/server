@@ -43,7 +43,7 @@ export PATH=${HOME}/.local/bin:${PATH}
 function ssh_setup {
     # Do an unconditional check
     [[ ! -f ${HOME}/.ssh/id_ed25519 ]] && \
-        echo "! Please generate an SSH key before using this command." && \
+        warn "Please generate an SSH key before using this command." && \
         return 1
 
     # The actual setup is here
@@ -56,18 +56,18 @@ function ssh_setup {
 function rom_sign {
     # Must be run at root of ROM source
     [[ ! -d $(pwd)/build/tools ]] && \
-        echo "! This function must be run at root of ROM source!" && \
+        warn "This function must be run at root of ROM source!" && \
         return 1
 
     # Make sure only one target files package exists prior to running the function
     [[ $(find "$(pwd)/out/dist" -name "*target_files*" | wc -l) -ne 1 ]] && \
-        echo "! Less or more than one target files package detected!" && \
+        warn "Less or more than one target files package detected!" && \
         return 1
 
     # Must have signing keys in .android-certs at root of home folder before proceeding
     for SIGNKEYS in {media,platform,releasekey,shared}.{pk8,x509.pem}; do
         [[ ! -f ${HOME}/.android-certs/${SIGNKEYS} ]] && \
-            echo "! Missing one or more signing keys in ${HOME}/.android-certs folder!" && \
+            warn "Missing one or more signing keys in ${HOME}/.android-certs folder!" && \
             break && \
             return 1
     done
@@ -109,77 +109,77 @@ function ct-ng_build {
     ISLPATCH=${HOME}/patches/isl/0001-isl--Revert-all-troublesome-changes.patch
 
     [[ -z $(command -v ct-ng) ]] && \
-        echo "! ${BLD}ct-ng${RST} isn't installed." && \
-        echo "  Please build or install crosstool-NG package before continuing." && \
+        warn "${BLD}ct-ng${RST} isn't installed." \
+             "Please build or install crosstool-NG package before continuing." && \
         return 1
 
     [[ -z ${CTDIR} ]] && \
-        echo "! ${BLD}CTDIR${RST} variable is empty. Refusing to continue." && \
+        warn "${BLD}CTDIR${RST} variable is empty. Refusing to continue." && \
         return 1
 
     (
         ! cd "${CTDIR}" 2> /dev/null && \
-            echo "! $(basename "${CTDIR}") doesn't exist in defined path." && \
+            warn "$(basename "${CTDIR}") doesn't exist in defined path." && \
             return 1
 
         echo "- Cleaning up work directory..."
         ! ct-ng clean > /dev/null && \
-            echo "! Failed to clean up work directory." && \
+            warn "Failed to clean up work directory." && \
             return 1
 
         (
             ! cd "${TARDIR}" 2> /dev/null && \
-                echo "! $(basename "${CTDIR}")/$(basename "${TARDIR}") doesn't exist in defined path." && \
+                warn "$(basename "${CTDIR}")/$(basename "${TARDIR}") doesn't exist in defined path." && \
                 return 1
 
             [[ ! -f "gmp-6.1.99-$(check_gmp_date).tar.lz" ]] && \
-                echo "- Downloading gmp-6.1.99-$(check_gmp_date).tar.lz..." && \
+                info "Downloading gmp-6.1.99-$(check_gmp_date).tar.lz..." && \
                 wget -q https://gmplib.org/download/snapshot/"gmp-6.1.99-$(check_gmp_date).tar.lz"
         )
         (
             ! cd "${GITDIR}" 2> /dev/null && \
-                echo "! $(basename "${CTDIR}")/$(basename "${GITDIR}") doesn't exist in defined path." && \
+                warn "$(basename "${CTDIR}")/$(basename "${GITDIR}") doesn't exist in defined path." && \
                 return 1
 
-            echo "- Updating git projects..."
+            info "Updating git projects..."
             ./update || \
                 return 1
         )
         (
             ! cd "${ISLDIR}" 2> /dev/null && \
-                echo "! $(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") doesn't exist in defined path." && \
+                warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") doesn't exist in defined path." && \
                 return 1
 
             [[ ! -d .git ]] && \
-                echo "! $(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") isn't a git project." && \
-                echo "  Are you sure the defined path is correct?" && \
+                warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") isn't a git project." \
+                     "Are you sure the defined path is correct?" && \
                 return 1
 
-            echo "- Updating and patching ISL for toolchain building..."
+            info "Updating and patching ISL for toolchain building..."
             exec 5>&1 6>&2 &> /dev/null
             git fetch origin master
             git reset --hard origin/master
             git clean -dfx
             exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
             ! patch --merge -s -N -p1 -i "${ISLPATCH}" && \
-                echo "! Failed to patch ISL. Refusing to continue." && \
+                warn "Failed to patch ISL. Refusing to continue." && \
                 return 1
 
             echo "- Generating configuration files..."
             ! ./autogen.sh && \
-                echo "! Failed to generate configuration files." && \
+                warn "Failed to generate configuration files." && \
                 return 1
         )
 
         ! ct-ng source && \
-            echo "! Failed to obtain required sources." && \
+            warn "Failed to obtain required sources." && \
             return 1
 
         if ct-ng build; then
             echo
-            echo "- Successfully built the toolchain."
+            info "Successfully built the toolchain."
         else
-            echo "! Failed to build the toolchain."
+            warn "Failed to build the toolchain."
             return 1
         fi
     )

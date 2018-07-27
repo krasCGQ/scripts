@@ -26,6 +26,20 @@ export USE_CCACHE=true
 export KBUILD_BUILD_USER=krasCGQ
 export KBUILD_BUILD_HOST=KudProject
 
+# Prints a message with a dash
+function info {
+    echo "- ${1}"
+}
+
+# Prints a message with an exclamation point
+function warn {
+    echo "! ${1}" >&2
+    while [[ ${#} -ge 2 ]]; do
+        echo "  ${2}" >&2
+        shift
+    done
+}
+
 # Parse current branch in git repository
 function parse_git_branch {
     BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
@@ -49,7 +63,7 @@ function tg_upload {
 
     # If no file is about to be uploaded, bail out
     [[ -z ${1} ]] && \
-        echo "! Please provide a file to upload!" && \
+        warn "Please provide a file to upload!" && \
         return 1
 
     # Upload it!
