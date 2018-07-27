@@ -43,7 +43,7 @@ function info {
     echo "- ${1}"
 }
 
-# Post a message to a Telegram chat
+# Posts a message to a Telegram chat
 function tg_post {
     curl -s -X POST https://api.telegram.org/bot"${TOKEN}"/sendMessage \
          -d text="$(for POST in "${@}"; do echo "${POST}"; done)" \
@@ -89,6 +89,17 @@ trap '{
     tg_error
 }' ERR
 
+# Prints a message with an exclamation point
+function warn {
+    echo "! ${1}" >&2
+}
+
+# Uploads a document to a Telegram chat
+function tg_upload {
+    curl -s https://api.telegram.org/bot"${TOKEN}"/sendDocument \
+         -F document=@"${1}" -F chat_id="${CHATID}" >> /dev/null
+}
+
 ## Commands
 
 # Parse parameters
@@ -109,6 +120,9 @@ if [[ ${#} -ge 1 ]]; then
             # OPTIONAL
             -b|--build-only)
                 BUILD_ONLY=true ;;
+            -u|--upload)
+                # Will be ignored if BUILD_ONLY=true
+                UPLOAD=true ;;
 
             # DIE!
             *)
@@ -140,6 +154,10 @@ sleep 1
 
 [[ -z ${COMPILER} ]] && \
     die "Missing required option!"
+
+[[ -n ${UPLOAD} && -n ${BUILD_ONLY} ]] && \
+    warn "Requested to only build but upload was assigned, disabling." && \
+    unset UPLOAD
 
 for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
     ! find ${VAR} > /dev/null 2>&1 && \
@@ -207,21 +225,34 @@ if [[ -z ${BUILD_ONLY} ]]; then
 
     # Export here to be picked later
     DATE=$(date +%s)
+    ZIP=${NAME}-"${DATE}".zip
 
     # Make flashable kernel zip
-    info "Creating ${NAME}-${DATE}.zip..."
+    info "Creating ${ZIP}..."
     (
         cd "${AK2}" || \
             die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
 
         # TODO: Signed flashable zip
-        zip -qr9 ${NAME}-"${DATE}".zip ./* -x README.md -x ./*.zip
+        zip -qr9 "${ZIP}" ./* -x README.md -x ./*.zip
     )
+fi
+
+# Upload kernel zip to Telegram chat if requested, else the end
+if [[ -n ${UPLOAD} ]]; then
+    info "Uploading ${ZIP} to Telegram..."
+    tg_post "${MSG} Completed!" \
+            "Uploading build..."
+    ! tg_upload "${AK2}/${ZIP}" && \
+         warn "Failed to upload ${ZIP}." && \
+         tg_post "Failed to upload the build." \
+                 "@krasCGQ can u do it for me ?? >_<"
+else
+    tg_post "${MSG} Completed!"
 fi
 
 # End script
 info "That's it. Job well done!"
-tg_post "${MSG} Completed!"
 
 # Alert for script ending
 echo -ne '\a'
