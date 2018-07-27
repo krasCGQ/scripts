@@ -64,16 +64,12 @@ function tg_error {
     tg_post "${MSG} Interrupted - Build Error(s)" \
             "@krasCGQ check console desu !! >_<"
 
-    if [[ -n ${STATUS} ]]; then
-        exit "${STATUS}"
-    else
-        exit 1
-    fi
+    exit "${STATUS}"
 }
 
 # Prints message to stderr and exit script, OR call tg_error function
 function die {
-    [[ -n ${STATUS} ]] && \
+    [[ -z ${STATUS} && -n ${STARTED} ]] && \
         STATUS=${?}
 
     echo "! ${1}" >&2
