@@ -201,10 +201,10 @@ function git_sync() {(
         BRANCH=master
     else
         # Set URL based on folder
-        URL_PREFIX=git://github.com/
-        LLVM_ORG=${URL_PREFIX}llvm-mirror/
+        LLVM_ORG=https://git.llvm.org/git/
         case ${FOLDER} in
             "clang"|"llvm")
+                URL_PREFIX=git://github.com/
                 URL=${URL_PREFIX}nathanchance/$(basename "${FOLDER}") ;;
             "extra")
                 URL=${LLVM_ORG}clang-tools-extra ;;
