@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import common bash completion
-. "${HOME}"/scripts/env/common
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
 # Use Central Indonesia Time
 export TZ=Asia/Makassar

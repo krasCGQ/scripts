@@ -4,7 +4,7 @@
 
 # Import common bash completion
 # shellcheck disable=SC1090
-. "${HOME}"/KudProject/scripts/env/common
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
 # Set up aliases
 alias update='sudo su -c "pacman -Sy --noprogressbar && bauerbill -Su --noconfirm --noprogressbar"'
