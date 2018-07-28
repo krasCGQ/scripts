@@ -29,6 +29,10 @@ export KBUILD_BUILD_HOST=KudProject
 # Prints a message with a dash
 function info {
     echo "- ${1}"
+    while [[ ${#} -ge 2 ]]; do
+        echo "  ${2}"
+        shift
+    done
 }
 
 # Prints a message with an exclamation point
