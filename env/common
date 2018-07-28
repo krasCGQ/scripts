@@ -7,9 +7,13 @@
 BLD=$(tput bold)
 RST=$(tput sgr0)
 
+## Aliases
+
 # Set up common aliases
 alias nano='nano -FISWaiuwx'
 alias wget='wget -c -t 0 --retry-connrefused'
+
+## Variables
 
 # Required for GPG signing
 GPG_TTY=$(tty)
@@ -21,9 +25,15 @@ export EDITOR=nano
 # Use ccache for faster compiling
 export USE_CCACHE=true
 
-# My identity in nutshell (kernel)
+# My kernel identity in nutshell
 export KBUILD_BUILD_USER=krasCGQ
 export KBUILD_BUILD_HOST=KudProject
+
+# Import Telegram bot token and chat ID
+SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
+TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
+# KudProject Community
+CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14)
 
 # Prints a message with a dash
 function info {
@@ -59,11 +69,6 @@ function parse_git_branch {
 # Upload a file to a Telegram chat
 # Usage: tg_upload <file>
 function tg_upload {
-    # Import Telegram bot token and chat ID
-    SCRIPTDIR=${HOME}/KudProject/scripts
-    TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
-    CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14) # KudProject Community
-
     # If no file is about to be uploaded, bail out
     [[ -z ${1} ]] && \
         warn "Please provide a file to upload!" && \
@@ -71,9 +76,7 @@ function tg_upload {
 
     # Upload it!
     curl -s https://api.telegram.org/bot"${TOKEN}"/sendDocument \
-        -F chat_id="${CHATID}" \
-        -F document=@"${1}" \
-        >> /dev/null
+        -F document=@"${1}" -F chat_id="${CHATID}" >> /dev/null
 }
 
 # Sign flashable zip with zipsigner

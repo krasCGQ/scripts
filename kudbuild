@@ -12,12 +12,7 @@
 ## Variables
 
 function set_variables {
-    # Import Telegram bot token & chat ID
-    SCRIPTDIR=${HOME}/KudProject/scripts
-    TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
-    CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14)
-
-    # Default message for posting
+    # Default message for posting to Telegram
     MSG="KudKernel build:"
 
     # Number of threads used

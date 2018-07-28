@@ -3,96 +3,90 @@
 # Copyright (C) 2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-## Text styles
-BLD=$(tput bold)
-RST=$(tput sgr0)
+## Import common environment script
+# shellcheck source=/dev/null
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
 
-## Switches
-case ${1} in
-    -v|--verbose) VERBOSE=true ;;
-    *) # Empty values
-       VERBOSE= ;;
-esac
+## Functions
 
-## Abort script when something went wrong
-function error {
+# Abort script when something went wrong
+function die {
     STATUS=${?}
     [[ -z ${VERBOSE} ]] && \
         exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
-    echo "${BLD}! Failed to patch selected projects.${RST}"
+    warn "Failed to patch selected projects."
     exit ${STATUS}
 }
-trap error ERR
+trap die ERR
 
-## Modify these variables accordingly
+# Modify these variables accordingly
 function variables_list {
     SRCDIR="${HOME}/tc/git"
     CTDIR="${HOME}/src/ct-ng/packages"
 }
 
-## List of projects
-# In order:
+# List of projects (in order):
 # 1) Location of git-cloned source
 # 2) Branch that we need to grab upstream changes from
 # 3) Location of package patches folder within ct-ng source
 # 4) Patches that we'd like to exclude; must be separated by vertical bar
 function projects_list {
-    ## GNU GCC
+    # GNU GCC
     GNUDIR="${SRCDIR}/gnu"
     GNUBRANCH="gcc-8-branch"
     GNUPATCH="${CTDIR}/gcc/8.1.0"
     GNUEXCL="0018"
 
-    ## Linaro GCC
+    # Linaro GCC
     LNRDIR="${SRCDIR}/linaro"
     LNRBRANCH="linaro-local/gcc-7-integration-branch"
     LNRPATCH="${CTDIR}/gcc-linaro/7.2-2017.11"
     LNREXCL=""
 
-    ## GNU Binutils
+    # GNU Binutils
     BINDIR="${SRCDIR}/binutils"
     BINBRANCH="master"
     BINPATCH="${CTDIR}/binutils/2.30"
     BINEXCL=""
 }
 
-## Usage: update_projects "<src-dir>" "<src-branch>" "<patch-dir>"
+# Usage: update_projects "<src-dir>" "<src-branch>" "<patch-dir>"
 function update_projects {
-    ## Be quiet
+    # Be quiet
     [[ -z ${VERBOSE} ]] && \
         exec 5>&1 6>&2 &> /dev/null
 
-    ## Enter source directory
-    cd "${1}" || error
+    # Enter source directory
+    cd "${1}" || die
 
-    ## Fetch updates from upstream
+    # Fetch updates from upstream
     git fetch origin "${2}" --depth=1
 
-    ## Hard reset current tree to latest source
+    # Hard reset current tree to latest source
     git reset --hard FETCH_HEAD
 
-    ## Clean them up as we can make mess with them at some point
+    # Clean them up as we can make mess with them at some point
     git clean -dfx
 
-    ## Fetch list of patches that we're going to apply
+    # Fetch list of patches that we're going to apply
     if [[ ! -z "${4}" ]]; then
         LIST="$(find "${3}" -name "*.patch" | grep -Ev "${4}" | sort -n)"
     else
         LIST="$(find "${3}" -name "*.patch" | sort -n)"
     fi
 
-    ## Stops here temporarily
+    # Stops here temporarily
     [[ -z ${VERBOSE} ]] && \
         exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
 
-    ## Notify that project patching is about to begin
-    echo "- Patching $(basename "${1}")..."
+    # Notify that project patching is about to begin
+    info "Patching $(basename "${1}")..."
 
     # Be quiet (again)
     [[ -z ${VERBOSE} ]] && \
         exec 5>&1 6>&2 &> /dev/null
 
-    ## Apply crosstool-ng patches
+    # Apply crosstool-ng patches
     for PATCH in ${LIST}; do
         # Output patch name if verbose
         echo "  - Applying patch $(basename "${PATCH}" | cut -d '-' -f 1 | tail -c 5)..."
@@ -101,10 +95,10 @@ function update_projects {
         patch --verbose --merge -N -p1 -i "${PATCH}"
     done
 
-    ## Remove .orig files
+    # Remove .orig files
     rm -f "$(find . -name "*.orig")"
 
-    ## Go back to dir where this script is run
+    # Go back to dir where this script is run
     # Disable shellcheck SC2164 warning as in no way this will fail.
     # shellcheck disable=SC2164
     cd - > /dev/null
@@ -117,9 +111,17 @@ function update_projects {
     return
 }
 
+## Commands
+
+# Parse parameters
+case ${1} in
+    -v|--verbose)
+        VERBOSE=true ;;
+esac
+
 variables_list
 projects_list
 update_projects "${GNUDIR}" "${GNUBRANCH}" "${GNUPATCH}" "${GNUEXCL}"
 update_projects "${LNRDIR}" "${LNRBRANCH}" "${LNRPATCH}" "${LNREXCL}"
 update_projects "${BINDIR}" "${BINBRANCH}" "${BINPATCH}" "${BINEXCL}"
-echo "${BLD}i Projects updated successfully.${RST}"
+info "Projects updated successfully."
