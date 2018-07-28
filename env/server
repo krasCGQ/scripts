@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1090
+# shellcheck source=/dev/null
 # Copyright (C) 2017-2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
