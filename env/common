@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Text styles
-BLD="\033[1m"
-RST="\033[0m"
+BLD=$(tput bold)
+RST=$(tput sgr0)
 
 # Set up common aliases
 alias echo='echo -e'
