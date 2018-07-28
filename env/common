@@ -8,7 +8,6 @@ BLD=$(tput bold)
 RST=$(tput sgr0)
 
 # Set up common aliases
-alias echo='echo -e'
 alias nano='nano -FISWaiuwx'
 alias wget='wget -c -t 0 --retry-connrefused'
 
