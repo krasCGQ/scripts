@@ -5,9 +5,9 @@
 
 # TODO: Proper build script, this is made solely for mido kernel build for now
 
-# Text styles
-BLD=$(tput bold)
-RST=$(tput sgr0)
+## Import common environment script
+# shellcheck source=/dev/null
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
 
 ## Variables
 
@@ -37,16 +37,6 @@ function set_variables {
 }
 
 ## Functions
-
-# Prints a message with a dash
-function info {
-    echo "- ${1}"
-}
-
-# Prints a message with an exclamation point
-function warn {
-    echo "! ${1}" >&2
-}
 
 # Posts a message to a Telegram chat
 function tg_post {
