@@ -15,41 +15,6 @@ export PATH=${HOME}/.files/bin:${PATH}
 # Export ccache-backed compiler symlinks
 export PATH=/usr/lib/ccache/bin:${PATH}
 
-# Sign release kernel zip with zipsigner
-function zipsigner {
-    [[ -z $(command -v java) ]] && \
-        warn "Please install any of OpenJDK version before continuing." && \
-        return 1
-
-    [[ -z ${ZIPSIGNER} ]] && \
-        warn "${BLD}ZIPSIGNER${RST} variable is empty. Refusing to continue." && \
-        return 1
-
-    [[ ${#} -lt 2 ]] && \
-        warn "${BLD}Usage:${RST} zipsigner <unsigned-zip> <signed-zip>" && \
-        return 1
-
-    [[ ! -f ${ZIPSIGNER} ]] && \
-        warn "${BLD}$(basename "${ZIPSIGNER}")${RST} doesn't exist in defined path." && \
-        return 1
-
-    [[ ! -f ${1} ]] && \
-        warn "${BLD}$(basename "${1}")${RST} doesn't exist in defined path." && \
-        return 1
-
-    [[ ! -d $(dirname "${2}") ]] && \
-        mkdir -p "$(dirname "${2}")"
-
-    echo "- Signing $(basename "${1}") as $(basename "${2}")..."
-    if $(command -v java) -jar "${ZIPSIGNER}" "${1}" "${2}"; then
-        info "Operation has completed successfully."
-    else
-        STATUS=${?}
-        warn "Failed to do defined operation."
-        return ${STATUS}
-    fi
-}
-
 # Repack FLAC files with maximum compression and ReplayGain applied
 function flac_repack {
     # Make sure FLAC package is installed
