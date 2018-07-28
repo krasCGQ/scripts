@@ -268,7 +268,7 @@ if [[ -n ${UPLOAD} ]]; then
             info "Uploading ${REL_ZIP} to webserver..."
             tg_post "${MSG} Completed!"
             for FILES in "${REL_ZIP}"{,.md5sum}; do
-                if rsync -qP "${REL_ZIP}" krasCGQ@srv1.botstack.host:~/srv/; then
+                if rsync -qP "${FILES}" krasCGQ@srv1.botstack.host:~/srv/kernels/mido; then
                     SUCCESS=true
                 else
                     warn "Failed to upload ${FILES}."
