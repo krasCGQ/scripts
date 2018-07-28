@@ -34,6 +34,10 @@ function set_variables {
     DTB=msm8953-qrd-sku3-mido
     NAME=KudKernel-mido
     OUT=$(pwd)/../build/mido
+    # FIXME: It has to be like this to avoid script error without '-r <version>'
+    if [[ -n ${RELEASE} ]]; then
+        export KBUILD_BUILD_VERSION=${RELEASE}
+    fi
 }
 
 ## Functions
@@ -110,6 +114,15 @@ if [[ ${#} -ge 1 ]]; then
             # OPTIONAL
             -b|--build-only)
                 BUILD_ONLY=true ;;
+            -r|--release)
+                shift
+
+                # Only integers are accepted here
+                if [[ -z ${1//[0-9]} ]]; then
+                    RELEASE=${1}
+                else
+                    die "Invalid version specified!"
+                fi ;;
             -u|--upload)
                 # Will be ignored if BUILD_ONLY=true
                 UPLOAD=true ;;
@@ -215,6 +228,8 @@ if [[ -z ${BUILD_ONLY} ]]; then
 
     # Export here to be picked later
     ZIP=${NAME}-$(date +%s).zip
+    [[ -n ${RELEASE} ]] && \
+        REL_ZIP=${NAME}-r${RELEASE}-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
     info "Creating ${ZIP}..."
@@ -222,20 +237,52 @@ if [[ -z ${BUILD_ONLY} ]]; then
         cd "${AK2}" || \
             die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
 
-        # TODO: Signed flashable zip
         zip -qr9 "${ZIP}" ./* -x README.md -x ./*.zip
+
+        # Sign zip for release
+        [[ -n ${RELEASE} ]] && \
+            zipsigner "${ZIP}" "${REL_ZIP}"
     )
 fi
 
-# Upload kernel zip to Telegram chat if requested, else the end
+# Upload kernel zip if requested, else the end
 if [[ -n ${UPLOAD} ]]; then
-    info "Uploading ${ZIP} to Telegram..."
-    tg_post "${MSG} Completed!" \
-            "Uploading build..."
-    ! tg_upload "${AK2}/${ZIP}" && \
-         warn "Failed to upload ${ZIP}." && \
-         tg_post "Failed to upload the build." \
-                 "@krasCGQ can u do it for me ?? >_<"
+    if [[ -z ${RELEASE} ]]; then
+        # To Telegram
+        info "Uploading ${ZIP} to Telegram..."
+        tg_post "${MSG} Completed!" \
+                "Uploading build..."
+        ! tg_upload "${AK2}/${ZIP}" && \
+             warn "Failed to upload ${ZIP}." && \
+             tg_post "Failed to upload the build." \
+                     "@krasCGQ can u do it for me ?? >_<"
+    else
+        # or to webserver for release zip
+        (
+            cd "${AK2}" || \
+                die "$(basename "${AK2}") doesn't exist in defined path."
+
+            info "Creating md5sum of ${REL_ZIP}..."
+            md5sum "${REL_ZIP}" > "${REL_ZIP}".md5sum
+
+            info "Uploading ${REL_ZIP} to webserver..."
+            tg_post "${MSG} Completed!"
+            for FILES in "${REL_ZIP}"{,.md5sum}; do
+                if rsync -qP "${REL_ZIP}" krasCGQ@srv1.botstack.host:~/srv/; then
+                    SUCCESS=true
+                else
+                    warn "Failed to upload ${FILES}."
+                    [[ -n ${SUCCESS} ]] && \
+                        unset SUCCESS
+                    break
+                fi
+            done
+
+            [[ -n ${SUCCESS} ]] && \
+                info "${REL_ZIP} uploaded successfully." \
+                     "GitHub releases and AndroidFileHost uploads need manual intervention, though."
+        )
+    fi
 else
     tg_post "${MSG} Completed!"
 fi
