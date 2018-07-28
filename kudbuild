@@ -239,10 +239,12 @@ if [[ -z ${BUILD_ONLY} ]]; then
 
         zip -qr9 "${ZIP}" ./* -x README.md -x ./*.zip
 
-        # Sign zip for release
         if [[ -n ${RELEASE} ]]; then
+            # Remove existing release zip if available
             [[ -f ${REL_ZIP} ]] && \
                 rm -f "${REL_ZIP}"{,.md5sum}
+
+            # Sign zip for release
             zipsigner "${ZIP}" "${REL_ZIP}"
         fi
     )
