@@ -240,8 +240,11 @@ if [[ -z ${BUILD_ONLY} ]]; then
         zip -qr9 "${ZIP}" ./* -x README.md -x ./*.zip
 
         # Sign zip for release
-        [[ -n ${RELEASE} ]] && \
+        if [[ -n ${RELEASE} ]]; then
+            [[ -f ${REL_ZIP} ]] && \
+                rm -f "${REL_ZIP}"{,.md5sum}
             zipsigner "${ZIP}" "${REL_ZIP}"
+        fi
     )
 fi
 
