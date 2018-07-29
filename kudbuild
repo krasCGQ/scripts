@@ -41,7 +41,7 @@ function set_variables {
 function tg_post {
     curl -s -X POST https://api.telegram.org/bot"${TOKEN}"/sendMessage \
          -d text="$(for POST in "${@}"; do echo "${POST}"; done)" \
-         -d parse_mode=html -d chat_id="${CHATID}" >> /dev/null
+         -d chat_id="${CHATID}" >> /dev/null
 }
 
 # In case of signal interrupt, post interruption notification and exit script
@@ -261,7 +261,7 @@ if [[ -n ${UPLOAD} ]]; then
              warn "Failed to upload ${ZIP}." && \
              tg_post "Failed to upload the build." \
                      "@krasCGQ can u do it for me ?? >_<"
-        tg_post "Latest commit: <code>$(git_pretty %h)</code> (\"$(git_pretty %s)\")"
+        tg_post "Latest commit: $(git_pretty %h) (\"$(git_pretty %s)\")"
     else
         # or to webserver for release zip
         (
@@ -291,7 +291,7 @@ if [[ -n ${UPLOAD} ]]; then
     fi
 else
     tg_post "${MSG} Completed!" \
-            "Latest commit: <code>$(git_pretty %h)</code> (\"$(git_pretty %s)\")"
+            "Latest commit: $(git_pretty %h) (\"$(git_pretty %s)\")"
 fi
 
 # End script
