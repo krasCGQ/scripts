@@ -84,7 +84,7 @@ function btg_build {
 
         rm -rf "${OPTDIR}"/aarch64-linux-gnu-old
         [[ -d ${OPTDIR}/aarch64-linux-gnu ]] && \
-            mv -f "${OPTDIR}"/aarch64-linux-gnu{,old}
+            mv -f "${OPTDIR}"/aarch64-linux-gnu{,-old}
         mv -f aarch64-linux-gnu "${OPTDIR}"
 
         ! ./build -a x86_64 -s gnu -v 9 -nt -nu && \
@@ -92,7 +92,7 @@ function btg_build {
 
         rm -rf "${OPTDIR}"/x86_64-linux-gnu-old
         [[ -d ${OPTDIR}/x86_64-linux-gnu ]] && \
-            mv -f "${OPTDIR}"/x86_64-linux-gnu{,old}
+            mv -f "${OPTDIR}"/x86_64-linux-gnu{,-old}
         mv -f x86_64-linux-gnu "${OPTDIR}"
 
         rm -rf build-*
