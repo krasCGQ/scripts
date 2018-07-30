@@ -106,7 +106,6 @@ function ct-ng_build {
     TARDIR=${CTDIR}/tarballs
     GITDIR=${CTDIR}/git
     ISLDIR=${GITDIR}/isl
-    ISLPATCH=${HOME}/patches/isl/0001-isl--Revert-all-troublesome-changes.patch
 
     [[ -z $(command -v ct-ng) ]] && \
         warn "${BLD}ct-ng${RST} isn't installed." \
@@ -155,15 +154,16 @@ function ct-ng_build {
                      "Are you sure the defined path is correct?" && \
                 return 1
 
-            info "Updating and patching ISL for toolchain building..."
+            info "Updating ISL..."
             exec 5>&1 6>&2 &> /dev/null
-            git fetch origin master
-            git reset --hard origin/master
+            git fetch upstream master
+            ! git rebase upstream/master && \
+                warn "Failed to rebase ISL patch. Refusing to continue." > /dev/stderr && \
+                return 1
+            [[ $(whoami) == krasCGQ && $(hostname) == botstack ]] && \
+                git push -f
             git clean -dfx
             exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
-            ! patch --merge -s -N -p1 -i "${ISLPATCH}" && \
-                warn "Failed to patch ISL. Refusing to continue." && \
-                return 1
 
             echo "- Generating configuration files..."
             ! ./autogen.sh && \
