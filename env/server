@@ -165,7 +165,7 @@ function ct-ng_build {
             git clean -dfx
             exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
 
-            echo "- Generating configuration files..."
+            info "Generating configuration files..."
             ! ./autogen.sh && \
                 warn "Failed to generate configuration files." && \
                 return 1
