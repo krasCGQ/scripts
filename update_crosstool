@@ -99,9 +99,7 @@ function update_projects {
     rm -f "$(find . -name "*.orig")"
 
     # Go back to dir where this script is run
-    # Disable shellcheck SC2164 warning as in no way this will fail.
-    # shellcheck disable=SC2164
-    cd - > /dev/null
+    cd - > /dev/null || die
 
     # Stops here for good
     [[ -z ${VERBOSE} ]] && \

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1117,SC2034
 # Copyright (C) 2017-2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
