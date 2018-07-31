@@ -29,11 +29,11 @@ export USE_CCACHE=true
 export KBUILD_BUILD_USER=krasCGQ
 export KBUILD_BUILD_HOST=KudProject
 
-# Import Telegram bot token and chat ID
+# Import Telegram bot token and chat ID (KudProject Community)
 SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
-TOKEN=$(cat "${SCRIPTDIR}"/tg_token)
-# KudProject Community
-CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14)
+[[ -f ${SCRIPTDIR}/tg_token && -f ${SCRIPTDIR}/tg_chatid ]] && \
+    TOKEN=$(cat "${SCRIPTDIR}"/tg_token) && \
+    CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14)
 
 # Prints a message with a dash
 function info {
