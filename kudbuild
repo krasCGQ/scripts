@@ -256,7 +256,7 @@ if [[ -n ${UPLOAD} ]]; then
              warn "Failed to upload ${ZIP}." && \
              tg_post "Failed to upload the build." \
                      "@krasCGQ can u do it for me ?? >_<"
-        tg_post "Latest commit: $(git_pretty %h) (\"$(git_pretty %s)\")"
+        tg_post "Latest commit: $(git_pretty "%h (\"%s\")")"
     else
         # or to webserver for release zip
         (
@@ -286,7 +286,7 @@ if [[ -n ${UPLOAD} ]]; then
     fi
 else
     tg_post "${MSG} Completed!" \
-            "Latest commit: $(git_pretty %h) (\"$(git_pretty %s)\")"
+            "Latest commit: $(git_pretty "%h (\"%s\")")"
 fi
 
 # End script
