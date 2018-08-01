@@ -17,6 +17,8 @@ Enjoy!
 
 ## License
 
+Disclaimer: License below _doesn't apply_ to any of submodules in this repository. They're exist here as one of my scripts' dependencies.
+
 ```
 Copyright (C) 2017-2018 Albert I (krasCGQ)
 
