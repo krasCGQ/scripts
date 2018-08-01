@@ -28,11 +28,14 @@ export USE_CCACHE=true
 export KBUILD_BUILD_USER=krasCGQ
 export KBUILD_BUILD_HOST=KudProject
 
-# Import Telegram bot token and chat ID (KudProject Community)
+# Define script directory
 SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
+
+# Import Telegram bot token and chat ID (KudProject Community)
 [[ -f ${SCRIPTDIR}/tg_token && -f ${SCRIPTDIR}/tg_chatid ]] && \
-    TOKEN=$(cat "${SCRIPTDIR}"/tg_token) && \
-    CHATID=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14)
+    TELEGRAM_TOKEN=$(cat "${SCRIPTDIR}"/tg_token) && \
+    TELEGRAM_CHAT=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14) && \
+    export TELEGRAM_TOKEN TELEGRAM_CHAT
 
 # Prints a message with a dash
 function info {
@@ -63,19 +66,6 @@ function parse_git_branch {
         # This is what we want to stdout
         echo " ${BRANCH}"
     fi
-}
-
-# Upload a file to a Telegram chat
-# Usage: tg_upload <file>
-function tg_upload {
-    # If no file is about to be uploaded, bail out
-    [[ -z ${1} ]] && \
-        warn "Please provide a file to upload!" && \
-        return 1
-
-    # Upload it!
-    curl -s https://api.telegram.org/bot"${TOKEN}"/sendDocument \
-        -F document=@"${1}" -F chat_id="${CHATID}" >> /dev/null
 }
 
 # Sign flashable zip with zipsigner

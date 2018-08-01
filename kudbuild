@@ -12,6 +12,9 @@
 ## Variables
 
 function set_variables {
+    # Source of telegram.sh
+    TELEGRAM="${SCRIPTDIR}"/telegram/telegram
+
     # Default message for posting to Telegram
     MSG="KudKernel build:"
 
@@ -37,11 +40,9 @@ function set_variables {
 
 ## Functions
 
-# Posts a message to a Telegram chat
+# telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
 function tg_post {
-    curl -s -X POST https://api.telegram.org/bot"${TOKEN}"/sendMessage \
-         -d text="$(for POST in "${@}"; do echo "${POST}"; done)" \
-         -d chat_id="${CHATID}" >> /dev/null
+    "${TELEGRAM}" "$(for POST in "${@}"; do echo "${POST}"; done)"
 }
 
 # In case of signal interrupt, post interruption notification and exit script
@@ -82,12 +83,6 @@ trap '{
 
     tg_error
 }' ERR
-
-# Uploads a document to a Telegram chat
-function tg_upload {
-    curl -s https://api.telegram.org/bot"${TOKEN}"/sendDocument \
-         -F document=@"${1}" -F chat_id="${CHATID}" >> /dev/null
-}
 
 # git log --pretty=format: wrapper
 function git_pretty {
@@ -257,7 +252,7 @@ if [[ -n ${UPLOAD} ]]; then
         info "Uploading ${ZIP} to Telegram..."
         tg_post "${MSG} Completed!" \
                 "Uploading build..."
-        ! tg_upload "${AK2}/${ZIP}" && \
+        ! "${TELEGRAM}" -f "${AK2}/${ZIP}" && \
              warn "Failed to upload ${ZIP}." && \
              tg_post "Failed to upload the build." \
                      "@krasCGQ can u do it for me ?? >_<"
