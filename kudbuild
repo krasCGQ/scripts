@@ -15,9 +15,6 @@ function set_variables {
     # Source of telegram.sh
     TELEGRAM="${SCRIPTDIR}"/telegram/telegram
 
-    # Default message for posting to Telegram
-    MSG="KudKernel build:"
-
     # Number of threads used
     THREADS=$(nproc --all)
 
@@ -32,10 +29,11 @@ function set_variables {
     DTB=msm8953-qrd-sku3-mido
     NAME=KudKernel-mido
     OUT=$(pwd)/../build/mido
-    # FIXME: It has to be like this to avoid script error without '-r <version>'
-    if [[ -n ${RELEASE} ]]; then
+    [[ -n ${RELEASE} ]] && \
         export KBUILD_BUILD_VERSION=${RELEASE}
-    fi
+
+    # Default message for posting to Telegram
+    MSG="${NAME/-*} build:"
 }
 
 ## Functions
@@ -278,11 +276,11 @@ if [[ -n ${UPLOAD} ]]; then
                     break
                 fi
             done
-
-            [[ -n ${SUCCESS} ]] && \
-                info "${REL_ZIP} uploaded successfully." \
-                     "GitHub releases and AndroidFileHost uploads need manual intervention, though."
         )
+
+        [[ -n ${SUCCESS} ]] && \
+            info "${REL_ZIP} uploaded successfully." \
+                 "GitHub releases and AndroidFileHost uploads need manual intervention, though."
     fi
 else
     tg_post "${MSG} Completed!" \
