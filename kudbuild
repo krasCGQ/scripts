@@ -24,7 +24,7 @@ function set_variables {
     # GCC and Clang (if used)
     GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
     [[ ${COMPILER} == clang ]] && \
-        CLANGPATH=/opt/kud/flash-clang-7.x/bin/clang
+        CLANGPATH=/opt/kud/flash-clang-8.x/bin/clang
 
     # Kernel build variables
     AK2=${HOME}/KudProject/AnyKernel2
