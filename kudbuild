@@ -23,12 +23,15 @@ function set_variables {
     [[ ${COMPILER} == clang ]] && \
         CLANGPATH=/opt/kud/flash-clang-8.x/bin/clang
 
+    # Device variable
+    DEVICE=mido
+
     # Kernel build variables
-    AK2=${HOME}/KudProject/AnyKernel2
+    AK2=${HOME}/KudProject/AnyKernel2-${DEVICE}
     ARCH=arm64
-    DTB=msm8953-qrd-sku3-mido
-    NAME=KudKernel-mido
-    OUT=$(pwd)/../build/mido
+    DTB=msm8953-qrd-sku3-${DEVICE}
+    NAME=KudKernel-${DEVICE}
+    OUT=$(pwd)/../build/${DEVICE}
     [[ -n ${RELEASE} ]] && \
         export KBUILD_BUILD_VERSION=${RELEASE}
 
@@ -267,7 +270,7 @@ if [[ -n ${UPLOAD} ]]; then
             info "Uploading ${REL_ZIP} to webserver..."
             tg_post "${MSG} Completed!"
             for FILES in "${REL_ZIP}"{,.md5sum}; do
-                if rsync -qP "${FILES}" krasCGQ@srv1.botstack.host:~/srv/kernels/mido; then
+                if rsync -qP "${FILES}" krasCGQ@srv1.botstack.host:~/srv/kernels/${DEVICE}; then
                     SUCCESS=true
                 else
                     warn "Failed to upload ${FILES}."
