@@ -197,7 +197,7 @@ function git_sync() {(
 
     # binutils uses another URL/branch scheme
     if [[ ${FOLDER} =~ "binutils" ]]; then
-        URL=git://git.linaro.org/toolchain/binutils-gdb
+        URL=https://sourceware.org/git/binutils-gdb.git
         # SC2030: Modification of BRANCH is local (to subshell caused by (..) group).
         # shellcheck disable=SC2030
         BRANCH=master
@@ -205,7 +205,7 @@ function git_sync() {(
         # Set URL based on folder
         case ${FOLDER} in
             "clang"|"llvm")
-                URL=git://github.com/nathanchance/$(basename "${FOLDER}") ;;
+                URL=https://github.com/nathanchance/$(basename "${FOLDER}").git ;;
             "extra")
                 URL=${LLVM_ORG}clang-tools-extra ;;
             *)
@@ -276,7 +276,7 @@ function sync_all() {
     esac
 
     # Define the git URL for global use
-    LLVM_ORG=git://github.com/llvm-mirror/
+    LLVM_ORG=https://git.llvm.org/git/
 
     git_sync llvm
     svn_sync "$(basename "${SVN_FOLDER}")"
@@ -319,7 +319,7 @@ function cleanup() {
 function build() {
     header "Building Clang"
 
-    [[ -n ${STOCK} ]] && URL_PREFIX=${LLVM_ORG} || URL_PREFIX=git://github.com/nathanchance/
+    [[ -n ${STOCK} ]] && URL_PREFIX=${LLVM_ORG} || URL_PREFIX=https://github.com/nathanchance/
     for REPO in clang llvm; do
         declare ${REPO^^}_REPOSITORY_STRING=${URL_PREFIX}${REPO}
     done
@@ -360,7 +360,7 @@ function build() {
     time ninja && SUCCESS=true
     TIME_STRING="$(format_time "${START}" "$(date +"%s")")"
     if [[ -n ${SUCCESS} ]]; then
-        VERSION_STRING=$("${BUILD_FOLDER}"/bin/clang --version | head -1 | perl -pe 's/\(git.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+        VERSION_STRING=$("${BUILD_FOLDER}"/bin/clang --version | head -1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
         header "SUCCESS!" "${GRN}"
         echo "${BOLD}Time elapsed:${RST} ${TIME_STRING,,}"
         echo
