@@ -198,7 +198,7 @@ function git_sync() {(
 
     # binutils uses another URL/branch scheme
     if [[ ${FOLDER} =~ "binutils" ]]; then
-        URL=https://sourceware.org/git/binutils-gdb.git
+        URL=https://git.linaro.org/toolchain/binutils-gdb
         # SC2030: Modification of BRANCH is local (to subshell caused by (..) group).
         # shellcheck disable=SC2030
         BRANCH=master
