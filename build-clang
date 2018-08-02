@@ -379,8 +379,8 @@ function build() {
 
 # Install the toolchain
 function install() {
-    if [[ -z ${TEST} ]]; then
-        rm -rf "${INSTALL_FOLDER}-old"
+    if [[ -z ${TEST} && -d ${INSTALL_FOLDER} ]]; then
+        [[ -d ${INSTALL_FOLDER}-old ]] && rm -rf "${INSTALL_FOLDER}-old"
         mv "${INSTALL_FOLDER}" "${INSTALL_FOLDER}-old"
     fi
 
