@@ -190,7 +190,7 @@ if [[ ${COMPILER} == clang ]]; then
     CC=( "CC=${CC}" )
 
     # Export custom compiler string
-    KBUILD_COMPILER_STRING=$("${CLANGPATH}" --version | head -n 1 | perl -pe 's/\(git.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+    KBUILD_COMPILER_STRING=$("${CLANGPATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
     export KBUILD_COMPILER_STRING
 fi
 
