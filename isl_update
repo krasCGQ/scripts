@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Cron-like script to update ISL fork every 6 hours.
+# Copyright (C) 2018 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+## Import common environment script
+# shellcheck source=/dev/null
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
+
+# Script name is here
+NAME=${0/*\/}
+
+# Post notifications to Telegram with Markdown
+function tg_post {
+    "${SCRIPTDIR}"/telegram/telegram -M "$(for POST in "${@}"; do echo "${POST}"; done)"
+}
+
+# Kill script when something goes wrong
+function suicide {
+    [[ -n ${1} ]] && \
+        STATUS=${1} || \
+        STATUS=${?}
+
+    tg_post "*$(hostname):* Script \`${NAME}\` has been terminated with status ${STATUS}."
+    exit ${STATUS}
+}
+
+trap 'suicide 130' INT TERM
+trap suicide ERR
+
+# Alert for script startup
+tg_post "*$(hostname):* Script \`${NAME}\` has been started."
+
+# Sanity check
+[[ -z ${ISLDIR} || ! -d ${ISLDIR} ]] && \
+    { warn "ISLDIR is either undefined or defined but doesn't exist.";
+      suicide 1; }
+
+while true; do
+    # Inform script execution
+    info "${BLD}$(date +"%H:%M")${RST} | Executing..."
+
+    # Fetch, rebase, and force push
+    { git -C "${ISLDIR}" fetch upstream master;
+      git -C "${ISLDIR}" rebase FETCH_HEAD;
+      git -C "${ISLDIR}" push -f; } &>> "${NAME}"-log.txt
+
+    # Alert for job completion
+    tg_post "*$(hostname):* ISL fork has been updated and pushed successfully at $(LC_ALL=C date +"%T UTC%:::z on %B %d, %Y"). Latest commit's short SHA-1 after the job is \`$(git log --pretty=format:%h -1)\`."
+
+    # Sleep for 6 hours
+    info "${BLD}$(date +"%H:%M")${RST} | Sleeping for 6 hours..."
+    sleep 6h
+done
