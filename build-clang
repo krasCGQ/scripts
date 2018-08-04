@@ -108,7 +108,7 @@ function display_error() {
 # Prints an error in bold red and exits the script
 function die() {
     display_error "${@}"
-    exit
+    exit 1
 }
 
 # Enforces the value needed for two-part flags
@@ -246,7 +246,7 @@ function git_sync() {(
 
     # Roll back if necessary
     rollback
-)}
+) || exit 1; }
 
 
 # Syncs a svn project
