@@ -48,7 +48,7 @@ while true; do
     # Alert for job completion
     tg_post "*$(hostname):* ISL fork has been updated and pushed successfully at $(LC_ALL=C date +"%T UTC%:::z on %B %d, %Y"). Latest commit's short SHA-1 after the job is \`$(git -C "${ISLDIR}" log --pretty=format:%h -1)\`."
 
-    # Sleep for 6 hours
-    info "${BLD}$(date +"%H:%M")${RST} | Sleeping for 6 hours..."
-    sleep 6h
+    # Sleep for 18 hours
+    info "${BLD}$(date +"%H:%M")${RST} | Sleeping for 18 hours..."
+    sleep 18h
 done
