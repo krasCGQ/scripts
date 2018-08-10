@@ -242,6 +242,9 @@ if [[ -z ${BUILD_ONLY} ]]; then
 
             # Sign zip for release
             zipsigner "${ZIP}" "${REL_ZIP}"
+
+            # Delete 'unsigned' zip
+            rm -f "${ZIP}"
         fi
     )
 fi
