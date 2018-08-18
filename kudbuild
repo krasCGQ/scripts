@@ -61,7 +61,7 @@ if [[ ${#} -ge 1 ]]; then
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
             # REQUIRED
-            -c|--compiler)
+            -c |--compiler)
                 shift
 
                 # Only Clang or GCC is supported, case insensitive
@@ -72,9 +72,24 @@ if [[ ${#} -ge 1 ]]; then
                 fi ;;
 
             # OPTIONAL
-            -b|--build-only)
+            -b |--build-only)
                 BUILD_ONLY=true ;;
-            -r|--release)
+            -cv|--clang-version)
+                shift
+
+                # Only Clang 5 and 7 are supported
+                if [[ -z ${1//[0-9]} ]]; then
+                    if [[ ${1} -eq 5 ]]; then
+                        CLANG_VERSION=4053586
+                    elif [[ ${1} -eq 7 ]]; then
+                        CLANG_VERSION=r328903
+                    else
+                        die "Invalid version specified!"
+                    fi
+                else
+                    die "Invalid version specified!"
+                fi ;;
+            -r |--release)
                 shift
 
                 # Only integers are accepted here
@@ -83,9 +98,9 @@ if [[ ${#} -ge 1 ]]; then
                 else
                     die "Invalid version specified!"
                 fi ;;
-            -s|--stock)
+            -s |--stock)
                 STOCK=true ;;
-            -u|--upload)
+            -u |--upload)
                 # Will be ignored if BUILD_ONLY=true
                 UPLOAD=true ;;
 
@@ -117,7 +132,7 @@ if [[ -z ${STOCK} ]]; then
 else
     GCC_COMPILER=aarch64-linux-android-4.9/bin/aarch64-linux-androidkernel-
     [[ ${COMPILER} == clang ]] && \
-        CLANG_COMPILER=android-clang/clang-r328903
+        CLANG_COMPILER=android-clang/clang-${CLANG_VERSION}
 fi
 
 # Set prefixes here
@@ -162,6 +177,10 @@ sleep 1
 [[ -n ${UPLOAD} && -n ${BUILD_ONLY} ]] && \
     warn "Requested to only build but upload was assigned, disabling." && \
     unset UPLOAD
+
+[[ -n ${CLANG_VERSION} && -z ${STOCK} ]] && \
+    warn "Assigning Clang version is only meant for AOSP Clang, disabling." && \
+    unset CLANG_VERSION
 
 for VAR in ${GCC_PREFIX}gcc ${CLANG_PATH}; do
     find ${VAR} > /dev/null 2>&1 || \
