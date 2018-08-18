@@ -88,6 +88,8 @@ if [[ ${#} -ge 1 ]]; then
                 else
                     die "Invalid version specified!"
                 fi ;;
+            -s|--stock)
+                STOCK=true ;;
             -u|--upload)
                 # Will be ignored if BUILD_ONLY=true
                 UPLOAD=true ;;
@@ -105,16 +107,28 @@ fi
 
 ## Variables
 
-# Source of telegram.sh
+# Paths
 TELEGRAM="${SCRIPTDIR}"/telegram/telegram
+OPT_DIR=/opt/kud
 
 # Number of threads used
 THREADS=$(nproc --all)
 
-# GCC and Clang (if used)
-GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+# GCC and Clang (if used) compilers
+if [[ -z ${STOCK} ]]; then
+    GCC_COMPILER=aarch64-linux-gnu/bin/aarch64-linux-gnu-
+    [[ ${COMPILER} == clang ]] && \
+        CLANG_COMPILER=flash-clang-8.x
+else
+    GCC_COMPILER=aarch64-linux-android-4.9/bin/aarch64-linux-androidkernel-
+    [[ ${COMPILER} == clang ]] && \
+        CLANG_COMPILER=android-clang/clang-r328903
+fi
+
+# Set prefixes here
+GCC_PREFIX=${OPT_DIR}/${GCC_COMPILER}
 [[ ${COMPILER} == clang ]] && \
-    CLANGPATH=/opt/kud/flash-clang-8.x/bin/clang
+    CLANG_PATH=${OPT_DIR}/${CLANG_COMPILER}/bin/clang
 
 # Device variable
 DEVICE=mido
@@ -154,7 +168,7 @@ sleep 1
     warn "Requested to only build but upload was assigned, disabling." && \
     unset UPLOAD
 
-for VAR in ${GCCPREFIX}gcc ${CLANGPATH}; do
+for VAR in ${GCC_PREFIX}gcc ${CLANG_PATH}; do
     find ${VAR} > /dev/null 2>&1 || \
         die "${BLD}$(basename "${VAR}")${RST} doesn't exist in defined path."
 done
@@ -178,18 +192,18 @@ if [[ -n $(command -v ccache) ]]; then
 fi
 
 # Append (or set) CROSS_COMPILE
-CROSS_COMPILE+=${GCCPREFIX}
+CROSS_COMPILE+=${GCC_PREFIX}
 
 # If Clang is used
 if [[ ${COMPILER} == clang ]]; then
     # Additionally also append (or set) CC
-    CC+=${CLANGPATH}
+    CC+=${CLANG_PATH}
 
     # FIXME: Needs to be overridden by itself inside arrays
     CC=( "CC=${CC}" )
 
     # Export custom compiler string
-    KBUILD_COMPILER_STRING=$("${CLANGPATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+    KBUILD_COMPILER_STRING=$("${CLANG_PATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
     export KBUILD_COMPILER_STRING
 fi
 
