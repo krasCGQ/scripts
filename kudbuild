@@ -292,11 +292,11 @@ if [[ -n ${UPLOAD} ]]; then
                     break
                 fi
             done
-        )
 
-        [[ -n ${SUCCESS} ]] && \
-            info "${REL_ZIP} uploaded successfully." \
-                 "GitHub releases and AndroidFileHost uploads need manual intervention, though."
+            [[ -n ${SUCCESS} ]] && \
+                info "${REL_ZIP} uploaded successfully." \
+                     "GitHub releases and AndroidFileHost uploads need manual intervention, though."
+        )
     fi
 else
     tg_post "${MSG} Completed!" \
