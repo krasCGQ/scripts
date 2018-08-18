@@ -20,7 +20,7 @@ function tg_post {
 trap '{
     [[ -n ${STARTED} ]] && \
         tg_post "${MSG} Interrupted - Signal Interrupt" \
-                "@krasCGQ Y u do dis ?? >_<"
+                "Request from @TheOhara was granted."
 
     exit 130
 }' INT
@@ -28,7 +28,7 @@ trap '{
 # For any errors, no matter what, post error notification and exit script
 function tg_error {
     tg_post "${MSG} Interrupted - Build Error(s)" \
-            "@krasCGQ check console desu !! >_<"
+            "@TheOhara, do something, quick!"
 
     exit "${STATUS}"
 }
@@ -54,11 +54,6 @@ trap '{
 
     tg_error
 }' ERR
-
-# git log --pretty=format: wrapper
-function git_pretty {
-    git log --pretty=format:"${1}" -1
-}
 
 ## Parse parameters
 
@@ -259,18 +254,19 @@ if [[ -z ${BUILD_ONLY} ]]; then
     )
 fi
 
+# Notify successful build completion
+tg_post "${MSG} Completed!"
+
 # Upload kernel zip if requested, else the end
 if [[ -n ${UPLOAD} ]]; then
     if [[ -z ${RELEASE} ]]; then
         # To Telegram
         info "Uploading ${ZIP} to Telegram..."
-        tg_post "${MSG} Completed!" \
-                "Uploading build..."
+        tg_post "Uploading build..."
         ! "${TELEGRAM}" -f "${AK2}/${ZIP}" && \
              warn "Failed to upload ${ZIP}." && \
              tg_post "Failed to upload the build." \
-                     "@krasCGQ can u do it for me ?? >_<"
-        tg_post "Latest commit: $(git_pretty "%h (\"%s\")")"
+                     "@TheOhara, I need your intervention please."
     else
         # or to webserver for release zip
         (
@@ -281,7 +277,6 @@ if [[ -n ${UPLOAD} ]]; then
             md5sum "${REL_ZIP}" > "${REL_ZIP}".md5sum
 
             info "Uploading ${REL_ZIP} to webserver..."
-            tg_post "${MSG} Completed!"
             for FILES in "${REL_ZIP}"{,.md5sum}; do
                 if rsync -qP "${FILES}" krasCGQ@srv1.botstack.host:~/srv/kernels/${DEVICE}; then
                     SUCCESS=true
@@ -298,12 +293,10 @@ if [[ -n ${UPLOAD} ]]; then
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
         )
     fi
-else
-    tg_post "${MSG} Completed!" \
-            "Latest commit: $(git_pretty "%h (\"%s\")")"
 fi
 
-# End script
+# Notify latest commit and end script
+tg_post "Latest commit: $(git log --pretty=format:"%h (\"%s\")" -1)"
 info "That's it. Job well done!"
 
 # Alert for script ending
