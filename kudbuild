@@ -9,36 +9,6 @@
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
 
-## Variables
-
-function set_variables {
-    # Source of telegram.sh
-    TELEGRAM="${SCRIPTDIR}"/telegram/telegram
-
-    # Number of threads used
-    THREADS=$(nproc --all)
-
-    # GCC and Clang (if used)
-    GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
-    [[ ${COMPILER} == clang ]] && \
-        CLANGPATH=/opt/kud/flash-clang-8.x/bin/clang
-
-    # Device variable
-    DEVICE=mido
-
-    # Kernel build variables
-    AK2=${HOME}/KudProject/AnyKernel2-${DEVICE}
-    ARCH=arm64
-    DTB=msm8953-qrd-sku3-${DEVICE}
-    NAME=KudKernel-${DEVICE}
-    OUT=$(pwd)/../build/${DEVICE}
-    [[ -n ${RELEASE} ]] && \
-        export KBUILD_BUILD_VERSION=${RELEASE}
-
-    # Default message for posting to Telegram
-    MSG="${NAME/-*} build:"
-}
-
 ## Functions
 
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
@@ -90,9 +60,8 @@ function git_pretty {
     git log --pretty=format:"${1}" -1
 }
 
-## Commands
+## Parse parameters
 
-# Parse parameters
 if [[ ${#} -ge 1 ]]; then
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
@@ -134,8 +103,35 @@ else
     die "No option specified!"
 fi
 
-# Set all required variables
-set_variables
+## Variables
+
+# Source of telegram.sh
+TELEGRAM="${SCRIPTDIR}"/telegram/telegram
+
+# Number of threads used
+THREADS=$(nproc --all)
+
+# GCC and Clang (if used)
+GCCPREFIX=/opt/kud/aarch64-linux-gnu/bin/aarch64-linux-gnu-
+[[ ${COMPILER} == clang ]] && \
+    CLANGPATH=/opt/kud/flash-clang-8.x/bin/clang
+
+# Device variable
+DEVICE=mido
+
+# Kernel build variables
+AK2=${HOME}/KudProject/AnyKernel2-${DEVICE}
+ARCH=arm64
+DTB=msm8953-qrd-sku3-${DEVICE}
+NAME=KudKernel-${DEVICE}
+OUT=$(pwd)/../build/${DEVICE}
+[[ -n ${RELEASE} ]] && \
+    export KBUILD_BUILD_VERSION=${RELEASE}
+
+# Default message for posting to Telegram
+MSG="${NAME/-*} build:"
+
+## Commands
 
 # Run this inside kernel source
 [[ ! -f Makefile || ! -d kernel ]] && \
