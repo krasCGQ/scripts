@@ -194,8 +194,8 @@ if [[ ${COMPILER} == clang ]]; then
     # Additionally also append (or set) CC
     CC+=${CLANG_PATH}
 
-    # FIXME: Needs to be overridden by itself inside arrays
-    CC=( "CC=${CC}" )
+    # Define additional parameters that'll be passed to make
+    CLANG_EXTRAS=( "CC=${CC}" "CLANG_TRIPLE=aarch64-linux-gnu" )
 
     # Export custom compiler string
     KBUILD_COMPILER_STRING=$("${CLANG_PATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
@@ -211,9 +211,8 @@ make ARCH=${ARCH} O="${OUT}" clean > /dev/null
 
 # Let's build the kernel!
 info "Building kernel..."
-# FIXME: ${CC[@]} due to use of arrays; needed to make this work
-make ARCH=${ARCH} O="${OUT}" "${CC[@]}" \
-     CROSS_COMPILE="${CROSS_COMPILE}" -j"${THREADS}" > /dev/null
+make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
+     "${CLANG_EXTRAS[@]}" -j"${THREADS}" > /dev/null
 
 if [[ -z ${BUILD_ONLY} ]]; then
     # Clean AnyKernel2 directory
