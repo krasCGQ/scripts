@@ -152,16 +152,16 @@ GCC_PREFIX=${OPT_DIR}/${GCC_COMPILER}
     CLANG_PATH=${OPT_DIR}/${CLANG_COMPILER}/bin/clang
 
 # Kernel build variables
-AK2=${HOME}/KudProject/AnyKernel2-"${DEVICE}"
+AK2=${HOME}/KudProject/AnyKernel2-${DEVICE}
 ARCH=arm64
 NAME=KudKernel
-OUT=$(pwd)/../build/"${DEVICE}"
+OUT=$(pwd)/../build/${DEVICE}
 [[ -n ${RELEASE} ]] && \
     export KBUILD_BUILD_VERSION=${RELEASE}
 
 # mido build ships both treble and non-treble DTBs
 [[ ${DEVICE} == mido ]] && \
-    DTB=msm8953-qrd-sku3-"${DEVICE}"
+    DTB=msm8953-qrd-sku3-${DEVICE}
 
 # Default message for posting to Telegram
 MSG="${NAME} (${DEVICE}) build:"
@@ -259,9 +259,9 @@ if [[ -z ${BUILD_ONLY} ]]; then
     fi
 
     # Export here to be picked later
-    ZIP=${NAME}-"${DEVICE}"-$(date +%s).zip
+    ZIP=${NAME}-${DEVICE}-$(date +%s).zip
     [[ -n ${RELEASE} ]] && \
-        REL_ZIP=${NAME}-"${DEVICE}"-r${RELEASE}-$(date +%Y%m%d).zip
+        REL_ZIP=${NAME}-${DEVICE}-r${RELEASE}-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
     info "Creating ${ZIP}..."
