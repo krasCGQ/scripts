@@ -182,8 +182,8 @@ done
 info "Running sanity checks..."
 sleep 1
 
-[[ -z ${COMPILER} ]] && \
-    die "Missing required option!"
+[[ -z ${COMPILER} || -z ${DEVICE} ]] && \
+    die "Missing required option(s)!"
 
 [[ -n ${UPLOAD} && -n ${BUILD_ONLY} ]] && \
     warn "Requested to only build but upload was assigned, disabling." && \
