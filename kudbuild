@@ -70,6 +70,17 @@ if [[ ${#} -ge 1 ]]; then
                 else
                     die "Invalid parameter specified!"
                 fi ;;
+            -d |--device)
+                shift
+
+                # Only mido and X00T are supported for now
+                if [[ ${1,,} == mido ]]; then
+                    DEVICE=${1,,}
+                elif [[ ${1^^} == X00T ]]; then
+                    DEVICE=${1^^}
+                else
+                    die "Invalid parameter specified!"
+                fi ;;
 
             # OPTIONAL
             -b |--build-only)
@@ -140,20 +151,20 @@ GCC_PREFIX=${OPT_DIR}/${GCC_COMPILER}
 [[ ${COMPILER} == clang ]] && \
     CLANG_PATH=${OPT_DIR}/${CLANG_COMPILER}/bin/clang
 
-# Device variable
-DEVICE=mido
-
 # Kernel build variables
-AK2=${HOME}/KudProject/AnyKernel2-${DEVICE}
+AK2=${HOME}/KudProject/AnyKernel2-"${DEVICE}"
 ARCH=arm64
-DTB=msm8953-qrd-sku3-${DEVICE}
-NAME=KudKernel-${DEVICE}
-OUT=$(pwd)/../build/${DEVICE}
+NAME=KudKernel
+OUT=$(pwd)/../build/"${DEVICE}"
 [[ -n ${RELEASE} ]] && \
     export KBUILD_BUILD_VERSION=${RELEASE}
 
+# mido build ships both treble and non-treble DTBs
+[[ ${DEVICE} == mido ]] && \
+    DTB=msm8953-qrd-sku3-"${DEVICE}"
+
 # Default message for posting to Telegram
-MSG="${NAME/-*} build:"
+MSG="${NAME} (${DEVICE}) build:"
 
 ## Commands
 
@@ -234,21 +245,23 @@ make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
      "${CLANG_EXTRAS[@]}" -j"${THREADS}" > /dev/null
 
 if [[ -z ${BUILD_ONLY} ]]; then
-    # Clean AnyKernel2 directory
-    info "Cleaning up AnyKernel2 folder..."
-    rm -rf "${AK2}"/{kernel,{,non}treble}/*
-
-    # Copy kernel image and DTB
-    info "Copying kernel image and DTBs to AnyKernel2 folder..."
-    cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel/
-    for VAR in {,non}treble; do
-        cp -f "${OUT}"/arch/arm64/boot/dts/qcom/${DTB}-${VAR}.dtb "${AK2}"/${VAR}/${DTB}.dtb
-    done
+    # Clean and copy kernel image and DTBs (mido only) to AnyKernel2 folder
+    info "Cleaning and copying required file(s) to AnyKernel2 folder..."
+    if [[ ${DEVICE} == mido ]]; then
+        rm -rf "${AK2}"/{kernel,{,non}treble}/*
+        cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel
+        for VAR in {,non}treble; do
+            cp -f "${OUT}"/arch/arm64/boot/dts/qcom/"${DTB}"-${VAR}.dtb "${AK2}"/${VAR}/"${DTB}".dtb
+        done
+    else
+        rm -f "${AK2}"/Image.gz-dtb
+        cp -f "${OUT}"/arch/arm64/boot/Image.gz-dtb "${AK2}"
+    fi
 
     # Export here to be picked later
-    ZIP=${NAME}-$(date +%s).zip
+    ZIP=${NAME}-"${DEVICE}"-$(date +%s).zip
     [[ -n ${RELEASE} ]] && \
-        REL_ZIP=${NAME}-r${RELEASE}-$(date +%Y%m%d).zip
+        REL_ZIP=${NAME}-"${DEVICE}"-r${RELEASE}-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
     info "Creating ${ZIP}..."
@@ -296,7 +309,7 @@ if [[ -n ${UPLOAD} ]]; then
 
             info "Uploading ${REL_ZIP} to webserver..."
             for FILES in "${REL_ZIP}"{,.md5sum}; do
-                if rsync -qP "${FILES}" krasCGQ@srv1.botstack.host:~/srv/kernels/${DEVICE}; then
+                if rsync -qP "${FILES}" krasCGQ@srv1.botstack.host:~/srv/kernels/"${DEVICE}"; then
                     SUCCESS=true
                 else
                     warn "Failed to upload ${FILES}."
