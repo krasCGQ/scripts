@@ -59,8 +59,15 @@ function rom_sign {
         warn "This function must be run at root of ROM source!" && \
         return 1
 
+    # If ${OUT} is empty, either we:
+    # 1. haven't finished a full build; or
+    # 2. exited terminal after completing a full build.
+    [[ -z ${OUT} ]] && \
+        warn "Run this function after a complete full build!" && \
+        return 1
+
     # Make sure only one target files package exists prior to running the function
-    [[ $(find "$(pwd)/out/dist" -name "*target_files*" | wc -l) -ne 1 ]] && \
+    [[ $(find "${OUT}/obj/PACKAGING/target_files_intermediates" -name "*target_files*" | wc -l) -ne 1 ]] && \
         warn "Less or more than one target files package detected!" && \
         return 1
 
@@ -75,7 +82,7 @@ function rom_sign {
     # Sign target files package
     ./build/tools/releasetools/sign_target_files_apks \
         -o -d "${HOME}"/.android-certs \
-        out/dist/*-target_files-*.zip \
+        ${OUT}/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
         signed-target_files.zip \
         || return 1
 
