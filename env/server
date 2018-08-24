@@ -67,7 +67,7 @@ function rom_sign {
         return 1
 
     # Make sure only one target files package exists prior to running the function
-    [[ $(find "${OUT}/obj/PACKAGING/target_files_intermediates" -name "*target_files*" | wc -l) -ne 1 ]] && \
+    [[ $(find "${OUT}/obj/PACKAGING/target_files_intermediates" -name "*target_files*.zip" | wc -l) -ne 1 ]] && \
         warn "Less or more than one target files package detected!" && \
         return 1
 
