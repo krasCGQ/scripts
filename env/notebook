@@ -7,6 +7,7 @@
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
 # Set up aliases
+alias neofetch='neofetch --package_managers off --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
 alias update='sudo su -c "pacman -Sy --noprogressbar && bauerbill -Su --noconfirm --noprogressbar"'
 
 # Export local binary path
