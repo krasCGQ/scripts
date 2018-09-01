@@ -17,10 +17,9 @@ CTNGCOMP=${HOME}/src/ct-ng/bash-completion/ct-ng
 TRANSFERSH=${HOME}/scripts/transfer.sh
 
 # If 'hostname' returns botstack, set up caddy & http-server aliases
-if [[ $(hostname) == botstack ]]; then
-    alias caddy='caddy -quic -quiet -conf ${HOME}/Caddyfile &'
-    alias http-server='http-server -a 0.0.0.0 -p 9001 >> /dev/null &'
-fi
+[[ $(hostname) == botstack ]] && \
+    { alias caddy='caddy -quic -quiet -conf ${HOME}/Caddyfile &';
+      alias http-server='http-server -a 0.0.0.0 -p 9001 >> /dev/null &'; }
 
 # If GOPATH doesn't exist, unset it
 [[ ! -d ${GOPATH} ]] && \
@@ -43,8 +42,8 @@ export PATH=${HOME}/.local/bin:${PATH}
 function ssh_setup {
     # Do an unconditional check
     [[ ! -f ${HOME}/.ssh/id_ed25519 ]] && \
-        warn "Please generate an SSH key before using this command." && \
-        return 1
+        { warn "Please generate an SSH key before using this command.";
+          return 1; }
 
     # The actual setup is here
     eval "$(ssh-agent -s)"
@@ -56,43 +55,42 @@ function ssh_setup {
 function rom_sign {
     # Must be run at root of ROM source
     [[ ! -d $(pwd)/build/tools ]] && \
-        warn "This function must be run at root of ROM source!" && \
-        return 1
+        { warn "This function must be run at root of ROM source!";
+          return 1; }
 
     # If ${OUT} is empty, either we:
     # 1. haven't finished a full build; or
     # 2. exited terminal after completing a full build.
     [[ -z ${OUT} ]] && \
-        warn "Run this function after a complete full build!" && \
-        return 1
+        { warn "Run this function after a complete full build!";
+          return 1; }
 
     # Make sure only one target files package exists prior to running the function
-    [[ $(find "${OUT}/obj/PACKAGING/target_files_intermediates" -name "*target_files*.zip" | wc -l) -ne 1 ]] && \
-        warn "Less or more than one target files package detected!" && \
-        return 1
+    [[ $(find "${OUT}"/obj/PACKAGING/target_files_intermediates -name "*target_files*.zip" | wc -l) -ne 1 ]] && \
+        { warn "Less or more than one target files package detected!";
+          return 1; }
 
     # Must have signing keys in .android-certs at root of home folder before proceeding
     for SIGNKEYS in {media,platform,releasekey,shared}.{pk8,x509.pem}; do
         [[ ! -f ${HOME}/.android-certs/${SIGNKEYS} ]] && \
-            warn "Missing one or more signing keys in ${HOME}/.android-certs folder!" && \
-            break && \
-            return 1
+            { warn "Missing one or more signing keys in ${HOME}/.android-certs folder!";
+              break; return 1; }
     done
 
     # Sign target files package
     ./build/tools/releasetools/sign_target_files_apks \
         -o -d "${HOME}"/.android-certs \
-        ${OUT}/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
-        signed-target_files.zip \
-        || return 1
+        "${OUT}"/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
+        signed-target_files.zip || \
+        return 1
 
     # Convert signed target files package to signed OTA package
     ./build/tools/releasetools/ota_from_target_files \
         --block --backup=true \
         -k "${HOME}"/.android-certs/releasekey \
         signed-target_files.zip \
-        signed-ota_update.zip \
-        || return 1
+        signed-ota_update.zip || \
+        return 1
 
     # Cleanup
     rm -f signed-target_files.zip
@@ -115,37 +113,37 @@ function ct-ng_build {
     ISLDIR=${GITDIR}/isl
 
     [[ -z $(command -v ct-ng) ]] && \
-        warn "${BLD}ct-ng${RST} isn't installed." \
-             "Please build or install crosstool-NG package before continuing." && \
-        return 1
+        { warn "${BLD}ct-ng${RST} isn't installed." \
+               "Please build or install crosstool-NG package before continuing.";
+          return 1; }
 
     [[ -z ${CTDIR} ]] && \
-        warn "${BLD}CTDIR${RST} variable is empty. Refusing to continue." && \
-        return 1
+        { warn "${BLD}CTDIR${RST} variable is empty. Refusing to continue.";
+          return 1; }
 
     (
         ! cd "${CTDIR}" 2> /dev/null && \
-            warn "$(basename "${CTDIR}") doesn't exist in defined path." && \
-            return 1
+            { warn "$(basename "${CTDIR}") doesn't exist in defined path.";
+              return 1; }
 
         echo "- Cleaning up work directory..."
         ! ct-ng clean > /dev/null && \
-            warn "Failed to clean up work directory." && \
-            return 1
+            { warn "Failed to clean up work directory.";
+              return 1; }
 
         (
             ! cd "${TARDIR}" 2> /dev/null && \
-                warn "$(basename "${CTDIR}")/$(basename "${TARDIR}") doesn't exist in defined path." && \
-                return 1
+                { warn "$(basename "${CTDIR}")/$(basename "${TARDIR}") doesn't exist in defined path.";
+                  return 1; }
 
             [[ ! -f "gmp-6.1.99-$(check_gmp_date).tar.lz" ]] && \
-                info "Downloading gmp-6.1.99-$(check_gmp_date).tar.lz..." && \
-                wget -q https://gmplib.org/download/snapshot/"gmp-6.1.99-$(check_gmp_date).tar.lz"
+                { info "Downloading gmp-6.1.99-$(check_gmp_date).tar.lz...";
+                  wget -q https://gmplib.org/download/snapshot/"gmp-6.1.99-$(check_gmp_date).tar.lz"; }
         )
         (
             ! cd "${GITDIR}" 2> /dev/null && \
-                warn "$(basename "${CTDIR}")/$(basename "${GITDIR}") doesn't exist in defined path." && \
-                return 1
+                { warn "$(basename "${CTDIR}")/$(basename "${GITDIR}") doesn't exist in defined path.";
+                  return 1; }
 
             info "Updating git projects..."
             ./update || \
@@ -153,20 +151,20 @@ function ct-ng_build {
         )
         (
             ! cd "${ISLDIR}" 2> /dev/null && \
-                warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") doesn't exist in defined path." && \
-                return 1
+                { warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") doesn't exist in defined path.";
+                  return 1; }
 
             [[ ! -d .git ]] && \
-                warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") isn't a git project." \
-                     "Are you sure the defined path is correct?" && \
-                return 1
+                { warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") isn't a git project." \
+                       "Are you sure the defined path is correct?";
+                  return 1; }
 
             info "Updating ISL..."
             exec 5>&1 6>&2 &> /dev/null
             git fetch upstream master
             ! git rebase upstream/master && \
-                warn "Failed to rebase ISL patch. Refusing to continue." > /dev/stderr && \
-                return 1
+                { warn "Failed to rebase ISL patch. Refusing to continue." > /dev/stderr;
+                  return 1; }
             [[ $(whoami) == krasCGQ && $(hostname) == botstack ]] && \
                 git push -f
             git clean -dfx
@@ -174,13 +172,13 @@ function ct-ng_build {
 
             info "Generating configuration files..."
             ! ./autogen.sh && \
-                warn "Failed to generate configuration files." && \
-                return 1
+                { warn "Failed to generate configuration files.";
+                  return 1; }
         )
 
         ! ct-ng source && \
-            warn "Failed to obtain required sources." && \
-            return 1
+            { warn "Failed to obtain required sources.";
+              return 1; }
 
         if ct-ng build; then
             echo

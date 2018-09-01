@@ -102,11 +102,9 @@ function update_projects {
     cd - > /dev/null || die
 
     # Stops here for good
-    [[ -z ${VERBOSE} ]] && \
+    if [[ -z ${VERBOSE} ]]; then
         exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
-
-    # FIXME: Script fails at very end of the function
-    return
+    fi
 }
 
 ## Commands

@@ -19,13 +19,13 @@ export PATH=/usr/lib/ccache/bin:${PATH}
 function flac_repack {
     # Make sure FLAC package is installed
     [[ -z $(command -v flac) ]] && \
-        warn "Please install flac package before continuing." && \
-        return 1
+        { warn "Please install flac package before continuing.";
+          return 1; }
 
     # Make sure we have FLAC files to repack
     [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
-        warn "There's nothing to do." && \
-        return 1
+        { warn "There's nothing to do.";
+          return 1; }
 
     # First we unpack
     flac --delete-input-file --totally-silent -d ./*.flac || \
@@ -43,8 +43,8 @@ function flac_repack {
 function opus_convert {
     # Ask to install opus-tools package if opusenc doesn't exist
     [[ -z $(command -v opusenc) ]] && \
-        warn "Please install opus-tools package before continuing." && \
-        return 1
+        { warn "Please install opus-tools package before continuing.";
+          return 1; }
 
     for SONG in ./*; do
         case "${SONG}" in
@@ -59,25 +59,24 @@ function opus_convert {
     done
 
     [[ ! ${SUPPORTED} ]] && \
-        warn "There's nothing to do." && \
-        return 1
+        { warn "There's nothing to do.";
+          return 1; }
 }
 
 # Wrapper to build both AArch64 and x86_64 GNU toolchains using build-tools-gcc
 function btg_build {
     [[ -z ${BTGDIR} || -z ${OPTDIR} ]] && \
-        warn "${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue." && \
-        return 1
+        { warn "${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue.";
+          return 1; }
 
     (
         ! cd "${BTGDIR}" && \
-            warn "$(basename "${BTGDIR}") doesn't exist in defined path." && \
-            return 1
+            { warn "$(basename "${BTGDIR}") doesn't exist in defined path.";
+              return 1; }
 
         # FIXME: Command requires sudo :/
         [[ ! -d ${OPTDIR} ]] && \
-            sudo mkdir -p "${OPTDIR}" && \
-            sudo chown -R "$(whoami)":users "${OPTDIR}"
+            sudo su -c "mkdir -p ${OPTDIR} && chown -R $(whoami):users ${OPTDIR}"
 
         ! ./build -a arm64 -s gnu -v 9 -nt && \
             return 1

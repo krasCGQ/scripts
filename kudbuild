@@ -186,12 +186,12 @@ sleep 1
     die "Missing required option(s)!"
 
 [[ -n ${UPLOAD} && -n ${BUILD_ONLY} ]] && \
-    warn "Requested to only build but upload was assigned, disabling." && \
-    unset UPLOAD
+    { warn "Requested to only build but upload was assigned, disabling.";
+      unset UPLOAD; }
 
 [[ -n ${CLANG_VERSION} && -z ${STOCK} ]] && \
-    warn "Assigning Clang version is only meant for AOSP Clang, disabling." && \
-    unset CLANG_VERSION
+    { warn "Assigning Clang version is only meant for AOSP Clang, disabling.";
+      unset CLANG_VERSION; }
 
 for VAR in ${GCC_PREFIX}gcc ${CLANG_PATH}; do
     find ${VAR} > /dev/null 2>&1 || \
@@ -295,9 +295,9 @@ if [[ -n ${UPLOAD} ]]; then
         info "Uploading ${ZIP} to Telegram..."
         tg_post "Uploading build..."
         ! "${TELEGRAM}" -f "${AK2}/${ZIP}" && \
-             warn "Failed to upload ${ZIP}." && \
-             tg_post "Failed to upload the build." \
-                     "@TheOhara, I need your intervention please."
+             { warn "Failed to upload ${ZIP}.";
+               tg_post "Failed to upload the build." \
+                       "@TheOhara, I need your intervention please."; }
     else
         # or to webserver for release zip
         (
