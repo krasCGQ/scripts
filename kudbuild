@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1004
+# KudProject kernel build script
 # Copyright (C) 2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
