@@ -139,16 +139,19 @@ THREADS=$(nproc --all)
 # GCC and Clang (if used) compilers
 if [[ -z ${STOCK} ]]; then
     GCC_COMPILER=aarch64-linux-gnu/bin/aarch64-linux-gnu-
+    GCC32_COMPILER=arm-linux-gnueabi/bin/arm-linux-gnueabi-
     [[ ${COMPILER} == clang ]] && \
         CLANG_COMPILER=flash-clang-8.x
 else
     GCC_COMPILER=aarch64-linux-android-4.9/bin/aarch64-linux-androidkernel-
+    GCC32_COMPILER=arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
     [[ ${COMPILER} == clang ]] && \
         CLANG_COMPILER=android-clang/clang-${CLANG_VERSION}
 fi
 
 # Set prefixes here
 GCC_PREFIX=${OPT_DIR}/${GCC_COMPILER}
+GCC32_PREFIX=${OPT_DIR}/${GCC32_COMPILER}
 [[ ${COMPILER} == clang ]] && \
     CLANG_PATH=${OPT_DIR}/${CLANG_COMPILER}/bin/clang
 
@@ -174,7 +177,7 @@ MSG="${NAME} (${DEVICE}) build:"
     die "Please run this script inside kernel source folder!"
 
 # Unset these variables if they're set
-for VAR in CROSS_COMPILE CC; do
+for VAR in CROSS_COMPILE{,_ARM32} CC; do
     [[ -n ${VAR} ]] && \
         unset ${VAR}
 done
@@ -194,7 +197,7 @@ sleep 1
     { warn "Assigning Clang version is only meant for AOSP Clang, disabling.";
       unset CLANG_VERSION; }
 
-for VAR in ${GCC_PREFIX}gcc ${CLANG_PATH}; do
+for VAR in ${GCC_PREFIX}gcc ${GCC32_PREFIX}gcc ${CLANG_PATH}; do
     find ${VAR} > /dev/null 2>&1 || \
         die "${BLD}$(basename "${VAR}")${RST} doesn't exist in defined path."
 done
@@ -212,13 +215,17 @@ STARTED=true
 
 # Always use ccache for faster compiling if exists in PATH
 if [[ -n $(command -v ccache) ]]; then
-    [[ ${COMPILER} == clang ]] && \
-        CC+="ccache " || \
+    if [[ ${COMPILER} == clang ]]; then
+        CC+="ccache "
+    else
         CROSS_COMPILE+="ccache "
+        CROSS_COMPILE_ARM32+="ccache "
+    fi
 fi
 
-# Append (or set) CROSS_COMPILE
+# Append (or set) CROSS_COMPILE{,_ARM32}
 CROSS_COMPILE+=${GCC_PREFIX}
+CROSS_COMPILE_ARM32+=${GCC32_PREFIX}
 
 # If Clang is used
 if [[ ${COMPILER} == clang ]]; then
@@ -226,7 +233,9 @@ if [[ ${COMPILER} == clang ]]; then
     CC+=${CLANG_PATH}
 
     # Define additional parameters that'll be passed to make
-    CLANG_EXTRAS=( "CC=${CC}" "CLANG_TRIPLE=aarch64-linux-gnu" )
+    CLANG_EXTRAS=( "CC=${CC}"
+                   "CLANG_TRIPLE=aarch64-linux-gnu"
+                   "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" )
 
     # Export custom compiler string
     KBUILD_COMPILER_STRING=$("${CLANG_PATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
@@ -243,7 +252,8 @@ make ARCH=${ARCH} O="${OUT}" clean > /dev/null
 # Let's build the kernel!
 info "Building kernel..."
 make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
-     "${CLANG_EXTRAS[@]}" -j"${THREADS}" > /dev/null
+     CROSS_COMPILE_ARM32="${CROSS_COMPILE_ARM32}" "${CLANG_EXTRAS[@]}" \
+     -j"${THREADS}" > /dev/null
 
 if [[ -z ${BUILD_ONLY} ]]; then
     # Clean and copy kernel image and DTBs (mido only) to AnyKernel2 folder
