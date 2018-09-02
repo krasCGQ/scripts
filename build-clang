@@ -354,8 +354,7 @@ function build() {
           -DLLVM_ENABLE_OCAMLDOC=OFF \
           -DLLVM_ENABLE_BINDINGS=OFF \
           -DLLVM_BINUTILS_INCDIR="${LLVM_FOLDER}/tools/binutils/include" \
-          -DLLVM_TARGETS_TO_BUILD="AArch64" \
-          -DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-unknown-linux-gnu \
+          -DLLVM_TARGETS_TO_BUILD="ARM;AArch64" \
           -DLLVM_OPTIMIZED_TABLEGEN=ON \
           -DLLVM_USE_LINKER=gold \
           -DCLANG_VENDOR="${VENDOR:+"${VENDOR} "}" \
