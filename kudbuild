@@ -4,8 +4,6 @@
 # Copyright (C) 2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# TODO: Proper build script, this is made solely for mido kernel build for now
-
 ## Import common environment script
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
