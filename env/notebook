@@ -79,7 +79,15 @@ function btg_build {
         [[ ! -d ${OPTDIR} ]] && \
             sudo su -c "mkdir -p ${OPTDIR} && chown -R $(whoami):users ${OPTDIR}"
 
-        ! ./build -a arm64 -s gnu -v 9 -nt && \
+        ! ./build -a arm -s gnu -v 9 -nt && \
+            return 1
+
+        rm -rf "${OPTDIR}"/arm-linux-gnueabi-old
+        [[ -d ${OPTDIR}/arm-linux-gnueabi ]] && \
+            mv -f "${OPTDIR}"/arm-linux-gnueabi{,-old}
+        mv -f arm-linux-gnueabi "${OPTDIR}"
+
+        ! ./build -a arm64 -s gnu -v 9 -nt -nu && \
             return 1
 
         rm -rf "${OPTDIR}"/aarch64-linux-gnu-old
