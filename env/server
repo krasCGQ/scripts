@@ -159,18 +159,8 @@ function ct-ng_build {
                        "Are you sure the defined path is correct?";
                   return 1; }
 
-            info "Updating ISL..."
-            exec 5>&1 6>&2 &> /dev/null
-            git fetch upstream master
-            ! git rebase upstream/master && \
-                { warn "Failed to rebase ISL patch. Refusing to continue." > /dev/stderr;
-                  return 1; }
-            [[ $(whoami) == krasCGQ && $(hostname) == botstack ]] && \
-                git push -f
-            git clean -dfx
-            exec 1>&5 2>&6 1> /dev/stdout 2> /dev/stderr
-
-            info "Generating configuration files..."
+            info "Regenerating ISL configuration files..."
+            git clean -dfx > /dev/null
             ! ./autogen.sh && \
                 { warn "Failed to generate configuration files.";
                   return 1; }
