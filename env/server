@@ -99,6 +99,8 @@ function rom_sign {
 
 # Date checking for GMP daily snapshot download
 function check_gmp_date {
+    local GAP
+
     [[ $(TZ=Europe/Berlin date +%Z) == CEST ]] && \
         GAP=15600 || \
         GAP=19200
@@ -108,6 +110,7 @@ function check_gmp_date {
 
 # A wrapper to automate crosstool-NG toolchain build
 function ct-ng_build {
+    local TARDIR GITDIR ISLDIR
     TARDIR=${CTDIR}/tarballs
     GITDIR=${CTDIR}/git
     ISLDIR=${GITDIR}/isl
