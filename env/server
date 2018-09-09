@@ -10,7 +10,7 @@
 export TZ=Asia/Makassar
 
 # Export GOPATH early for checking
-export GOPATH=${HOME}/go
+export GOPATH=${HOME}/.local/go
 
 # Other variables used around this script
 CTNGCOMP=${HOME}/src/ct-ng/bash-completion/ct-ng
