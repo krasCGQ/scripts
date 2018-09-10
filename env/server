@@ -195,7 +195,7 @@ function update_binaries {
         # Fetch or update required projects
         info "Fetching Caddy sources..."
         for PROJECTS in mholt/caddy/caddy caddyserver/builds; do
-            go get github.com/${PROJECTS} || \
+            go get -u github.com/${PROJECTS} || \
                 { warn "Failed to fetch ${PROJECTS}.";
                   return 1; }
         done
