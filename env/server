@@ -183,5 +183,34 @@ function ct-ng_build {
     )
 }
 
+# Update all local binaries
+function update_binaries {
+    # Caddy
+    (
+        # Check if ${GOPATH} is defined and exist
+        [[ -z ${GOPATH} || ! -d ${GOPATH} ]] && \
+            { warn "GOPATH doesn't seem to be defined or exist.";
+              return 1; }
+
+        # Fetch or update required projects
+        info "Fetching Caddy sources..."
+        for PROJECTS in mholt/caddy/caddy caddyserver/builds; do
+            go get github.com/${PROJECTS} || \
+                { warn "Failed to fetch ${PROJECTS}.";
+                  return 1; }
+        done
+
+        # Build from source
+        info "Building Caddy..."
+        cd ${GOPATH}/src/github.com/mholt/caddy/caddy || \
+            return 1
+        go run build.go || \
+            return 1
+    )
+
+    # Done!
+    info "Done."
+}
+
 # Last, but my most convenient part
 export PS1='\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]$(parse_git_branch)\[\e[1;32m\] \$\[\e[0m\] '
