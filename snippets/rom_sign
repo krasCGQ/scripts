@@ -14,6 +14,12 @@
 # https://source.android.com/devices/tech/ota/sign_builds
 
 function rom_sign {
+    # Mark variables as local
+    local NO_BACKUPTOOL BACKUP_FLAG
+
+    # The following ROMs don't support backuptool
+    NO_BACKUPTOOL=( "nitrogen" )
+
     # Must be run at root of ROM source
     [[ ! -d $(pwd)/build/tools ]] && \
         { warn "This function must be run at root of ROM source!";
@@ -38,6 +44,18 @@ function rom_sign {
               break; return 1; }
     done
 
+    # Check what ROM we're going to sign by looking inside vendor folder
+    for ROMS in "${NO_BACKUPTOOL[@]}"; do
+        # Let's assume the ROM has backuptool support
+        BACKUP_FLAG="--backup=true"
+
+        if [[ -n $(find vendor -maxdepth 1 -name ${ROMS}) ]]; then
+            # ROM lacks backuptool support
+            unset BACKUP_FLAG
+            break
+        fi
+    done
+
     # Sign target files package
     ./build/tools/releasetools/sign_target_files_apks \
         -o -d "${HOME}"/.android-certs \
@@ -47,7 +65,7 @@ function rom_sign {
 
     # Convert signed target files package to signed OTA package
     ./build/tools/releasetools/ota_from_target_files \
-        --block --backup=true \
+        --block ${BACKUP_FLAG} \
         -k "${HOME}"/.android-certs/releasekey \
         signed-target_files.zip \
         signed-ota_update.zip || \
