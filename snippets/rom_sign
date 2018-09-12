@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Android ROM signing wrapper
+# Copyright (C) 2017-2018 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0
+#
+# This snippet contains portions of code taken from AOSP documentation and has
+# been modified accordingly to make it compatible with both AOSP and custom
+# ROMs, which usually have backuptool (aka addon.d support).
+#
+# Due to such reason, this snippet is licensed under either GPL-3.0+ as part of
+# my scripts or Apache-2.0 following same license used by most AOSP projects.
+#
+# Refer to the following AOSP documentation on how things work:
+# https://source.android.com/devices/tech/ota/sign_builds
+
+function rom_sign {
+    # Must be run at root of ROM source
+    [[ ! -d $(pwd)/build/tools ]] && \
+        { warn "This function must be run at root of ROM source!";
+          return 1; }
+
+    # If ${OUT} is empty, either we:
+    # 1. haven't finished a full build; or
+    # 2. exited terminal after completing a full build.
+    [[ -z ${OUT} ]] && \
+        { warn "Run this function after a complete full build!";
+          return 1; }
+
+    # Make sure only one target files package exists prior to running the function
+    [[ $(find "${OUT}"/obj/PACKAGING/target_files_intermediates -name "*target_files*.zip" | wc -l) -ne 1 ]] && \
+        { warn "Less or more than one target files package detected!";
+          return 1; }
+
+    # Must have signing keys in .android-certs at root of home folder before proceeding
+    for SIGNKEYS in {media,platform,releasekey,shared}.{pk8,x509.pem}; do
+        [[ ! -f ${HOME}/.android-certs/${SIGNKEYS} ]] && \
+            { warn "Missing one or more signing keys in ${HOME}/.android-certs folder!";
+              break; return 1; }
+    done
+
+    # Sign target files package
+    ./build/tools/releasetools/sign_target_files_apks \
+        -o -d "${HOME}"/.android-certs \
+        "${OUT}"/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
+        signed-target_files.zip || \
+        return 1
+
+    # Convert signed target files package to signed OTA package
+    ./build/tools/releasetools/ota_from_target_files \
+        --block --backup=true \
+        -k "${HOME}"/.android-certs/releasekey \
+        signed-target_files.zip \
+        signed-ota_update.zip || \
+        return 1
+
+    # Cleanup
+    rm -f signed-target_files.zip
+    rm -rf out/dist/*
+}
