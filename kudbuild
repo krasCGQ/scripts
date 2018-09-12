@@ -198,7 +198,7 @@ sleep 1
       unset CLANG_VERSION; }
 
 for VAR in ${GCC_PREFIX}gcc ${GCC32_PREFIX}gcc ${CLANG_PATH}; do
-    find ${VAR} > /dev/null 2>&1 || \
+    find ${VAR} &> /dev/null || \
         die "${BLD}$(basename "${VAR}")${RST} doesn't exist in defined path."
 done
 
