@@ -53,7 +53,6 @@ function rom_sign {
         signed-ota_update.zip || \
         return 1
 
-    # Cleanup
+    # Remove signed target files because we don't need it anymore
     rm -f signed-target_files.zip
-    rm -rf out/dist/*
 }
