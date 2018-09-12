@@ -8,7 +8,7 @@
 
 # Set up aliases
 alias neofetch='neofetch --package_managers off --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
-alias update='sudo su -c "pacman -Sy --noprogressbar && bauerbill -Su --noconfirm --noprogressbar"'
+alias update='sudo su -c "pacman -Sy --noprogressbar && powerpill -Su --noconfirm --noprogressbar"'
 
 # Export local binary path
 export PATH=${HOME}/.files/bin:${PATH}
