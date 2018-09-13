@@ -9,7 +9,7 @@ Enjoy!
 * `build-clang`: Clang build script (mostly modified for my local environment)
 * `isl_update`: Cron-like script to update [my ISL fork](https://github.com/krasCGQ/isl) every 18 hours.
 * `killswitch`: VPN kill switch enabler/disabler for UFW (requires `sudo` privileges as `ufw` is only visible to `root` user); only supports VPN connected through `tun0`
-* `kudbuild`: KudKernel (mido) build script; only builds and copies things to specified AnyKernel2 folder
+* `kudbuild`: KudKernel build script; only supports mido ([non]treble) and X00T.
 * `update_crosstool`: Automatically update projects and apply crosstool-NG patches to them (requires sources to be shallow cloned first, and point `variables_list` and `projects_list` to the respective, right folders)
 
 ## Snippets List
