@@ -44,11 +44,11 @@ function rom_sign {
               break; return 1; }
     done
 
+    # Let's assume the ROM has backuptool support
+    BACKUP_FLAG="--backup=true"
+
     # Check what ROM we're going to sign by looking inside vendor folder
     for ROMS in "${NO_BACKUPTOOL[@]}"; do
-        # Let's assume the ROM has backuptool support
-        BACKUP_FLAG="--backup=true"
-
         if [[ -n $(find vendor -maxdepth 1 -name ${ROMS}) ]]; then
             # ROM lacks backuptool support
             unset BACKUP_FLAG
