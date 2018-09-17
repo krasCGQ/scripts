@@ -20,22 +20,22 @@ export PATH=/usr/lib/ccache/bin:${PATH}
 function flac_repack {
     # Make sure FLAC package is installed
     [[ -z $(command -v flac) ]] && \
-        { warn "Please install flac package before continuing.";
-          return 1; }
+        { warn "Please install flac package before continuing."; return 1; }
 
     # Make sure we have FLAC files to repack
     [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
-        { warn "There's nothing to do.";
-          return 1; }
+        { warn "There's nothing to do."; return 1; }
 
-    # First we unpack
+    # First we decompress
     flac --delete-input-file --totally-silent -d ./*.flac || \
-        return 1
+        { warn "Failed to decompress one or more songs."; return 1; }
 
     # Then we repack with maximum compression and ReplayGain applied
     for SONG in ./*; do
         case "${SONG}" in
-            *.aiff|*.wav) flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || return 1;;
+            *.aiff|*.wav)
+                flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || \
+                    { warn "Failed to compress ${SONG}."; return 1; } ;;
         esac
     done
 }
@@ -44,59 +44,53 @@ function flac_repack {
 function opus_convert {
     # Ask to install opus-tools package if opusenc doesn't exist
     [[ -z $(command -v opusenc) ]] && \
-        { warn "Please install opus-tools package before continuing.";
-          return 1; }
+        { warn "Please install opus-tools package before continuing."; return 1; }
 
     for SONG in ./*; do
         case "${SONG}" in
-            *.aiff|*.flac|*.wav) # Declare that we have something to do!
-                                 SUPPORTED=true
-                                 # Not supporting wildcards for converting
-                                 opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 \
-                                     "${SONG}" \
-                                     "$(basename "${SONG}" | sed 's/\(.*\)\..*/\1/').ogg" || \
-                                     return 1 ;;
+            *.aiff|*.flac|*.wav)
+                # Declare that we have something to do!
+                SUPPORTED=true
+
+                # Not supporting wildcards for converting
+                opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 \
+                    "${SONG}" \
+                    "$(basename "${SONG}" | sed 's/\(.*\)\..*/\1/').ogg" || \
+                    return 1 ;;
         esac
     done
 
-    [[ ! ${SUPPORTED} ]] && \
-        { warn "There's nothing to do.";
-          return 1; }
+    [[ -z ${SUPPORTED} ]] && \
+        { warn "There's nothing to do."; return 1; }
 }
 
 # Wrapper to build both AArch64 and x86_64 GNU toolchains using build-tools-gcc
 function btg_build {
     [[ -z ${BTGDIR} || -z ${OPTDIR} ]] && \
-        { warn "${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue.";
-          return 1; }
+        { warn "${BLD}BTGDIR${RST} and/or ${BLD}OPTDIR${RST} variables are empty. Refusing to continue."; return 1; }
 
     (
-        ! cd "${BTGDIR}" && \
-            { warn "$(basename "${BTGDIR}") doesn't exist in defined path.";
-              return 1; }
+        cd "${BTGDIR}" || return 1
 
         # FIXME: Command requires sudo :/
         [[ ! -d ${OPTDIR} ]] && \
             sudo su -c "mkdir -p ${OPTDIR} && chown -R $(whoami):users ${OPTDIR}"
 
-        ! ./build -a arm -s gnu -v 9 -nt && \
-            return 1
+        ./build -a arm -s gnu -v 9 -nt || return 1
 
         rm -rf "${OPTDIR}"/arm-linux-gnueabi-old
         [[ -d ${OPTDIR}/arm-linux-gnueabi ]] && \
             mv -f "${OPTDIR}"/arm-linux-gnueabi{,-old}
         mv -f arm-linux-gnueabi "${OPTDIR}"
 
-        ! ./build -a arm64 -s gnu -v 9 -nt -nu && \
-            return 1
+        ./build -a arm64 -s gnu -v 9 -nt -nu || return 1
 
         rm -rf "${OPTDIR}"/aarch64-linux-gnu-old
         [[ -d ${OPTDIR}/aarch64-linux-gnu ]] && \
             mv -f "${OPTDIR}"/aarch64-linux-gnu{,-old}
         mv -f aarch64-linux-gnu "${OPTDIR}"
 
-        ! ./build -a x86_64 -s gnu -v 9 -nt -nu && \
-            return 1
+        ./build -a x86_64 -s gnu -v 9 -nt -nu || return 1
 
         rm -rf "${OPTDIR}"/x86_64-linux-gnu-old
         [[ -d ${OPTDIR}/x86_64-linux-gnu ]] && \

@@ -42,8 +42,7 @@ export PATH=${HOME}/.local/bin:${PATH}
 function ssh_setup {
     # Do an unconditional check
     [[ ! -f ${HOME}/.ssh/id_ed25519 ]] && \
-        { warn "Please generate an SSH key before using this command.";
-          return 1; }
+        { warn "Please generate an SSH key before using this command."; return 1; }
 
     # The actual setup is here
     eval "$(ssh-agent -s)"
@@ -70,61 +69,43 @@ function ct-ng_build {
 
     [[ -z $(command -v ct-ng) ]] && \
         { warn "${BLD}ct-ng${RST} isn't installed." \
-               "Please build or install crosstool-NG package before continuing.";
-          return 1; }
+               "Please build or install crosstool-NG package before continuing."; return 1; }
 
     [[ -z ${CTDIR} ]] && \
-        { warn "${BLD}CTDIR${RST} variable is empty. Refusing to continue.";
-          return 1; }
+        { warn "${BLD}CTDIR${RST} variable is empty. Refusing to continue."; return 1; }
 
     (
-        ! cd "${CTDIR}" 2> /dev/null && \
-            { warn "$(basename "${CTDIR}") doesn't exist in defined path.";
-              return 1; }
+        cd "${CTDIR}" || return 1
 
         echo "- Cleaning up work directory..."
-        ! ct-ng clean > /dev/null && \
-            { warn "Failed to clean up work directory.";
-              return 1; }
+        ct-ng clean > /dev/null || return 1
 
         (
-            ! cd "${TARDIR}" 2> /dev/null && \
-                { warn "$(basename "${CTDIR}")/$(basename "${TARDIR}") doesn't exist in defined path.";
-                  return 1; }
+            cd "${TARDIR}" || return 1
 
             [[ ! -f "gmp-6.1.99-$(check_gmp_date).tar.lz" ]] && \
                 { info "Downloading gmp-6.1.99-$(check_gmp_date).tar.lz...";
                   wget -q https://gmplib.org/download/snapshot/"gmp-6.1.99-$(check_gmp_date).tar.lz"; }
         )
         (
-            ! cd "${GITDIR}" 2> /dev/null && \
-                { warn "$(basename "${CTDIR}")/$(basename "${GITDIR}") doesn't exist in defined path.";
-                  return 1; }
+            cd "${GITDIR}" || return 1;
 
             info "Updating git projects..."
-            ./update || \
-                return 1
+            ./update || return 1
         )
         (
-            ! cd "${ISLDIR}" 2> /dev/null && \
-                { warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") doesn't exist in defined path.";
-                  return 1; }
+            cd "${ISLDIR}" || return 1;
 
             [[ ! -d .git ]] && \
                 { warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") isn't a git project." \
-                       "Are you sure the defined path is correct?";
-                  return 1; }
+                       "Are you sure the defined path is correct?"; return 1; }
 
             info "Regenerating ISL configuration files..."
             git clean -dfx > /dev/null
-            ! ./autogen.sh && \
-                { warn "Failed to generate configuration files.";
-                  return 1; }
+            ./autogen.sh || return 1
         )
 
-        ! ct-ng source && \
-            { warn "Failed to obtain required sources.";
-              return 1; }
+        ct-ng source || return 1;
 
         if ct-ng build; then
             echo
@@ -142,23 +123,19 @@ function update_binaries {
     (
         # Check if ${GOPATH} is defined and exist
         [[ -z ${GOPATH} || ! -d ${GOPATH} ]] && \
-            { warn "GOPATH doesn't seem to be defined or exist.";
-              return 1; }
+            { warn "GOPATH doesn't seem to be defined or exist."; return 1; }
 
         # Fetch or update required projects
         info "Fetching Caddy sources..."
         for PROJECTS in mholt/caddy/caddy caddyserver/builds; do
             go get -u github.com/${PROJECTS} || \
-                { warn "Failed to fetch ${PROJECTS}.";
-                  return 1; }
+                { warn "Failed to fetch ${PROJECTS}."; return 1; }
         done
 
         # Build from source
         info "Building Caddy..."
-        cd ${GOPATH}/src/github.com/mholt/caddy/caddy || \
-            return 1
-        go run build.go || \
-            return 1
+        cd ${GOPATH}/src/github.com/mholt/caddy/caddy || return 1
+        go run build.go || return 1
     )
 
     # Done!

@@ -16,17 +16,19 @@ alias wget='wget -c -t 0 --retry-connrefused'
 
 # Required for GPG signing
 GPG_TTY=$(tty)
-export GPG_TTY
 
 # GNU nano for text editor
-export EDITOR=nano
+EDITOR=nano
 
 # Use ccache for faster compiling
-export USE_CCACHE=true
+USE_CCACHE=true
 
 # My kernel identity in nutshell
-export KBUILD_BUILD_USER=krasCGQ
-export KBUILD_BUILD_HOST=KudProject
+KBUILD_BUILD_USER=krasCGQ
+KBUILD_BUILD_HOST=KudProject
+
+# Export some variables to satisfy shellcheck requirements
+export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
 # Define script directory
 SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
@@ -57,7 +59,9 @@ function warn {
 
 # Parse current branch in git repository
 function parse_git_branch {
+    local BRANCH
     BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
+
     if [[ ! -z ${BRANCH} ]]; then
         # Don't give extra brackets if project isn't at any branch or is currently detached
         [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && \
@@ -71,33 +75,28 @@ function parse_git_branch {
 # Sign flashable zip with zipsigner
 function zipsigner {
     [[ -z $(command -v java) ]] && \
-        { warn "Please install any of OpenJDK version before continuing.";
-          return 1; }
+        { warn "Please install any of OpenJDK version before continuing."; return 1; }
 
     [[ -z ${ZIPSIGNER} ]] && \
-        { warn "${BLD}ZIPSIGNER${RST} variable is empty. Refusing to continue.";
-          return 1; }
+        { warn "${BLD}ZIPSIGNER${RST} variable is empty. Refusing to continue."; return 1; }
 
     [[ ${#} -lt 2 ]] && \
-        { warn "${BLD}Usage:${RST} zipsigner <unsigned-zip> <signed-zip>";
-          return 1; }
+        { warn "${BLD}Usage:${RST} zipsigner <unsigned-zip> <signed-zip>"; return 1; }
 
     [[ ! -f ${ZIPSIGNER} ]] && \
-        { warn "${BLD}$(basename "${ZIPSIGNER}")${RST} doesn't exist in defined path.";
-          return 1; }
+        { warn "${BLD}$(basename "${ZIPSIGNER}")${RST} doesn't exist in defined path."; return 1; }
 
     [[ ! -f ${1} ]] && \
-        { warn "${BLD}$(basename "${1}")${RST} doesn't exist in defined path.";
-          return 1; }
+        { warn "${BLD}$(basename "${1}")${RST} doesn't exist in defined path."; return 1; }
 
     [[ ! -d $(dirname "${2}") ]] && \
         mkdir -p "$(dirname "${2}")"
 
-    echo "- Signing $(basename "${1}") as $(basename "${2}")..."
+    info "Signing $(basename "${1}") as $(basename "${2}")..."
     if $(command -v java) -jar "${ZIPSIGNER}" "${1}" "${2}"; then
         info "Operation has completed successfully."
     else
-        STATUS=${?}
+        local STATUS=${?}
         warn "Failed to do defined operation."
         return ${STATUS}
     fi
