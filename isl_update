@@ -35,8 +35,7 @@ tg_post "*$(hostname):* Script \`${NAME}\` has been started."
 
 # Sanity check
 [[ -z ${ISLDIR} || ! -d ${ISLDIR} ]] && \
-    { warn "ISLDIR is either undefined or defined but doesn't exist.";
-      suicide 1; }
+    { warn "ISLDIR is either undefined or defined but doesn't exist."; suicide 1; }
 
 while true; do
     # Inform script execution
