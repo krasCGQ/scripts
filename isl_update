@@ -17,6 +17,8 @@ function tg_post {
 
 # Kill script when something goes wrong
 function suicide {
+    local STATUS
+
     [[ -n ${1} ]] && \
         STATUS=${1} || \
         STATUS=${?}
