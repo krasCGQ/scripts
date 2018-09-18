@@ -134,7 +134,7 @@ function update_binaries {
 
         # Build from source
         info "Building Caddy..."
-        cd ${GOPATH}/src/github.com/mholt/caddy/caddy || return 1
+        cd "${GOPATH}"/src/github.com/mholt/caddy/caddy || return 1
         go run build.go || return 1
     )
 
