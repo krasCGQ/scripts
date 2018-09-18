@@ -101,5 +101,23 @@ function btg_build {
     )
 }
 
+# Wrapper to build Clang using Nathan's script
+function clang_build {
+    # Check if we properly init the submodule
+    [[ $(find "${SCRIPTDIR}"/nathan | wc -l) -eq 0 ]] && \
+        { warn "Submodule required by this function isn't initialized properly!"; return 1; }
+
+    # Do inside a subshell to avoid messing with the original environment
+    (
+        # Source Nathan's common environment script
+        . "${SCRIPTDIR}"/nathan/common
+
+        # Run build-clang script
+        "${SCRIPTDIR}"/nathan/build-clang \
+            -i /opt/kud/flash-clang-8.x \
+            -v Flash
+    ) || { warn "Something went wrong with the subshell!"; return 1; }
+}
+
 # Last, but my most convenient part
 export PS1='\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]$(parse_git_branch)\[\e[1;36m\] \$\[\e[0m\] '
