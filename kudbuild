@@ -245,7 +245,7 @@ fi
 # Clean build directory
 info "Cleaning build directory..."
 # TODO: Completely clean build?
-make ARCH=${ARCH} O="${OUT}" clean > /dev/null
+make ARCH=${ARCH} O="${OUT}" clean &> /dev/null
 
 # TODO: Generate defconfig if it doesn't exist
 
