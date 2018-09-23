@@ -114,7 +114,7 @@ function clang_build {
 
         # Run build-clang script
         "${SCRIPTDIR}"/nathan/build-clang \
-            -i /opt/kud/flash-clang-8.x \
+            -i /opt/kud \
             -v Flash
     ) || { warn "Something went wrong with the subshell!"; return 1; }
 }
