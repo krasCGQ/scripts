@@ -113,9 +113,7 @@ function clang_build {
         . "${SCRIPTDIR}"/nathan/common
 
         # Run build-clang script
-        "${SCRIPTDIR}"/nathan/build-clang \
-            -i /opt/kud \
-            -v Flash
+        "${SCRIPTDIR}"/nathan/build-clang -i /opt/kud
     ) || { warn "Something went wrong with the subshell!"; return 1; }
 }
 
