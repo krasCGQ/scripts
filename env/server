@@ -148,16 +148,16 @@ function update_binaries {
         CT_SRC=${HOME}/src/ct-ng
         THREADS=$(nproc --all)
 
-        cd ${CT_SRC} || return 1
+        cd "${CT_SRC}" || return 1
 
         # Uninstall already installed binary if exist
         [[ -f ${LOCAL_DIR}/bin/ct-ng ]] && \
             { info "Uninstalling previous version of crosstool-NG...";
-              make uninstall -j${THREADS} > /dev/null; }
+              make uninstall -j"${THREADS}" > /dev/null; }
 
         # Clean working directory
         info "Cleaning crosstool-NG directory..."
-        make distclean -j${THREADS} &> /dev/null
+        make distclean -j"${THREADS}" &> /dev/null
         git clean -dfx > /dev/null
 
         # Update sources
@@ -168,16 +168,16 @@ function update_binaries {
         # Configuration
         info "Generating crosstool-NG configuration files..."
         { ./bootstrap 2> /dev/null;
-          ./configure --prefix=${LOCAL_PATH} > /dev/null; } || \
+          ./configure --prefix="${LOCAL_PATH}" > /dev/null; } || \
             { warn "Failed to generate crosstool-NG configuration files."; return 1; }
 
         # Build from source
         info "Building crosstool-NG..."
-        make -j${THREADS} > /dev/null || return 1
+        make -j"${THREADS}" > /dev/null || return 1
 
         # Install to local binary path
         info "Installing crosstool-NG..."
-        make install -j${THREADS} > /dev/null || return 1
+        make install -j"${THREADS}" > /dev/null || return 1
     )
 
     # Done!
