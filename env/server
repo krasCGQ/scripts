@@ -12,6 +12,9 @@ export TZ=Asia/Makassar
 # Export GOPATH early for checking
 export GOPATH=${HOME}/.local/go
 
+# Default local binary path
+LOCAL_PATH=${HOME}/.local
+
 # Other variables used around this script
 CTNGCOMP=${HOME}/src/ct-ng/bash-completion/ct-ng
 TRANSFERSH=${HOME}/scripts/transfer.sh
@@ -26,7 +29,7 @@ TRANSFERSH=${HOME}/scripts/transfer.sh
     unset GOPATH
 
 # Export local binary paths
-export PATH=${HOME}/.local/bin:${PATH}
+export PATH=${LOCAL_PATH}/bin:${PATH}
 [[ -d ${GOPATH} ]] && \
     export PATH=${GOPATH}/bin:${PATH}
 
@@ -136,6 +139,45 @@ function update_binaries {
         info "Building Caddy..."
         cd "${GOPATH}"/src/github.com/mholt/caddy/caddy || return 1
         go run build.go || return 1
+    )
+
+    # crosstool-NG
+    (
+        # Local variables
+        local CT_SRC THREADS
+        CT_SRC=${HOME}/src/ct-ng
+        THREADS=$(nproc --all)
+
+        cd ${CT_SRC} || return 1
+
+        # Uninstall already installed binary if exist
+        [[ -f ${LOCAL_DIR}/bin/ct-ng ]] && \
+            { info "Uninstalling previous version of crosstool-NG...";
+              make uninstall -j${THREADS} > /dev/null; }
+
+        # Clean working directory
+        info "Cleaning crosstool-NG directory..."
+        make distclean -j${THREADS} &> /dev/null
+        git clean -dfx > /dev/null
+
+        # Update sources
+        info "Updating crosstool-NG sources..."
+        git pull &> /dev/null || \
+            { warn "Failed to update crosstool-NG sources."; return 1; }
+
+        # Configuration
+        info "Generating crosstool-NG configuration files..."
+        { ./bootstrap 2> /dev/null;
+          ./configure --prefix=${LOCAL_PATH} > /dev/null; } || \
+            { warn "Failed to generate crosstool-NG configuration files."; return 1; }
+
+        # Build from source
+        info "Building crosstool-NG..."
+        make -j${THREADS} > /dev/null || return 1
+
+        # Install to local binary path
+        info "Installing crosstool-NG..."
+        make install -j${THREADS} > /dev/null || return 1
     )
 
     # Done!
