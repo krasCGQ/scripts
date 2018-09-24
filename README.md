@@ -6,7 +6,6 @@ Enjoy!
 
 ## Standalone Scripts List
 
-* `build-clang`: Clang build script (mostly modified for my local environment)
 * `isl_update`: Cron-like script to update [my ISL fork](https://github.com/krasCGQ/isl) every 18 hours.
 * `killswitch`: VPN kill switch enabler/disabler for UFW (requires `sudo` privileges as `ufw` is only visible to `root` user); only supports VPN connected through `tun0`
 * `kudbuild`: KudKernel build script; only supports mido ([non]treble) and X00T.
@@ -15,10 +14,6 @@ Enjoy!
 ## Snippets List
 
 * `rom_sign`: Android ROM signing wrapper; run `rom_sign` at root of your ROM source after sourcing.
-
-## Credits
-
-* [Nathan Chancellor (nathanchance)](https://github.com/nathanchance) - `build-clang` script, which has been modified accordingly on this repository
 
 ## License
 
