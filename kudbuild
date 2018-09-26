@@ -305,7 +305,7 @@ if [[ -n ${UPLOAD} ]]; then
         # To Telegram
         info "Uploading ${ZIP} to Telegram..."
         tg_post "Uploading build..."
-        ! "${TELEGRAM}" -f "${AK2}/${ZIP}" && \
+        "${TELEGRAM}" -f "${AK2}/${ZIP}" || \
              { warn "Failed to upload ${ZIP}.";
                tg_post "Failed to upload the build." \
                        "@TheOhara, I need your intervention please."; }
