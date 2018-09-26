@@ -54,6 +54,11 @@ trap '{
     tg_error
 }' ERR
 
+# git log --pretty alias
+function git_pretty {
+    git log --pretty=format:"%h (\"%s\")" -1
+}
+
 ## Parse parameters
 
 if [[ ${#} -ge 1 ]]; then
@@ -304,11 +309,12 @@ if [[ -n ${UPLOAD} ]]; then
     if [[ -z ${RELEASE} ]]; then
         # To Telegram
         info "Uploading ${ZIP} to Telegram..."
-        tg_post "Uploading build..."
-        "${TELEGRAM}" -f "${AK2}/${ZIP}" || \
-             { warn "Failed to upload ${ZIP}.";
-               tg_post "Failed to upload the build." \
-                       "@TheOhara, I need your intervention please."; }
+        tg_post "Uploading build to testing group..."
+        "${TELEGRAM}" -f "${AK2}/${ZIP}" -c "$(get_chatid rg_unified)" \
+            "New test build available with latest commit: $(git_pretty)" || \
+            { warn "Failed to upload ${ZIP}.";
+              tg_post "Failed to upload the build." \
+                      "@TheOhara, I need your intervention please."; }
     else
         # or to webserver for release zip
         (
@@ -338,7 +344,7 @@ if [[ -n ${UPLOAD} ]]; then
 fi
 
 # Notify latest commit and end script
-tg_post "Latest commit: $(git log --pretty=format:"%h (\"%s\")" -1)"
+tg_post "Latest commit: $(git_pretty)"
 info "That's it. Job well done!"
 
 # Alert for script ending

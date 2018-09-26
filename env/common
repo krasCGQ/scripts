@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
+# shellcheck source=/dev/null
 # Copyright (C) 2017-2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Text styles
 BLD=$(tput bold)
 RST=$(tput sgr0)
+
+# Export script directory at the beginning
+SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
+
+# Import Telegram Chat ID fetching function if exists
+[[ -f ${SCRIPTDIR}/tg_chatid ]] && \
+    . "${SCRIPTDIR}"/tg_chatid
 
 ## Aliases
 
@@ -30,13 +38,10 @@ KBUILD_BUILD_HOST=KudProject
 # Export some variables to satisfy shellcheck requirements
 export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
-# Define script directory
-SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
-
 # Import Telegram bot token and chat ID (KudProject Community)
 [[ -f ${SCRIPTDIR}/tg_token && -f ${SCRIPTDIR}/tg_chatid ]] && \
     { TELEGRAM_TOKEN=$(cat "${SCRIPTDIR}"/tg_token);
-      TELEGRAM_CHAT=$(< "${SCRIPTDIR}"/tg_chatid head -n 1 -c 14);
+      TELEGRAM_CHAT=$(get_chatid kud_community);
       export TELEGRAM_TOKEN TELEGRAM_CHAT; }
 
 # Prints a message with a dash
