@@ -36,7 +36,7 @@ if [[ ${#} -eq 1 ]]; then
             die "Invalid parameter specified!" ;;
     esac
 else
-    die "No or more than one option specified!"
+    die "No or more than one parameter specified!"
 fi
 
 for COMMAND in "${CONFIG[@]}"; do
