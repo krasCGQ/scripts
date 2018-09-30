@@ -33,7 +33,7 @@ if [[ ${#} -eq 1 ]]; then
 
         # Suicide
         *)
-            die "Invalid option specified!" ;;
+            die "Invalid parameter specified!" ;;
     esac
 else
     die "No or more than one option specified!"
