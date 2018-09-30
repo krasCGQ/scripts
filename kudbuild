@@ -72,7 +72,7 @@ if [[ ${#} -ge 1 ]]; then
                 if [[ ${1,,} == clang || ${1,,} == gcc ]]; then
                     COMPILER=${1,,}
                 else
-                    die "Invalid parameter specified!"
+                    die "Invalid value specified!"
                 fi ;;
             -d |--device)
                 shift
@@ -83,7 +83,7 @@ if [[ ${#} -ge 1 ]]; then
                 elif [[ ${1^^} == X00T ]]; then
                     DEVICE=${1^^}
                 else
-                    die "Invalid parameter specified!"
+                    die "Invalid value specified!"
                 fi ;;
 
             # OPTIONAL
@@ -121,15 +121,14 @@ if [[ ${#} -ge 1 ]]; then
                 # Will be ignored if BUILD_ONLY=true
                 UPLOAD=true ;;
 
-            # DIE!
+            # Unsupported parameter
             *)
-                die "Invalid option(s) specified!" ;;
+                warn "Unrecognized parameter specified: \"${1}\"" ;;
         esac
-
         shift
     done
 else
-    die "No option specified!"
+    die "No parameter specified!"
 fi
 
 ## Variables
