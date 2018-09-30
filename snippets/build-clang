@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# nathanchance's build-clang script wrapper
+# Copyright (C) 2018 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+function build-clang {
+    # Check if we properly init the submodule
+    [[ $(find "${SCRIPTDIR}"/nathan | wc -l) -eq 0 ]] && \
+        { warn "Submodule required by this function isn't initialized properly!"; return 1; }
+
+    # Do inside a subshell to avoid messing with the original environment
+    (
+        # Source Nathan's common environment script
+        . "${SCRIPTDIR}"/nathan/common
+
+        # Run build-clang script
+        "${SCRIPTDIR}"/nathan/build-clang -i /opt/kud
+    ) || { warn "Something went wrong with the subshell!"; return 1; }
+}
