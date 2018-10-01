@@ -13,6 +13,7 @@ Enjoy!
 
 ## Snippets List
 
+* `build-clang`: [Nathan Chancellor](https://github.com/nathanchance)'s build-clang script wrapper; executes his script inside a subshell to avoid messing with current environment.
 * `rom_sign`: Android ROM signing wrapper; run `rom_sign` at root of your ROM source after sourcing.
 
 ## License
