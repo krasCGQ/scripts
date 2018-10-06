@@ -53,6 +53,11 @@ function rom_sign {
         fi
     done
 
+    # Pure AOSP doesn't have backuptool support implemented
+    # Let's just look for GLOBAL-PREUPLOAD.cfg in manifest repo
+    [[ -n ${BACKUP_FLAG} && -f .repo/manifests/GLOBAL-PREUPLOAD.cfg ]] && \
+        unset BACKUP_FLAG
+
     # Sign target files package
     ./build/tools/releasetools/sign_target_files_apks \
         -o -d "${HOME}"/.android-certs \
