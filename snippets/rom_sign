@@ -58,20 +58,18 @@ function rom_sign {
     [[ -n ${BACKUP_FLAG} && -f .repo/manifests/GLOBAL-PREUPLOAD.cfg ]] && \
         unset BACKUP_FLAG
 
-    # Sign target files package
-    ./build/tools/releasetools/sign_target_files_apks \
-        -o -d "${HOME}"/.android-certs \
-        "${OUT}"/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
-        signed-target_files.zip || \
-        return 1
+    (
+        # Sign target files package
+        ./build/tools/releasetools/sign_target_files_apks \
+            -o -d "${HOME}"/.android-certs \
+            "${OUT}"/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
+            signed-target_files.zip
 
-    # Convert signed target files package to signed OTA package
-    ./build/tools/releasetools/ota_from_target_files \
-        --block ${BACKUP_FLAG} \
-        -k "${HOME}"/.android-certs/releasekey \
-        signed-target_files.zip \
-        signed-ota_update.zip || \
-        return 1
+        # Convert signed target files package to signed OTA package
+        ./build/tools/releasetools/ota_from_target_files \
+            --block ${BACKUP_FLAG} -k "${HOME}"/.android-certs/releasekey \
+            signed-target_files.zip signed-ota_update.zip
+    ) || return 1
 
     # Remove signed target files because we don't need it anymore
     rm -f signed-target_files.zip
