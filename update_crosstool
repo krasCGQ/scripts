@@ -34,19 +34,19 @@ function projects_list {
     # GNU GCC
     GNUDIR="${SRCDIR}/gnu"
     GNUBRANCH="gcc-8-branch"
-    GNUPATCH="${CTDIR}/gcc/8.1.0"
+    GNUPATCH="${CTDIR}/gcc/8.2.0"
     GNUEXCL="0018"
 
     # Linaro GCC
     LNRDIR="${SRCDIR}/linaro"
     LNRBRANCH="linaro-local/gcc-7-integration-branch"
-    LNRPATCH="${CTDIR}/gcc-linaro/7.2-2017.11"
+    LNRPATCH="${CTDIR}/gcc-linaro/7.3-2018.05"
     LNREXCL=""
 
     # GNU Binutils
     BINDIR="${SRCDIR}/binutils"
     BINBRANCH="master"
-    BINPATCH="${CTDIR}/binutils/2.30"
+    BINPATCH="${CTDIR}/binutils/2.31.1"
     BINEXCL=""
 }
 
