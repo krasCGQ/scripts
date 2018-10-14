@@ -35,7 +35,7 @@ function projects_list {
     GNUDIR="${SRCDIR}/gnu"
     GNUBRANCH="gcc-8-branch"
     GNUPATCH="${CTDIR}/gcc/8.2.0"
-    GNUEXCL="0018"
+    GNUEXCL="0006|0010"
 
     # Linaro GCC
     LNRDIR="${SRCDIR}/linaro"
@@ -47,7 +47,7 @@ function projects_list {
     BINDIR="${SRCDIR}/binutils"
     BINBRANCH="master"
     BINPATCH="${CTDIR}/binutils/2.31.1"
-    BINEXCL=""
+    BINEXCL="0009|0010"
 }
 
 # Usage: update_projects "<src-dir>" "<src-branch>" "<patch-dir>"
@@ -59,11 +59,18 @@ function update_projects {
     # Enter source directory
     cd "${1}" || die
 
-    # Fetch updates from upstream
-    git fetch origin "${2}" --depth=1
+    if [[ $(pwd) != ${GNUDIR} ]]; then
+        # Fetch updates from upstream
+        git fetch origin "${2}" --depth=1
 
-    # Hard reset current tree to latest source
-    git reset --hard FETCH_HEAD
+        # Hard reset current tree to latest source
+        git reset --hard FETCH_HEAD
+    else
+        # Workaround failing patches for GNU GCC 8.2.1
+        git reset --hard
+        git fetch upstream "${2}"
+        git rebase upstream/gcc-8-branch
+    fi
 
     # Clean them up as we can make mess with them at some point
     git clean -dfx
