@@ -68,7 +68,6 @@ function ct-ng_build {
     local TARDIR GITDIR ISLDIR
     TARDIR=${CTDIR}/tarballs
     GITDIR=${CTDIR}/git
-    ISLDIR=${GITDIR}/isl
 
     [[ -z $(command -v ct-ng) ]] && \
         { warn "${BLD}ct-ng${RST} isn't installed." \
@@ -96,22 +95,10 @@ function ct-ng_build {
             info "Updating git projects..."
             ./update || return 1
         )
-        (
-            cd "${ISLDIR}" || return 1;
-
-            [[ ! -d .git ]] && \
-                { warn "$(basename "${CTDIR}")/$(basename "${GITDIR}")/$(basename "${ISLDIR}") isn't a git project." \
-                       "Are you sure the defined path is correct?"; return 1; }
-
-            info "Regenerating ISL configuration files..."
-            git clean -dfx > /dev/null
-            ./autogen.sh || return 1
-        )
 
         ct-ng source || return 1;
 
         if ct-ng build; then
-            echo
             info "Successfully built the toolchain."
         else
             warn "Failed to build the toolchain."
