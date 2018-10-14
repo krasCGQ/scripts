@@ -92,7 +92,7 @@ function update_projects {
         echo "  - Applying patch $(basename "${PATCH}" | cut -d '-' -f 1 | tail -c 5)..."
 
         # Apply every patches with merge strategy
-        patch --verbose --merge -N -p1 -i "${PATCH}"
+        patch --merge -N -p1 -i "${PATCH}"
     done
 
     # Remove .orig files
