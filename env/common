@@ -17,7 +17,7 @@ SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
 ## Aliases
 
 # Set up common aliases
-alias nano='nano -FISWaiuwx'
+alias nano='nano -FSWaiuwx'
 alias wget='wget -c -t 0 --retry-connrefused'
 
 ## Variables
