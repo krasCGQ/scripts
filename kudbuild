@@ -92,7 +92,7 @@ if [[ ${#} -ge 1 ]]; then
             -cv|--clang-version)
                 shift
 
-                # Only latest versions of Clang 5-7 are supported
+                # Only latest versions of Clang 5-8 are supported
                 if [[ -z ${1//[0-9]} ]]; then
                     if [[ ${1} -eq 5 ]]; then
                         CLANG_VERSION=4053586
@@ -100,6 +100,8 @@ if [[ ${#} -ge 1 ]]; then
                         CLANG_VERSION=4691093
                     elif [[ ${1} -eq 7 ]]; then
                         CLANG_VERSION=r328903
+                    elif [[ ${1} -eq 8 ]]; then
+                        CLANG_VERSION=r339409b
                     else
                         die "Invalid version specified!"
                     fi
