@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Environment setup for my VPS
+# Copyright (C) 2018 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Don't setup if not in correct environment
+[[ $(whoami) != kud || $(hostname) != wafuu ]] && return 1
+
+# Import common environment script
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
+
+# Update alias
+alias update='sudo su -c "apt-get update && apt-get dist-upgrade -y --allow-unauthenticated"'
