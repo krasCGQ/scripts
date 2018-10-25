@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck source=/dev/null
+# Environment setup for my build server
 # Copyright (C) 2017-2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Import common bash completion
+# Don't setup if not in correct environment
+[[ $(whoami) != krasCGQ || $(hostname) != botstack ]] && return 1
+
+# Import common environment script
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
 # Use Central Indonesia Time

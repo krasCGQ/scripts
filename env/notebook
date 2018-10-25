@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+# Environment setup for my notebook
 # Copyright (C) 2017-2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Import common bash completion
+# Don't setup if not in correct environment
+[[ $(whoami) != krascgq || $(hostname) != KudNotebook ]] && return 1
+
+# Import common environment script
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
