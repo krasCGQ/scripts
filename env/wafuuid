@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
-[[ $(whoami) != kud || $(hostname) != wafuu ]] && return 1
+[[ $(whoami) != kud || $(hostname) != wafuu.id ]] && return 1
 
 # Import common environment script
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
