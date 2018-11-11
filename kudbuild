@@ -183,9 +183,9 @@ MSG="${NAME} (${DEVICE}) build:"
     die "Please run this script inside kernel source folder!"
 
 # Unset these variables if they're set
-for VAR in CROSS_COMPILE{,_ARM32} CC; do
-    [[ -n ${VAR} ]] && \
-        unset ${VAR}
+for VARIABLE in CROSS_COMPILE{,_ARM32} CC; do
+    [[ -n ${VARIABLE} ]] && \
+        unset ${VARIABLE}
 done
 
 # Sanity checks
@@ -203,9 +203,9 @@ sleep 1
     { warn "Assigning Clang version is only meant for AOSP Clang, disabling.";
       unset CLANG_VERSION; }
 
-for VAR in ${GCC_PREFIX}gcc ${GCC32_PREFIX}gcc ${CLANG_PATH}; do
-    find ${VAR} &> /dev/null || \
-        die "${BLD}$(basename "${VAR}")${RST} doesn't exist in defined path."
+for VARIABLE in ${GCC_PREFIX}gcc ${GCC32_PREFIX}gcc ${CLANG_PATH}; do
+    find ${VARIABLE} &> /dev/null || \
+        die "${BLD}$(basename "${VARIABLE}")${RST} doesn't exist in defined path."
 done
 
 [[ ! -d ${AK2} ]] && \
@@ -267,8 +267,8 @@ if [[ -z ${BUILD_ONLY} ]]; then
     if [[ ${DEVICE} == mido ]]; then
         rm -rf "${AK2}"/{kernel,{,non}treble}/*
         cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel
-        for VAR in {,non}treble; do
-            cp -f "${OUT}"/arch/arm64/boot/dts/qcom/"${DTB}"-${VAR}.dtb "${AK2}"/${VAR}/"${DTB}".dtb
+        for VARIANT in {,non}treble; do
+            cp -f "${OUT}"/arch/arm64/boot/dts/qcom/"${DTB}"-${VARIANT}.dtb "${AK2}"/${VARIANT}/"${DTB}".dtb
         done
     else
         rm -f "${AK2}"/Image.gz-dtb
