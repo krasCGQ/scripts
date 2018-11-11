@@ -219,6 +219,9 @@ sleep 1
 # Explicitly declare build script startup
 STARTED=true
 
+# Set globstar so '**' is recursive
+shopt -s globstar
+
 # Always use ccache for faster compiling if exists in PATH
 if [[ -n $(command -v ccache) ]]; then
     if [[ ${COMPILER} == clang ]]; then
@@ -270,9 +273,12 @@ if [[ -z ${BUILD_ONLY} ]]; then
         for VARIANT in {,non}treble; do
             cp -f "${OUT}"/arch/arm64/boot/dts/qcom/"${DTB}"-${VARIANT}.dtb "${AK2}"/${VARIANT}/"${DTB}".dtb
         done
-    else
-        rm -f "${AK2}"/Image.gz-dtb
+    elif [[ ${DEVICE} == X00T ]]; then
+        rm -f "${AK2}"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
         cp -f "${OUT}"/arch/arm64/boot/Image.gz-dtb "${AK2}"
+        for MODULE in "${OUT}"/**/*.ko; do
+            cp -f "${MODULE}" "${AK2}"/modules/vendor/lib/modules
+        done
     fi
 
     # Export here to be picked later
@@ -347,6 +353,9 @@ fi
 # Notify latest commit and end script
 tg_post "Latest commit: $(git_pretty)"
 info "That's it. Job well done!"
+
+# Unset globstar
+shopt -u globstar
 
 # Alert for script ending
 echo -ne '\a'
