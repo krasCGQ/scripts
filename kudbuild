@@ -280,7 +280,7 @@ if [[ -z ${BUILD_ONLY} ]]; then
     # Export here to be picked later
     ZIP=${NAME}-${DEVICE}-$(date +%s).zip
     [[ -n ${RELEASE} ]] && \
-        REL_ZIP=${NAME}-${DEVICE}-r${RELEASE}-$(date +%Y%m%d).zip
+        RELEASE_ZIP=${NAME}-${DEVICE}-r${RELEASE}-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
     info "Creating ${ZIP}..."
@@ -292,11 +292,11 @@ if [[ -z ${BUILD_ONLY} ]]; then
 
         if [[ -n ${RELEASE} ]]; then
             # Remove existing release zip if available
-            [[ -f ${REL_ZIP} ]] && \
-                rm -f "${REL_ZIP}"{,.md5sum}
+            [[ -f ${RELEASE_ZIP} ]] && \
+                rm -f "${RELEASE_ZIP}"{,.md5sum}
 
             # Sign zip for release
-            zipsigner "${ZIP}" "${REL_ZIP}"
+            zipsigner "${ZIP}" "${RELEASE_ZIP}"
 
             # Delete 'unsigned' zip
             rm -f "${ZIP}"
@@ -324,15 +324,15 @@ if [[ -n ${UPLOAD} ]]; then
             cd "${AK2}" || \
                 die "$(basename "${AK2}") doesn't exist in defined path."
 
-            info "Creating md5sum of ${REL_ZIP}..."
-            md5sum "${REL_ZIP}" > "${REL_ZIP}".md5sum
+            info "Creating md5sum of ${RELEASE_ZIP}..."
+            md5sum "${RELEASE_ZIP}" > "${RELEASE_ZIP}".md5sum
 
-            info "Uploading ${REL_ZIP} to webserver..."
-            for FILES in "${REL_ZIP}"{,.md5sum}; do
-                if rsync -qP --relative "${FILES}" kud@sophie.wafuu.id:/var/www/dl.wafuu.id/kernels/"${DEVICE}"/; then
+            info "Uploading ${RELEASE_ZIP} to webserver..."
+            for FILE in "${RELEASE_ZIP}"{,.md5sum}; do
+                if rsync -qP --relative "${FILE}" kud@sophie.wafuu.id:/var/www/dl.wafuu.id/kernels/"${DEVICE}"/; then
                     SUCCESS=true
                 else
-                    warn "Failed to upload ${FILES}."
+                    warn "Failed to upload ${FILE}."
                     [[ -n ${SUCCESS} ]] && \
                         unset SUCCESS
                     break
@@ -340,7 +340,7 @@ if [[ -n ${UPLOAD} ]]; then
             done
 
             [[ -n ${SUCCESS} ]] && \
-                info "${REL_ZIP} uploaded successfully." \
+                info "${RELEASE_ZIP} uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
         )
     fi
