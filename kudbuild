@@ -93,18 +93,14 @@ if [[ ${#} -ge 1 ]]; then
                 shift
 
                 # Only latest versions of Clang 5-8 are supported
-                if [[ -z ${1//[0-9]} ]]; then
-                    if [[ ${1} -eq 5 ]]; then
-                        CLANG_VERSION=4053586
-                    elif [[ ${1} -eq 6 ]]; then
-                        CLANG_VERSION=4691093
-                    elif [[ ${1} -eq 7 ]]; then
-                        CLANG_VERSION=r328903
-                    elif [[ ${1} -eq 8 ]]; then
-                        CLANG_VERSION=r344140b
-                    else
-                        die "Invalid version specified!"
-                    fi
+                if [[ ${1} -eq 5 ]]; then
+                    CLANG_VERSION=4053586
+                elif [[ ${1} -eq 6 ]]; then
+                    CLANG_VERSION=4691093
+                elif [[ ${1} -eq 7 ]]; then
+                    CLANG_VERSION=r328903
+                elif [[ ${1} -eq 8 ]]; then
+                    CLANG_VERSION=r344140b
                 else
                     die "Invalid version specified!"
                 fi ;;
