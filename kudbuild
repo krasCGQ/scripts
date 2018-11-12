@@ -333,7 +333,7 @@ if [[ -n ${UPLOAD} ]]; then
 
             info "Uploading ${REL_ZIP} to webserver..."
             for FILES in "${REL_ZIP}"{,.md5sum}; do
-                if rsync -qP "${FILES}" krasCGQ@srv1.botstack.host:~/srv/kernels/"${DEVICE}"; then
+                if rsync -qP "${FILES}" kud@sophie.wafuu.id:/var/www/dl.wafuu.id/kernels/"${DEVICE}"; then
                     SUCCESS=true
                 else
                     warn "Failed to upload ${FILES}."
