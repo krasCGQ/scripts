@@ -294,7 +294,7 @@ if [[ -z ${BUILD_ONLY} ]]; then
         if [[ -n ${RELEASE} ]]; then
             # Remove existing release zip if available
             [[ -f ${RELEASE_ZIP} ]] && \
-                rm -f "${RELEASE_ZIP}"{,.md5sum}
+                rm -f "${RELEASE_ZIP}"
 
             # Sign zip for release
             zipsigner "${ZIP}" "${RELEASE_ZIP}"
@@ -325,24 +325,13 @@ if [[ -n ${UPLOAD} ]]; then
             cd "${AK2}" || \
                 die "$(basename "${AK2}") doesn't exist in defined path."
 
-            info "Creating md5sum of ${RELEASE_ZIP}..."
-            md5sum "${RELEASE_ZIP}" > "${RELEASE_ZIP}".md5sum
-
             info "Uploading ${RELEASE_ZIP} to webserver..."
-            for FILE in "${RELEASE_ZIP}"{,.md5sum}; do
-                if rsync -qP --relative "${FILE}" kud@sophie.wafuu.id:/var/www/dl.wafuu.id/kernels/"${DEVICE}"/; then
-                    SUCCESS=true
-                else
-                    warn "Failed to upload ${FILE}."
-                    [[ -n ${SUCCESS} ]] && \
-                        unset SUCCESS
-                    break
-                fi
-            done
-
-            [[ -n ${SUCCESS} ]] && \
+            if rsync -qP --relative "${RELEASE_ZIP}" kud@sophie.wafuu.id:/var/www/dl.wafuu.id/kernels/"${DEVICE}"/; then
                 info "${RELEASE_ZIP} uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
+            else
+                warn "Failed to upload ${RELEASE_ZIP}."
+            fi
         )
     fi
 fi
