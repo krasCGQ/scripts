@@ -133,6 +133,7 @@ fi
 
 # Paths
 TELEGRAM="${SCRIPTDIR}"/telegram/telegram
+ROOT_DIR=${HOME}/KudProject
 OPT_DIR=/opt/kud
 
 # Number of threads used
@@ -143,7 +144,7 @@ if [[ -z ${STOCK} ]]; then
     GCC_COMPILER=aarch64-linux-gnu/bin/aarch64-linux-gnu-
     GCC32_COMPILER=arm-linux-gnueabi/bin/arm-linux-gnueabi-
     [[ ${COMPILER} == clang ]] && \
-        CLANG_COMPILER=flash-clang-8.x
+        CLANG_COMPILER=clang-8.x
 else
     GCC_COMPILER=aarch64-linux-android-4.9/bin/aarch64-linux-androidkernel-
     GCC32_COMPILER=arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
@@ -158,10 +159,10 @@ GCC32_PREFIX=${OPT_DIR}/${GCC32_COMPILER}
     CLANG_PATH=${OPT_DIR}/${CLANG_COMPILER}/bin/clang
 
 # Kernel build variables
-AK2=${HOME}/KudProject/AnyKernel2-${DEVICE}
+AK2=${ROOT_DIR}/AnyKernel2/${DEVICE}
 ARCH=arm64
 NAME=KudKernel
-OUT=$(pwd)/../build/${DEVICE}
+OUT=${ROOT_DIR}/kernels/build/${DEVICE}
 [[ -n ${RELEASE} ]] && \
     export KBUILD_BUILD_VERSION=${RELEASE}
 
