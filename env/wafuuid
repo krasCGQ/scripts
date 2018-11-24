@@ -10,4 +10,4 @@
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
 # Update alias
-alias update='sudo su -c "apt-get update && apt-get dist-upgrade -y"'
+alias update='sudo su -c "apt update && apt-get dist-upgrade -y"'
