@@ -166,9 +166,13 @@ OUT=${ROOT_DIR}/kernels/build/${DEVICE}
 [[ -n ${RELEASE} ]] && \
     export KBUILD_BUILD_VERSION=${RELEASE}
 
-# mido build ships both treble and non-treble DTBs
-[[ ${DEVICE} == mido ]] && \
+if [[ ${DEVICE} == mido ]]; then
+    # mido build ships both treble and non-treble DTBs
     DTB=msm8953-qrd-sku3-${DEVICE}
+elif [[ ${DEVICE} == X00T ]]; then
+    # X00T: Also send test build zip to open testing group
+    OPEN_TESTING=-1001334393755
+fi
 
 # Default message for posting to Telegram
 MSG="${NAME} (${DEVICE}) build:"
@@ -315,6 +319,7 @@ if [[ -n ${UPLOAD} ]]; then
         info "Uploading ${ZIP} to Telegram..."
         tg_post "Uploading build to testing group..."
         "${TELEGRAM}" -f "${AK2}/${ZIP}" -c "$(get_chatid rg_unified)" \
+            $([[ ${DEVICE} == X00T ]] && echo "-c" "${OPEN_TESTING}") \
             "New test build available with latest commit: $(git_pretty)" || \
             { warn "Failed to upload ${ZIP}.";
               tg_post "Failed to upload the build." \
