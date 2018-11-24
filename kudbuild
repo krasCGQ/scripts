@@ -130,6 +130,16 @@ else
     die "No parameter specified!"
 fi
 
+# X00T: Check early and enforce use of AOSP Clang
+if [[ ${DEVICE} == X00T  && -z ${STOCK} ]]; then
+    warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk.";
+    STOCK=true;
+    # Clang 8 as default if '-cv' isn't assigned
+    [[ -z ${CLANG_VERSION} ]] && CLANG_VERSION=r344140b
+
+    sleep 1
+fi
+
 ## Variables
 
 # Paths
