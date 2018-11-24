@@ -12,7 +12,8 @@
 
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
 function tg_post {
-    "${TELEGRAM}" "$(for POST in "${@}"; do echo "${POST}"; done)"
+    "${TELEGRAM}" "$(for POST in "${@}"; do echo "${POST}"; done)" \
+        &> /dev/null || return 0
 }
 
 # In case of signal interrupt, post interruption notification and exit script
