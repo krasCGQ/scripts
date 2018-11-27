@@ -19,16 +19,14 @@ function tg_post {
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
     [[ -n ${STARTED} ]] && \
-        tg_post "${MSG} Interrupted - Signal Interrupt" \
-                "Request from @TheOhara was granted."
+        tg_post "${MSG} Interrupted - Signal Interrupt"
 
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
 function tg_error {
-    tg_post "${MSG} Interrupted - Build Error(s)" \
-            "@TheOhara, do something, quick!"
+    tg_post "${MSG} Interrupted - Build Error(s)"
 
     exit "${STATUS}"
 }
@@ -333,8 +331,7 @@ if [[ -n ${UPLOAD} ]]; then
             $([[ ${DEVICE} == X00T ]] && echo "-c" "${OPEN_TESTING}") \
             "New test build available with latest commit: $(git_pretty)" || \
             { warn "Failed to upload ${ZIP}.";
-              tg_post "Failed to upload the build." \
-                      "@TheOhara, I need your intervention please."; }
+              tg_post "Failed to upload the build."; }
     else
         # or to webserver for release zip
         (
