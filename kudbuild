@@ -32,7 +32,7 @@ trap '{
 # For any errors, no matter what, post error notification and exit script
 function tg_error {
     if [[ ${DEVICE} == X00T ]]; then
-        tg_post "${MSG} Halted - Fatal mistake(s) commited by workers"
+        tg_post "${MSG} Halted - Fatal mistake(s) committed by workers"
     else
         tg_post "${MSG} Interrupted - Build Error(s)"
     fi
@@ -368,7 +368,7 @@ fi
 
 # Notify latest commit and end script
 if [[ ${DEVICE} == X00T ]]; then
-    tg_post "Latest included bricks: $(git_pretty)"
+    tg_post "Latest included brick: $(git_pretty)"
 else
     tg_post "Latest commit: $(git_pretty)"
 fi
