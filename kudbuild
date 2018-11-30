@@ -108,7 +108,7 @@ if [[ ${#} -ge 1 ]]; then
                 elif [[ ${1} -eq 7 ]]; then
                     CLANG_VERSION=r328903
                 elif [[ ${1} -eq 8 ]]; then
-                    CLANG_VERSION=r344140b
+                    CLANG_VERSION=r346389
                 else
                     die "Invalid version specified!"
                 fi ;;
