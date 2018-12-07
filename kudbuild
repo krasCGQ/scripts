@@ -18,24 +18,15 @@ function tg_post {
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
-    if [[ -n ${STARTED} ]]; then
-        if [[ ${DEVICE} == X00T ]]; then
-            tg_post "${MSG} Halted - A worker died from fallen bricks"
-        else
-            tg_post "${MSG} Interrupted - Signal Interrupt"
-        fi
-    fi
+    [[ -n ${STARTED} ]] && \
+        tg_post "${MSG} Interrupted - Signal Interrupt"
 
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
 function tg_error {
-    if [[ ${DEVICE} == X00T ]]; then
-        tg_post "${MSG} Halted - Fatal mistake(s) committed by workers"
-    else
-        tg_post "${MSG} Interrupted - Build Error(s)"
-    fi
+    tg_post "${MSG} Interrupted - Build Error(s)"
 
     exit "${STATUS}"
 }
@@ -142,7 +133,7 @@ if [[ ${DEVICE} == X00T  && -z ${STOCK} ]]; then
     warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk.";
     STOCK=true;
     # Clang 8 as default if '-cv' isn't assigned
-    [[ -z ${CLANG_VERSION} ]] && CLANG_VERSION=r346389
+    [[ -z ${CLANG_VERSION} ]] && CLANG_VERSION=r344140b
 
     sleep 1
 fi
@@ -179,9 +170,7 @@ GCC32_PREFIX=${OPT_DIR}/${GCC32_COMPILER}
 # Kernel build variables
 AK2=${ROOT_DIR}/AnyKernel2/${DEVICE}
 ARCH=arm64
-[[ ${DEVICE} == X00T ]] && \
-     NAME=BrickKernel || \
-     NAME=KudKernel
+NAME=KudKernel
 OUT=${ROOT_DIR}/kernels/build/${DEVICE}
 [[ -n ${RELEASE} ]] && \
     export KBUILD_BUILD_VERSION=${RELEASE}
@@ -195,9 +184,7 @@ elif [[ ${DEVICE} == X00T ]]; then
 fi
 
 # Default message for posting to Telegram
-[[ ${DEVICE} == X00T ]] && \
-    MSG="${NAME} construction:" || \
-    MSG="${NAME} (${DEVICE}) build:"
+MSG="${NAME} (${DEVICE}) build:"
 
 ## Commands
 
@@ -339,14 +326,10 @@ if [[ -n ${UPLOAD} ]]; then
     if [[ -z ${RELEASE} ]]; then
         # To Telegram
         info "Uploading ${ZIP} to Telegram..."
-        if [[ ${DEVICE} == X00T ]]; then
-            tg_post "Giving constructed wall of bricks to experimental test site..."
-        else
-            tg_post "Uploading build to testing group..."
-        fi
+        tg_post "Uploading build to testing group..."
         "${TELEGRAM}" -f "${AK2}/${ZIP}" -c "$(get_chatid rg_unified)" \
             $([[ ${DEVICE} == X00T ]] && echo "-c" "${OPEN_TESTING}") \
-            "New ${NAME} test build available with latest commit: $(git_pretty)" || \
+            "New test build available with latest commit: $(git_pretty)" || \
             { warn "Failed to upload ${ZIP}.";
               tg_post "Failed to upload the build."; }
     else
@@ -367,11 +350,7 @@ if [[ -n ${UPLOAD} ]]; then
 fi
 
 # Notify latest commit and end script
-if [[ ${DEVICE} == X00T ]]; then
-    tg_post "Latest included brick: $(git_pretty)"
-else
-    tg_post "Latest commit: $(git_pretty)"
-fi
+tg_post "Latest commit: $(git_pretty)"
 info "That's it. Job well done!"
 
 # Unset globstar
