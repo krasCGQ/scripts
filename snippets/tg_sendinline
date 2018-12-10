@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Copyright (C) 2018 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+function tg_sendinline {
+    REQUEST="{
+        \"chat_id\": \"${TELEGRAM_CHAT}\",
+        \"text\": \"$(for POST in "${@}"; do echo "${POST}"; done)\",
+        \"reply_markup\": {
+            \"inline_keyboard\": [[
+                {
+                    \"text\": \"Test\",
+                    \"url\": \"https://wafuu.id\"
+                }
+            ]]
+        }
+    }"
+
+    curl -s -X POST https://api.telegram.org/bot"${TELEGRAM_TOKEN}"/sendMessage \
+         -H "Content-Type: application/json" -d "${REQUEST}"
+}
