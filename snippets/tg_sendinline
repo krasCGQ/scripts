@@ -3,12 +3,40 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 function tg_sendinline {
+    local REQUEST TEXT
+
+    if [[ ${#} -ge 1 ]]; then
+        while [[ ${#} -ge 1 ]]; do
+            case ${1} in
+                # REQUIRED, BUT CAN BE SET EXTERNALLY
+                -c|--chat-id)
+                    shift
+
+                    TELEGRAM_CHAT=${1} ;;
+                -t|--token)
+                    shift
+
+                    if [[ ${1} == *:* ]]; then
+                        TELEGRAM_TOKEN=${1}
+                    else
+                        warn "Invalid value specified!"
+                        return 1
+                    fi ;;
+
+                # EVERYTHING ELSE: Send as part of message instead
+                *)
+                    TEXT+="${1}\n" ;;
+            esac
+            shift
+        done
+    fi
+
     [[ -z ${TELEGRAM_TOKEN} || -z ${TELEGRAM_CHAT} ]] && \
         { warn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."; return 1; }
 
-    local REQUEST="{
+    REQUEST="{
         \"chat_id\": \"${TELEGRAM_CHAT}\",
-        \"text\": \"$(for POST in "${@}"; do echo "${POST}"; done)\",
+        \"text\": \"$(echo -e "${TEXT}")\",
         \"reply_markup\": {
             \"inline_keyboard\": [[
                 {
