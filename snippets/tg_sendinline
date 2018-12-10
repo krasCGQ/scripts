@@ -96,6 +96,10 @@ function tg_sendinline {
     [[ -z ${TELEGRAM_TOKEN} || -z ${TELEGRAM_CHAT} ]] && \
         { warn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."; return 1; }
 
+    # If no inline buttons to include, abort the function
+    [[ -z ${INLINE} ]] && \
+        { warn "INLINE is empty. Do you really want to use this function?"; return 1; }
+
     # Add missing ending square bracket if needed
     [[ $(echo "${INLINE}" | tail -c 2) == "}" ]] && \
         INLINE+=" ]"
