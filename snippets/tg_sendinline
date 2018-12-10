@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
+# Wrapper for sending Telegram posts with inline buttons
 # Copyright (C) 2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Based and expanded from https://stackoverflow.com/a/49063573.
+
 function tg_sendinline {
+    # Local variables
     local COUNT INLINE INLINE_TEXT INLINE_URL ON_SAME_ROW REQUEST ROW_COUNT TEXT
 
+    # Parse parameters
     if [[ ${#} -ge 1 ]]; then
         while [[ ${#} -ge 1 ]]; do
             case ${1} in
@@ -49,6 +54,7 @@ function tg_sendinline {
             esac
             shift
 
+            # Inline buttons set up
             if [[ -n ${INLINE_TEXT} && -n ${INLINE_URL} ]]; then
                 if [[ -n ${ON_SAME_ROW} ]]; then
                     [[ -n ${ROW_COUNT} || (-z ${ROW_COUNT} && -n ${COUNT}) ]] && \
@@ -86,12 +92,15 @@ function tg_sendinline {
         done
     fi
 
+    # Make sure we have token of the bot and target chat ID
     [[ -z ${TELEGRAM_TOKEN} || -z ${TELEGRAM_CHAT} ]] && \
         { warn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."; return 1; }
 
+    # Add missing ending square bracket if needed
     [[ $(echo "${INLINE}" | tail -c 2) == "}" ]] && \
         INLINE+=" ]"
 
+    # Request JSON
     REQUEST="{
         \"chat_id\": \"${TELEGRAM_CHAT}\",
         \"text\": \"$(echo -e "${TEXT}")\",
@@ -102,6 +111,7 @@ function tg_sendinline {
         }
     }"
 
+    # Post using provided request JSON
     curl -s -X POST https://api.telegram.org/bot"${TELEGRAM_TOKEN}"/sendMessage \
          -H "Content-Type: application/json" -d "${REQUEST}"
 }
