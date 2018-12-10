@@ -37,11 +37,13 @@ function tg_sendinline {
                 -c  |--chat-id)
                     shift
 
+                    local TELEGRAM_CHAT
                     TELEGRAM_CHAT=${1} ;;
                 -t  |--token)
                     shift
 
                     if [[ ${1} == *:* ]]; then
+                        local TELEGRAM_TOKEN
                         TELEGRAM_TOKEN=${1}
                     else
                         warn "Invalid value specified!"
