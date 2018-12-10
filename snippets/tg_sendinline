@@ -64,9 +64,9 @@ function tg_sendinline {
                         ROW_COUNT=1 || \
                         ROW_COUNT=$((ROW_COUNT + 1))
                 else
-                    if [[ -n ${COUNT} && -n ${ROW_COUNT} ]]; then
+                    if [[ -n ${COUNT} && -z ${ROW_COUNT} ]]; then
                         INLINE+=", "
-                    else
+                    elif [[ -n ${ROW_COUNT} ]]; then
                         INLINE+=" ], "
                         unset ROW_COUNT
                     fi
