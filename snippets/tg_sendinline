@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 function tg_sendinline {
+    [[ -z ${TELEGRAM_TOKEN} || -z ${TELEGRAM_CHAT} ]] && \
+        { warn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."; return 1; }
+
     local REQUEST="{
         \"chat_id\": \"${TELEGRAM_CHAT}\",
         \"text\": \"$(for POST in "${@}"; do echo "${POST}"; done)\",
