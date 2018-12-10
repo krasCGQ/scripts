@@ -117,5 +117,5 @@ function tg_sendinline {
 
     # Post using provided request JSON
     curl -s -X POST https://api.telegram.org/bot"${TELEGRAM_TOKEN}"/sendMessage \
-         -H "Content-Type: application/json" -d "${REQUEST}"
+         -H "Content-Type: application/json" -d "${REQUEST}" &> /dev/null
 }
