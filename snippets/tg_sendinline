@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 function tg_sendinline {
-    REQUEST="{
+    local REQUEST="{
         \"chat_id\": \"${TELEGRAM_CHAT}\",
         \"text\": \"$(for POST in "${@}"; do echo "${POST}"; done)\",
         \"reply_markup\": {
