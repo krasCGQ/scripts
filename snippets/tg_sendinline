@@ -3,17 +3,27 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 function tg_sendinline {
-    local REQUEST TEXT
+    local COUNT INLINE INLINE_TEXT INLINE_URL REQUEST TEXT
 
     if [[ ${#} -ge 1 ]]; then
         while [[ ${#} -ge 1 ]]; do
             case ${1} in
+                # REQUIRED
+                -in|--inline-name)
+                    shift
+
+                    INLINE_TEXT="${1}" ;;
+                -iu|--inline-url)
+                    shift
+
+                    INLINE_URL="${1}" ;;
+
                 # REQUIRED, BUT CAN BE SET EXTERNALLY
-                -c|--chat-id)
+                -c |--chat-id)
                     shift
 
                     TELEGRAM_CHAT=${1} ;;
-                -t|--token)
+                -t |--token)
                     shift
 
                     if [[ ${1} == *:* ]]; then
@@ -28,6 +38,24 @@ function tg_sendinline {
                     TEXT+="${1}\n" ;;
             esac
             shift
+
+            if [[ -n ${INLINE_TEXT} && -n ${INLINE_URL} ]]; then
+                [[ -n ${COUNT} ]] && \
+                    INLINE+=", "
+
+                [[ -z ${COUNT} ]] && \
+                    COUNT=1 || \
+                    COUNT=$((COUNT + 1))
+
+                INLINE+="[
+                    {
+                    \"text\": \"${INLINE_TEXT}\",
+                    \"url\": \"${INLINE_URL}\"
+                    }
+                ]"
+
+                unset INLINE_{TEXT,URL}
+            fi
         done
     fi
 
@@ -38,12 +66,9 @@ function tg_sendinline {
         \"chat_id\": \"${TELEGRAM_CHAT}\",
         \"text\": \"$(echo -e "${TEXT}")\",
         \"reply_markup\": {
-            \"inline_keyboard\": [[
-                {
-                    \"text\": \"Test\",
-                    \"url\": \"https://wafuu.id\"
-                }
-            ]]
+            \"inline_keyboard\": [
+                ${INLINE}
+            ]
         }
     }"
 
