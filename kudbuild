@@ -323,7 +323,7 @@ if [[ -n ${UPLOAD} ]]; then
         # To Telegram
         info "Uploading ${ZIP} to Telegram..."
         tg_post "Uploading build to testing group..."
-        "${TELEGRAM}" -f "${AK2}/${ZIP}" -c "$(get_chatid rg_unified)" \
+        "${TELEGRAM}" -f "${AK2}/${ZIP}" -c "-1001494373196" \
             "New test build available with latest commit: $(git_pretty)" || \
             { warn "Failed to upload ${ZIP}.";
               tg_post "Failed to upload the build."; }
