@@ -274,6 +274,10 @@ if [[ -z ${BUILD_ONLY} ]]; then
     # Clean and copy kernel image and DTBs (mido only) to AnyKernel2 folder
     info "Cleaning and copying required file(s) to AnyKernel2 folder..."
     if [[ ${DEVICE} == mido ]]; then
+        for VARIANT in kernel {,non}treble; do
+            [[ ! -d ${AK2}/${VARIANT} ]] && \
+                mkdir "${AK2}"/${VARIANT}
+        done
         rm -rf "${AK2}"/{kernel,{,non}treble}/*
         cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel
         for VARIANT in {,non}treble; do
