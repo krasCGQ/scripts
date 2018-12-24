@@ -105,5 +105,52 @@ function btg_build {
     )
 }
 
+# Create an 8 GB swap file
+# TODO: File system checks; Btrfs doesn't go well with swap file
+function swapfile_create {
+    # Local variables
+    local FILE_TYPE FILE_SIZE
+
+    # Skip file format and size checks if swap file (?) doesn't exist
+    [[ ! -f ${SWAP_FILE} ]] && \
+        SWAP_FILE_EXIST=false
+
+    # Declare these to avoid unnecessarily long commands
+    [[ -z ${SWAP_FILE_EXIST} ]] && \
+        { FILE_TYPE="$(file -b ${SWAP_FILE} | awk '{print $2}')";
+          FILE_SIZE="$(ls -s --block-size=G ${SWAP_FILE} | awk '{print $1}')"; }
+
+    # If swap file is exist, technically nothing to do
+    [[ ${FILE_TYPE} == swap && ${FILE_SIZE} == 8G ]] && \
+        { info "Swap file is exist, no need to re-create it."; return; }
+
+    # TODO: Run with sudo if swap file isn't @ /home or has incorrect permission
+    info "Creating swap file. This may take a while..."
+
+    # Write zeros to create a dummy file - 2,048,000 chunks of 4 kilobytes
+    dd if=/dev/zero of=${SWAP_FILE} bs=4K count=2048000 2> /dev/null
+
+    # Make sure zeros are written properly
+    sync
+
+    # Set dummy file's permission to 0600
+    chmod 600 ${SWAP_FILE}
+
+    # Create swap file over dummy file
+    mkswap ${SWAP_FILE} > /dev/null
+
+    # (Re-)Assigning for final checks
+    FILE_TYPE="$(file -b ${SWAP_FILE} | awk '{print $2}')"
+    FILE_SIZE="$(ls -s --block-size=G ${SWAP_FILE} | awk '{print $1}')"
+
+    # Check if swap file is successfully created
+    if [[ ${FILE_TYPE} == swap && ${FILE_SIZE} == 8G ]]; then
+        info "Operation has completed successfully."
+    else
+        warn "Failed to do the operation."
+        return 1
+    fi
+}
+
 # Last, but my most convenient part
 export PS1='\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]$(parse_git_branch)\[\e[1;36m\] \$\[\e[0m\] '
