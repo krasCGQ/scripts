@@ -36,6 +36,6 @@ function build-clang {
         . "${SCRIPTDIR}"/nathan/common
 
         # Run build-clang script
-        "${SCRIPTDIR}"/nathan/build-clang "${BUILD_FLAGS[@]}"
+        "${SCRIPTDIR}"/nathan/build-clang -S "${BUILD_FLAGS[@]}"
     ) || { warn "Something went wrong with the subshell!"; return 1; }
 }
