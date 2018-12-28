@@ -105,6 +105,47 @@ function btg_build {
     )
 }
 
+# Rebuild DKMS modules of currently installed kernel with Clang (requires sudo)
+function dkms_rebuild {
+    # Local variables
+    local BIND_DIR DKMS_MODULE KERNEL
+
+    # Location of wrappers
+    BIND_DIR=${SCRIPTDIR}/binds
+
+    # Current kernel running on system
+    KERNEL=$(uname -r)
+
+    # Make sure user has sudo
+    info "Checking for sudo; please enter password if prompted."
+    ! sudo -v 2> /dev/null && \
+        { warn "Current user isn't a sudo!"; return 1; }
+
+    # Make sure session is running kernel that exists in /usr/lib/modules
+    [[ ! -d /usr/lib/modules/${KERNEL} ]] && \
+        { warn "Current kernel doesn't exist in /usr/lib/modules". \
+               "Do you recently updated the kernel and need to reboot?"; return 1; }
+
+    # Bind mount gcc and g++ Clang wrappers to /usr/bin
+    { sudo mount --bind "${BIND_DIR}"/gcc /usr/bin/gcc;
+      sudo mount --bind "${BIND_DIR}"/g++ /usr/bin/g++; } || return 1
+
+    # List DKMS modules that we're going to reinstall
+    for DKMS_MODULE in $(dkms status | grep "${KERNEL}" | cut -d "," -f 1,2 | sed -e 's|, |/|g'); do
+        # Reinstall DKMS module
+        info "Reinstalling DKMS module: ${DKMS_MODULE}"
+        { sudo dkms uninstall "${DKMS_MODULE}" -k "${KERNEL}";
+          sudo dkms install "${DKMS_MODULE}" -k "${KERNEL}"; } > /dev/null || return 1
+    done
+
+    # Umount wrappers
+    { sudo umount /usr/bin/gcc;
+      sudo umount /usr/bin/g++; } || return 1
+
+    # Function ends...
+    info "The operation completed successfully. Please reboot or modprobe manually."
+}
+
 # Create an 8 GB swap file
 # TODO: File system checks; Btrfs doesn't go well with swap file
 function swapfile_create {
