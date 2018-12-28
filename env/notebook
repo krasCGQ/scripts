@@ -123,7 +123,7 @@ function dkms_rebuild {
 
     # Make sure session is running kernel that exists in /usr/lib/modules
     [[ ! -d /usr/lib/modules/${KERNEL} ]] && \
-        { warn "Current kernel doesn't exist in /usr/lib/modules". \
+        { warn "Current kernel doesn't exist in /usr/lib/modules." \
                "Do you recently updated the kernel and need to reboot?"; return 1; }
 
     # Bind mount gcc and g++ Clang wrappers to /usr/bin
