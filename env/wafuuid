@@ -7,6 +7,7 @@
 [[ $(whoami) != kud || $(hostname) != wafuu.id ]] && return 1
 
 # Import common environment script
+# shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
 # Update alias

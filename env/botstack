@@ -69,7 +69,7 @@ function check_gmp_date {
 
 # A wrapper to automate crosstool-NG toolchain build
 function ct-ng_build {
-    local TARDIR GITDIR ISLDIR
+    local TARDIR GITDIR
     TARDIR=${CTDIR}/tarballs
     GITDIR=${CTDIR}/git
 

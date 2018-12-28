@@ -68,7 +68,7 @@ function parse_git_branch {
     local BRANCH
     BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
 
-    if [[ ! -z ${BRANCH} ]]; then
+    if [[ -n ${BRANCH} ]]; then
         # Don't give extra brackets if project isn't at any branch or is currently detached
         [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && \
             BRANCH="(${BRANCH})"
