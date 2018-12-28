@@ -59,7 +59,7 @@ function update_projects {
     # Enter source directory
     cd "${1}" || die
 
-    if [[ $(pwd) != ${GNUDIR} ]]; then
+    if [[ $(pwd) != "${GNUDIR}" ]]; then
         # Fetch updates from upstream
         git fetch origin "${2}" --depth=1
 
@@ -76,7 +76,7 @@ function update_projects {
     git clean -dfx
 
     # Fetch list of patches that we're going to apply
-    if [[ ! -z "${4}" ]]; then
+    if [[ -n "${4}" ]]; then
         LIST="$(find "${3}" -name "*.patch" | grep -Ev "${4}" | sort -n)"
     else
         LIST="$(find "${3}" -name "*.patch" | sort -n)"
