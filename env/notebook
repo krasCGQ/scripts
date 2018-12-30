@@ -23,7 +23,7 @@ export PATH=/usr/lib/ccache/bin:${PATH}
 # (Re)Pack FLAC files with maximum compression and ReplayGain applied
 function flac_pack {
     # Mark functions as local
-    local LIST OLD_LIST REPACK SONG
+    local BASE_NAME LIST OLD_LIST REPACK SONG
 
     # Make sure FLAC package is installed
     [[ -z $(command -v flac) ]] && \
@@ -69,9 +69,14 @@ function flac_pack {
         unset LIST
 
         # Based on values OLD_LIST array, we set values for PCM files
-        # Note: This has to be set blindly since we don't know which files
         for SONG in "${OLD_LIST[@]}"; do
-            LIST+=( "$(find . -name "$(basename "${SONG}" | sed -e s/.flac//)*")" )
+            BASE_NAME="$(basename "${SONG}" | sed -e s/.flac//)"
+            for FORMAT in aiff wav; do
+                if [[ -f ${BASE_NAME}.${FORMAT} ]]; then
+                    LIST+=( "${BASE_NAME}.${FORMAT}" )
+                    break
+                fi
+            done
         done
 
     # Else, list all files blindly since we don't know which are PCM files
