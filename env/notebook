@@ -20,21 +20,41 @@ export PATH=${HOME}/.files/bin:${PATH}
 # Export ccache-backed compiler symlinks
 export PATH=/usr/lib/ccache/bin:${PATH}
 
-# Repack FLAC files with maximum compression and ReplayGain applied
-function flac_repack {
+# (Re)Pack FLAC files with maximum compression and ReplayGain applied
+function flac_pack {
+    # Mark REPACK as local
+    local REPACK
+
     # Make sure FLAC package is installed
     [[ -z $(command -v flac) ]] && \
         { warn "Please install flac package before continuing."; return 1; }
 
-    # Make sure we have FLAC files to repack
-    [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
-        { warn "There's nothing to do."; return 1; }
+    # Parse parameters
+    while [[ ${#} -ge 1 ]]; do
+        case ${1} in
+            # Request repacking of existing FLAC files
+            -r|--repack)
+                REPACK=true ;;
 
-    # First we decompress
-    flac --delete-input-file --totally-silent -d ./*.flac || \
-        { warn "Failed to decompress one or more songs."; return 1; }
+            # Unrecognized parameter, skip
+            *)
+                warn "Unrecognized parameter specified: \"${1}\"" ;;
+        esac
+        shift
+    done
 
-    # Then we repack with maximum compression and ReplayGain applied
+    # If repack requested
+    if [[ -n ${REPACK} ]]; then
+        # Make sure we have FLAC files to repack
+        [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
+            { warn "Repack requested, but there's nothing to do."; return 1; }
+
+        # Decompress FLAC files
+        flac --delete-input-file --totally-silent -d ./*.flac || \
+            { warn "Failed to decompress one or more songs."; return 1; }
+    fi
+
+    # Pack PCM audio files with maximum compression and ReplayGain applied
     for SONG in ./*; do
         case "${SONG}" in
             *.aiff|*.wav)
