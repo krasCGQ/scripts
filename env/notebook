@@ -22,8 +22,8 @@ export PATH=/usr/lib/ccache/bin:${PATH}
 
 # (Re)Pack FLAC files with maximum compression and ReplayGain applied
 function flac_pack {
-    # Mark REPACK as local
-    local REPACK
+    # Mark functions as local
+    local REPACK SONG
 
     # Make sure FLAC package is installed
     [[ -z $(command -v flac) ]] && \
@@ -49,19 +49,27 @@ function flac_pack {
         [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
             { warn "Repack requested, but there's nothing to do."; return 1; }
 
-        # Decompress FLAC files
-        flac --delete-input-file --totally-silent -d ./*.flac || \
-            { warn "Failed to decompress one or more songs."; return 1; }
+        # Unpack FLAC files
+        for SONG in ./*.flac; do
+            SONG="$(basename "${SONG}")"
+            info "Unpacking \"${SONG}\"..."
+            flac --delete-input-file --totally-silent -d "${SONG}" || \
+                { warn "Failed to unpack \"${SONG}\"."; return 1; }
+        done
     fi
 
     # Pack PCM audio files with maximum compression and ReplayGain applied
     for SONG in ./*; do
         case "${SONG}" in
             *.aiff|*.wav)
+                SONG="$(basename "${SONG}")"
+                info "Packing \"${SONG}\"..."
                 flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || \
-                    { warn "Failed to compress ${SONG}."; return 1; } ;;
+                    { warn "Failed to pack \"${SONG}\"."; return 1; } ;;
         esac
     done
+
+    info "The operation completed successfully."
 }
 
 # Convert all FLAC, WAV, and/or AIFF files to Opus
