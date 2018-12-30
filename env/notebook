@@ -82,18 +82,19 @@ function flac_pack {
     # Else, list all supported PCM audio files
     else
         for SONG in ./*; do
-            case "${SONG}" in
+            BASE_NAME="$(basename "${SONG}")"
+            case "${BASE_NAME}" in
                 # AIFF/WAV PCM file
                 *.aiff|*.wav)
-                    LIST+=( "$(basename "${SONG}")" ) ;;
+                    LIST+=( "${BASE_NAME}" ) ;;
 
                 # FLAC file, already packed
                 *.flac)
-                    warn "Skipping already packed audio file: ${SONG}" ;;
+                    warn "Skipping already packed audio file: ${BASE_NAME}" ;;
 
                 # Unsupported audio/file format
                 *)
-                    warn "Skipping unsupported file/audio format: ${SONG}" ;;
+                    warn "Skipping unsupported file/audio format: ${BASE_NAME}" ;;
             esac
         done
     fi
