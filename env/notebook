@@ -89,11 +89,11 @@ function flac_pack {
 
                 # FLAC file, already packed
                 *.flac)
-                    warn "Skipping already packed audio file: \"${SONG}\"" ;;
+                    warn "Skipping already packed audio file: ${SONG}" ;;
 
                 # Unsupported audio/file format
                 *)
-                    warn "Skipping unsupported file/audio format: \"${SONG}\"" ;;
+                    warn "Skipping unsupported file/audio format: ${SONG}" ;;
             esac
         done
     fi
