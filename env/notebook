@@ -23,7 +23,7 @@ export PATH=/usr/lib/ccache/bin:${PATH}
 # (Re)Pack FLAC files with maximum compression and ReplayGain applied
 function flac_pack {
     # Mark functions as local
-    local REPACK SONG
+    local LIST OLD_LIST REPACK SONG
 
     # Make sure FLAC package is installed
     [[ -z $(command -v flac) ]] && \
@@ -49,23 +49,48 @@ function flac_pack {
         [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
             { warn "Repack requested, but there's nothing to do."; return 1; }
 
-        # Unpack FLAC files
+        # List them
         for SONG in ./*.flac; do
-            SONG="$(basename "${SONG}")"
+            LIST+=( "$(basename "${SONG}")" )
+        done
+
+        # Unpack FLAC files
+        for SONG in "${LIST[@]}"; do
             info "Unpacking \"${SONG}\"..."
             flac --delete-input-file --totally-silent -d "${SONG}" || \
                 { warn "Failed to unpack \"${SONG}\"."; return 1; }
         done
     fi
 
+    # If repack requested
+    if [[ -n ${LIST[*]} ]]; then
+        # Move LIST arrays to OLD_LIST and unset the variable
+        OLD_LIST=( "${LIST[@]}" )
+        unset LIST
+
+        # Based on values OLD_LIST array, we set values for PCM files
+        # Note: This has to be set blindly since we don't know which files
+        for SONG in "${OLD_LIST[@]}"; do
+            LIST+=( "$(find . -name "$(basename "${SONG}" | sed -e s/.flac//)*")" )
+        done
+
+    # Else, list all files blindly since we don't know which are PCM files
+    else
+        for SONG in ./*; do
+            LIST+=( "$(basename "${SONG}")" )
+        done
+    fi
+
     # Pack PCM audio files with maximum compression and ReplayGain applied
-    for SONG in ./*; do
+    for SONG in "${LIST[@]}"; do
         case "${SONG}" in
+            # AIFF/WAV PCM file
             *.aiff|*.wav)
-                SONG="$(basename "${SONG}")"
                 info "Packing \"${SONG}\"..."
                 flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || \
                     { warn "Failed to pack \"${SONG}\"."; return 1; } ;;
+
+            # Unsupported audio/file format
             *)
                 warn "Unsupported audio/file format: \"$(basename "${SONG}")\"" ;;
         esac
