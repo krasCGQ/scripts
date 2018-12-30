@@ -51,7 +51,7 @@ function flac_pack {
         done
 
         # Exit function if nothing to repack
-        [[ -z ${LIST[*]} || ${LIST[*]} == *.flac ]] && \
+        [[ -z ${LIST[*]} || ${LIST[*]} == "*.flac" ]] && \
             { warn "Repack requested, but there's nothing to do."; return 1; }
 
         # Unpack FLAC files
@@ -94,7 +94,7 @@ function flac_pack {
 
                 # Unsupported audio/file format
                 *)
-                    [[ ${BASE_NAME} != * ]] && \
+                    [[ ${BASE_NAME} != "*" ]] && \
                         warn "Skipping unsupported file/audio format: ${BASE_NAME}" ;;
             esac
         done
