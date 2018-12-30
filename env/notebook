@@ -79,26 +79,30 @@ function flac_pack {
             done
         done
 
-    # Else, list all files blindly since we don't know which are PCM files
+    # Else, list all supported PCM audio files
     else
         for SONG in ./*; do
-            LIST+=( "$(basename "${SONG}")" )
+            case "${SONG}" in
+                # AIFF/WAV PCM file
+                *.aiff|*.wav)
+                    LIST+=( "$(basename "${SONG}")" ) ;;
+
+                # FLAC file, already packed
+                *.flac)
+                    warn "Skipping already packed audio file: \"${SONG}\"" ;;
+
+                # Unsupported audio/file format
+                *)
+                    warn "Skipping unsupported file/audio format: \"${SONG}\"" ;;
+            esac
         done
     fi
 
     # Pack PCM audio files with maximum compression and ReplayGain applied
     for SONG in "${LIST[@]}"; do
-        case "${SONG}" in
-            # AIFF/WAV PCM file
-            *.aiff|*.wav)
-                info "Packing \"${SONG}\"..."
-                flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || \
-                    { warn "Failed to pack \"${SONG}\"."; return 1; } ;;
-
-            # Unsupported audio/file format
-            *)
-                warn "Unsupported audio/file format: \"$(basename "${SONG}")\"" ;;
-        esac
+        info "Packing \"${SONG}\"..."
+        flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || \
+            { warn "Failed to pack \"${SONG}\"."; return 1; }
     done
 
     info "The operation completed successfully."
