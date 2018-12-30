@@ -45,14 +45,14 @@ function flac_pack {
 
     # If repack requested
     if [[ -n ${REPACK} ]]; then
-        # Make sure we have FLAC files to repack
-        [[ $(find . -name "*.flac" | wc -l) -eq 0 ]] && \
-            { warn "Repack requested, but there's nothing to do."; return 1; }
-
-        # List them
+        # List FLAC files to repack
         for SONG in ./*.flac; do
             LIST+=( "$(basename "${SONG}")" )
         done
+
+        # Exit function if nothing to repack
+        [[ -z ${LIST[*]} ]] && \
+            { warn "Repack requested, but there's nothing to do."; return 1; }
 
         # Unpack FLAC files
         for SONG in "${LIST[@]}"; do
@@ -98,6 +98,10 @@ function flac_pack {
             esac
         done
     fi
+
+    # Exit function if nothing to pack
+    [[ -z ${LIST[*]} ]] && \
+        { warn "There's nothing to do."; return 1; }
 
     # Pack PCM audio files with maximum compression and ReplayGain applied
     for SONG in "${LIST[@]}"; do
