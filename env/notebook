@@ -66,6 +66,8 @@ function flac_pack {
                 info "Packing \"${SONG}\"..."
                 flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || \
                     { warn "Failed to pack \"${SONG}\"."; return 1; } ;;
+            *)
+                warn "Unsupported audio/file format: \"$(basename "${SONG}")\"" ;;
         esac
     done
 
