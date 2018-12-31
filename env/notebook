@@ -33,8 +33,12 @@ function flac_pack {
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
             # Request repacking of existing FLAC files
-            -r|--repack)
+            -r |--repack)
                 REPACK=true ;;
+
+            # Embed ReplayGain information of all songs in a single folder
+            -rg|--replay-gain)
+                REPLAY_GAIN=true
 
             # Unrecognized parameter, skip
             *)
@@ -104,12 +108,21 @@ function flac_pack {
     [[ -z ${LIST[*]} ]] && \
         { warn "There's nothing to do."; return 1; }
 
-    # Pack PCM audio files with maximum compression and ReplayGain applied
+    # Pack PCM audio files with maximum compression
     for SONG in "${LIST[@]}"; do
         info "Packing \"${SONG}\"..."
-        flac --delete-input-file --totally-silent --replay-gain -V8 "${SONG}" || \
+        flac --delete-input-file --totally-silent -V8 "${SONG}" || \
             { warn "Failed to pack \"${SONG}\"."; return 1; }
     done
+
+    # Embed ReplayGain if requested
+    if [[ -n ${REPLAY_GAIN} ]]; then
+        # Just to make sure that no ReplayGain metadata exist
+        metaflac --remove-replay-gain *.flac
+
+        # Apply (new) ReplayGain metadata to all songs in same folder
+        metaflac --add-replay-gain *.flac
+    fi
 
     info "The operation completed successfully."
 }
