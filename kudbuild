@@ -150,8 +150,8 @@ THREADS=$(nproc --all)
 
 # GCC and Clang (if used) compilers
 if [[ -z ${STOCK} ]]; then
-    GCC_COMPILER=aarch64-linux-gnu/bin/aarch64-linux-gnu-
-    GCC32_COMPILER=arm-linux-gnueabi/bin/arm-linux-gnueabi-
+    GCC_COMPILER=linaro/aarch64-linux-gnu-8.x/bin/aarch64-linux-gnu-
+    GCC32_COMPILER=linaro/arm-linux-gnueabi-8.x/bin/arm-linux-gnueabi-
     [[ ${COMPILER} == clang ]] && \
         CLANG_COMPILER=clang-8.x
 else
