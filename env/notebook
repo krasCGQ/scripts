@@ -118,10 +118,10 @@ function flac_pack {
     # Embed ReplayGain if requested
     if [[ -n ${REPLAY_GAIN} ]]; then
         # Just to make sure that no ReplayGain metadata exist
-        metaflac --remove-replay-gain *.flac
+        metaflac --remove-replay-gain ./*.flac
 
         # Apply (new) ReplayGain metadata to all songs in same folder
-        metaflac --add-replay-gain *.flac
+        metaflac --add-replay-gain ./*.flac
     fi
 
     info "The operation completed successfully."
