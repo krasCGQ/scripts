@@ -38,7 +38,7 @@ function flac_pack {
 
             # Embed ReplayGain information of all songs in a single folder
             -rg|--replay-gain)
-                REPLAY_GAIN=true
+                REPLAY_GAIN=true ;;
 
             # Unrecognized parameter, skip
             *)
