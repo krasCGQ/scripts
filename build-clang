@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1117
-# Clang compilation script
-# Copyright (C) 2018 Nathan Chancellor
-# Copyright (C) 2018 Albert I (krasCGQ)
+#
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Copyright (C) 2018 Nathan Chancellor
+#
+# Copyright (C) 2018 Albert I (krasCGQ)
+#
+# Clang compilation script
 
 
 ###############
@@ -12,13 +15,8 @@
 #             #
 ###############
 
-# Colors
-GRN="\033[01;32m"
-RED="\033[01;31m"
-RST="\033[0m"
-
 # Folder that will house the source and build files
-MAIN_FOLDER=${HOME}/KudProject/clang
+MAIN_FOLDER=${HOME}/clang-build
 
 # Folder that will hold the main LLVM source
 LLVM_FOLDER=${MAIN_FOLDER}/llvm
@@ -29,13 +27,12 @@ BUILD_FOLDER=${MAIN_FOLDER}/build
 # Start tracking time
 START=$(date +"%s")
 
-# Number of threads
-THREADS=$(nproc --all)
-
 # Easy to use version variables
 STABLE_VERSION=7
 MASTER_VERSION=8
 
+# Set ME variable if on my server
+[[ $(uname -n) = "flashbox" ]] && ME=true
 
 ###############
 #             #
@@ -43,90 +40,19 @@ MASTER_VERSION=8
 #             #
 ###############
 
-# Alias for echo to print escape codes
-function echo() {
-    command echo -e "${@}"
-}
-
-# Prints a formatted header to point out what is being done to the user
-function header() {
-    if [[ -n ${2} ]]; then
-        COLOR=${2}
-    else
-        COLOR=${RED}
-    fi
-    echo "${COLOR}"
-    echo "====$(for i in $(seq ${#1}); do echo "=\c"; done)===="
-    echo "==  ${1}  =="
-    # SC2034: i appears unused. Verify it or export it.
-    # shellcheck disable=SC2034
-    echo "====$(for i in $(seq ${#1}); do echo "=\c"; done)===="
-    echo "${RST}"
-}
-
-# Formats the time
-function format_time() {
-    local TIME_STRING
-    MINS=$(((${2} - ${1}) / 60))
-    SECS=$(((${2} - ${1}) % 60))
-    if [[ ${MINS} -ge 60 ]]; then
-        HOURS=$((MINS / 60))
-        MINS=$((MINS % 60))
-    fi
-
-    if [[ ${HOURS} -eq 1 ]]; then
-        TIME_STRING+="1 HOUR, "
-    elif [[ ${HOURS} -ge 2 ]]; then
-        TIME_STRING+="${HOURS} HOURS, "
-    fi
-
-    if [[ ${MINS} -eq 1 ]]; then
-        TIME_STRING+="1 MINUTE"
-    else
-        TIME_STRING+="${MINS} MINUTES"
-    fi
-
-    if [[ ${SECS} -eq 1 && -n ${HOURS} ]]; then
-        TIME_STRING+=", AND 1 SECOND"
-    elif [[ ${SECS} -eq 1 && -z ${HOURS} ]]; then
-        TIME_STRING+=" AND 1 SECOND"
-    elif [[ ${SECS} -ne 1 && -n ${HOURS} ]]; then
-        TIME_STRING+=", AND ${SECS} SECONDS"
-    elif [[ ${SECS} -ne 1 && -z ${HOURS} ]]; then
-        TIME_STRING+=" AND ${SECS} SECONDS"
-    fi
-
-    echo "${TIME_STRING}"
-}
-
-# Prints an error in bold red
-function display_error() {
-    echo
-    echo "${RED}${1}${RST}"
-    [[ -z ${2} ]] && echo
-}
-
-# Prints an error in bold red and exits the script
-function die() {
-    display_error "${@}"
-    exit 1
-}
-
-# Enforces the value needed for two-part flags
-function enforce_value() {
-    [[ ${#} -lt 1 ]] && die "A additional value is needed for one of the flags passed to this script!"
-}
-
-# Add a remote if it doesn't exist
-function add_remote() {
-    if ! git remote | grep -q -m 1 "${1}"; then
-        git remote add "${1}" "${2}"
-    fi
-}
-
 function parse_parameters() {
+    PARAMS="${*}"
+
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
+            "-B"|"--bootstrap")
+                if [[ -n ${ME} ]]; then
+                    for FLASH_VERSION in ${STABLE_VERSION} ${MASTER_VERSION}; do
+                        [[ -d ${TC_FOLDER}/flash-clang-${FLASH_VERSION}.x ]] && \
+                            export PATH="${TC_FOLDER}/flash-clang-${FLASH_VERSION}.x/bin:${PATH}"
+                    done
+                fi ;;
+
             "-b"|"--build-only")
                 BUILD_ONLY=true ;;
 
@@ -150,6 +76,11 @@ function parse_parameters() {
             "-T"|"--test")
                 TEST=true ;;
 
+            "-t"|"--telegram")
+                TG=true
+                TG_MSG_FILE=$(mktemp)
+                trap 'rm -f "${TG_MSG_FILE}"' EXIT ;;
+
             "-u"|"--update-only")
                 UPDATE_ONLY=true ;;
 
@@ -163,11 +94,22 @@ function parse_parameters() {
         shift
     done
 
+    if [[ -n ${TG} ]]; then
+        {
+            echo "\`\`\`"
+            echo "Currently executing..."
+            echo
+            echo "$(basename "${0}") ${PARAMS}"
+            echo "\`\`\`"
+        } > "${TG_MSG_FILE}"
+        notify "$(cat "${TG_MSG_FILE}")"
+    fi
+
     # The master branch is compiled by default
     [[ -z ${VERSION} ]] && VERSION=${MASTER_VERSION}
 
     # Folder that will hold the final compiled toolchain
-    [[ -z ${INSTALL_FOLDER} ]] && INSTALL_FOLDER=/opt/kud/${VENDOR:+"${VENDOR,,}-"}clang-${VERSION}.x${TEST:+"-test"}
+    [[ -z ${INSTALL_FOLDER} ]] && INSTALL_FOLDER=${TC_FOLDER}/${VENDOR:+"${VENDOR,,}-"}clang-${VERSION}.x${TEST:+"-test"}
 
     # SVN copy of the LLVM folder for revisioning
     SVN_FOLDER=${MAIN_FOLDER}/svn-${VERSION}.x
@@ -204,7 +146,7 @@ function git_sync() {(
 
     # binutils uses another URL/branch scheme
     if [[ ${FOLDER} =~ "binutils" ]]; then
-        URL=https://git.linaro.org/toolchain/binutils-gdb
+        URL=https://sourceware.org/git/binutils-gdb.git
         # SC2030: Modification of BRANCH is local (to subshell caused by (..) group).
         # shellcheck disable=SC2030
         BRANCH=master
@@ -212,7 +154,8 @@ function git_sync() {(
         # Set URL based on folder
         case ${FOLDER} in
             "clang")
-                URL=https://github.com/nathanchance/$(basename "${FOLDER}").git ;;
+                [[ -n ${ME} ]] && URL_PREFIX=git@github.com: || URL_PREFIX=https://github.com/
+                URL=${URL_PREFIX}nathanchance/$(basename "${FOLDER}").git ;;
             "extra")
                 URL=${LLVM_ORG}clang-tools-extra ;;
             *)
@@ -241,6 +184,7 @@ function git_sync() {(
         else
             git reset --hard origin/"${BRANCH}"
             git rebase upstream/"${BRANCH}" || die "There was an error rebasing ${FOLDER}!"
+            [[ -n ${ME} ]] && git push -f
         fi
     else
         git fetch origin || die "There was an error fetching updates for ${FOLDER}!"
@@ -331,20 +275,22 @@ function cleanup() {
 function build() {
     header "Building Clang"
 
+    [[ -n ${TG} ]] && notify "\`Beginning build of Clang ${VERSION}...\`"
+
     [[ -n ${STOCK} ]] && URL_PREFIX=${LLVM_ORG} || URL_PREFIX=https://github.com/nathanchance/
 
     cmake -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
           -DLINK_POLLY_INTO_TOOLS=ON \
           -DCMAKE_C_COMPILER="${CC}" \
-          -DCMAKE_C_FLAGS="-O3 -pthread -fopenmp -march=native" \
+          -DCMAKE_C_FLAGS="-O3 -march=native -mtune=native" \
           -DCMAKE_CXX_COMPILER="${CXX}" \
-          -DCMAKE_CXX_FLAGS="-O3 -pthread -fopenmp -march=native" \
+          -DCMAKE_CXX_FLAGS="-O3 -march=native -mtune=native" \
+          -DLLVM_CCACHE_BUILD=ON \
           -DLLVM_ENABLE_PIC=ON \
           -DCMAKE_INSTALL_PREFIX="${INSTALL_FOLDER}" \
           -DLLVM_PARALLEL_COMPILE_JOBS="${THREADS}" \
           -DLLVM_PARALLEL_LINK_JOBS="${THREADS}" \
-          -DLLVM_LIBDIR_SUFFIX=64 \
           -DLLVM_ENABLE_THREADS=ON \
           -DLLVM_ENABLE_WARNINGS=OFF \
           -DLLVM_ENABLE_WERROR=OFF \
@@ -354,7 +300,7 @@ function build() {
           -DLLVM_ENABLE_OCAMLDOC=OFF \
           -DLLVM_ENABLE_BINDINGS=OFF \
           -DLLVM_BINUTILS_INCDIR="${LLVM_FOLDER}/tools/binutils/include" \
-          -DLLVM_TARGETS_TO_BUILD="ARM;AArch64" \
+          -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64" \
           -DLLVM_OPTIMIZED_TABLEGEN=ON \
           -DLLVM_USE_LINKER=gold \
           -DCLANG_VENDOR="${VENDOR:+"${VENDOR} "}" \
@@ -366,13 +312,35 @@ function build() {
     time ninja && SUCCESS=true
     TIME_STRING="$(format_time "${START}" "$(date +"%s")")"
     if [[ -n ${SUCCESS} ]]; then
-        VERSION_STRING=$("${BUILD_FOLDER}"/bin/clang --version | head -1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+        VERSION_STRING=$(clang_version "${BUILD_FOLDER}"/bin/clang)
+        if [[ -n ${TG} ]]; then
+            {
+                echo "\`\`\`"
+                echo "Clang ${VERSION} build was successful!"
+                echo
+                echo "Time elapsed: ${TIME_STRING,,}"
+                echo
+                echo "Version string: ${VERSION_STRING}"
+                echo "\`\`\`"
+            } > "${TG_MSG_FILE}"
+            notify "$(cat "${TG_MSG_FILE}")"
+        fi
         header "SUCCESS!" "${GRN}"
         echo "${BOLD}Time elapsed:${RST} ${TIME_STRING,,}"
         echo
         echo "${BOLD}Version string:${RST} ${VERSION_STRING}"
         echo
     else
+        if [[ -n ${TG} ]]; then
+            {
+                echo "\`\`\`"
+                echo "Error while building Clang ${VERSION}!"
+                echo
+                echo "Time elapsed: ${TIME_STRING,,}"
+                echo "\`\`\`"
+            } > "${TG_MSG_FILE}"
+            notify "$(cat "${TG_MSG_FILE}")"
+        fi
         header "ERROR BUILDING!"
         display_error "Time elapsed: ${TIME_STRING,,}"
         exit
@@ -384,9 +352,9 @@ function build() {
 
 # Install the toolchain
 function install() {
-    if [[ -z ${TEST} && -d ${INSTALL_FOLDER} ]]; then
-        [[ -d ${INSTALL_FOLDER}-old ]] && rm -rf "${INSTALL_FOLDER}-old"
-        mv "${INSTALL_FOLDER}" "${INSTALL_FOLDER}-old"
+    if [[ -z ${TEST} ]]; then
+        rm -rf "${INSTALL_FOLDER}-old"
+        cp -r "${INSTALL_FOLDER}" "${INSTALL_FOLDER}-old" 2>/dev/null
     fi
 
     if ! ninja install &>/dev/null; then
@@ -412,7 +380,9 @@ function sync_build() {
 }
 
 
+source "$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" || return; pwd)/common"
 trap 'echo; die "Manually aborted!"' SIGINT SIGTERM
 parse_parameters "${@}"
 sync_build
 install
+exit 0
