@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Environment setup for my notebook
-# Copyright (C) 2017-2018 Albert I (krasCGQ)
+# Copyright (C) 2017-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
@@ -269,7 +269,7 @@ function swapfile_create {
 
     # Check if swap file is successfully created
     if [[ ${FILE_TYPE} == swap && -n ${FILE_SIZE_MATCH} ]]; then
-        info "Operation has completed successfully."
+        info "The operation completed successfully."
     else
         warn "Failed to do the operation."
         return 1

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck source=/dev/null
 # Common environment setup
-# Copyright (C) 2017-2018 Albert I (krasCGQ)
+# Copyright (C) 2017-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Text styles
@@ -100,10 +100,10 @@ function zipsigner {
 
     info "Signing $(basename "${1}") as $(basename "${2}")..."
     if $(command -v java) -jar "${ZIPSIGNER}" "${1}" "${2}"; then
-        info "Operation has completed successfully."
+        info "The operation completed successfully."
     else
         local STATUS=${?}
-        warn "Failed to do defined operation."
+        warn "Failed to do the operation."
         return ${STATUS}
     fi
 }
