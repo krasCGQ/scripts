@@ -14,11 +14,8 @@
 alias neofetch='neofetch --package_managers off --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
 alias update='sudo su -c "pacman -Sy && powerpill -Su --noconfirm"'
 
-# Export local binary path
-export PATH=${HOME}/.files/bin:${PATH}
-
-# Export ccache-backed compiler symlinks
-export PATH=/usr/lib/ccache/bin:${PATH}
+# Export new PATH containing local binaries, ccache-backed compiler symlinks, and perl modules
+export PATH=${HOME}/.files/bin:/usr/lib/ccache/bin:${PATH}:/usr/bin/vendor_perl
 
 # (Re)Pack FLAC files with maximum compression and ReplayGain applied
 function flac_pack {
