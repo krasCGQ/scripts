@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# Collection of OpenVPN-related snippets for dealing with Private Internet Access
+# Copyright (C) 2019 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Setup Private Internet Access configuration files for OpenVPN
+function pia_ovpnsetup {
+    # Local functions
+    local AUTH_FILE CONFIG EXTRA_ARGS MODE PASS TMP_DIR USER
+
+    # Temporary directory to fetch and manage configuration files
+    TMP_DIR=/tmp/pia_openvpn
+
+    # Path to auth-user-pass file
+    AUTH_FILE=/etc/openvpn/pia-auth.conf
+
+    # What to do if something fails, being interrupted or terminated
+    trap '{
+        [[ $(pwd) == ${TMP_DIR} ]] && cd - > /dev/null
+        [[ -d ${TMP_DIR} ]] && rm -rf ${TMP_DIR}
+        return 2> /dev/null
+    }' ERR INT TERM
+
+    # Make sure OpenVPN is installed
+    [[ -z $(command -v openvpn) ]] && \
+        { warn "Please install openvpn package before continuing."; return 1; }
+
+    # UDP by default
+    MODE=udp
+
+    # Parse parameters
+    # Only one type at a time, latter function will override already assigned
+    while [[ ${#} -ge 1 ]]; do
+        case ${1} in
+            # TCP
+            -t|--tcp)
+                MODE=tcp ;;
+
+            # UDP
+            -u|--udp)
+                MODE=udp ;;
+
+            # Unrecognized parameter, skip
+            *)
+                warn "Unrecognized parameter specified: \"${1}\"" ;;
+        esac
+        shift
+    done
+
+    # Make sure user has sudo
+    info "Checking for sudo; please enter password if prompted."
+    ! sudo -v 2> /dev/null && \
+        { warn "Current user isn't a sudo!"; return 1; }
+
+    # Create temporary directory and enter it
+    mkdir -p ${TMP_DIR}
+    cd ${TMP_DIR} || return 1
+
+    # Fetch recommended configuration files
+    info "Fetching configuration files..."
+    [[ ${MODE} == tcp ]] && EXTRA_ARGS=-tcp
+    curl -sO https://www.privateinternetaccess.com/openvpn/openvpn${EXTRA_ARGS}.zip
+
+    # Extract configuration files and remove the archive
+    info "Extracting configuration files..."
+    unzip -q openvpn${EXTRA_ARGS}.zip
+    rm -f openvpn${EXTRA_ARGS}.zip
+
+    # sed configuration files to include auth-user-pass file path
+    info "Patching configuration files..."
+    for CONFIG in ./*.ovpn; do
+        # Single quote doesn't expand things
+        sed -i 's|auth-user-pass|auth-user-pass /etc/openvpn/pia-auth.conf|' "${CONFIG}"
+    done
+
+    # Move everything to /etc/openvpn/client and set correct permissions
+    info "Moving configuration files to /etc/openvpn..."
+    sudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
+
+    # Go back to previous directory and remove temporary directory
+    cd - > /dev/null || return 1
+    rm -rf ${TMP_DIR}
+
+    # Prompt user to enter Private Internet Access credientials
+    echo -n "- Please enter your PIA username: "
+    read -r USER
+    echo -n "- Please enter your PIA password: "
+    read -r PASS
+
+    # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
+    info "Saving credientials to ${AUTH_FILE}..."
+    echo -e "${USER}\n${PASS}" | sudo tee ${AUTH_FILE} > /dev/null
+    sudo su -c "chown root:network ${AUTH_FILE} && chmod 600 ${AUTH_FILE}"
+
+    # And... it's done.
+    info "The operation completed successfully."
+}
+
+# Wrapper to connect to Private Internet Access with OpenVPN
+# TODO: Country shortcode
+function pia_ovpnconnect {
+    # Warn for specification of more than a country
+    if [[ ${#} -gt 1 ]]; then
+        warn "This function uses one parameter only."
+    # Exit function if no country is specified
+    elif [[ ${#} -lt 1 ]]; then
+        warn "Please specify a country to connect."
+        return 1
+    fi
+
+    # Make sure OpenVPN is installed
+    [[ -z $(command -v openvpn) ]] && \
+        { warn "Please install openvpn package before continuing."; return 1; }
+
+    # Make sure user has sudo
+    info "Checking for sudo; please enter password if prompted."
+    ! sudo -v 2> /dev/null && \
+        { warn "Current user isn't a sudo!"; return 1; }
+
+    # Use PIA DNS servers in resolv.conf
+    echo -e "nameserver 209.222.18.222\nnameserver 209.222.18.218" | \
+        sudo tee /etc/resolv.conf > /dev/null
+
+    # Make resolv.conf read-only
+    sudo chattr +i /etc/resolv.conf
+
+    # Restart name server cache daemon
+    # TODO: Non-Arch based?
+    sudo su -c "nscd -K && nscd"
+
+    # Connect with supplied country name in the background
+    info "Establishing connection to ${1}..."
+    sudo openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 3600 &> /dev/null
+
+    # Upon disconnection, warn it
+    warn "Connection has been terminated."
+
+    # Make resolv.conf read/write
+    sudo chattr -i /etc/resolv.conf
+}
