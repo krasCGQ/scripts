@@ -99,7 +99,7 @@ if [[ ${#} -ge 1 ]]; then
                 elif [[ ${1} -eq 7 ]]; then
                     CLANG_VERSION=r328903
                 elif [[ ${1} -eq 8 ]]; then
-                    CLANG_VERSION=r346389b
+                    CLANG_VERSION=r346389c
                 else
                     die "Invalid version specified!"
                 fi ;;
@@ -133,7 +133,7 @@ if [[ ${DEVICE} == X00T  && -z ${STOCK} ]]; then
     warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk.";
     STOCK=true;
     # Clang 8 as default if '-cv' isn't assigned
-    [[ -z ${CLANG_VERSION} ]] && CLANG_VERSION=r346389b
+    [[ -z ${CLANG_VERSION} ]] && CLANG_VERSION=r346389c
 
     sleep 1
 fi
