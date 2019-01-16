@@ -93,7 +93,10 @@ function pia_ovpnsetup {
 
 # Wrapper to connect to Private Internet Access with OpenVPN
 # TODO: Country shortcode
-function pia_ovpnconnect {
+function pia_ovpnconnect-default {
+    # Don't run function if not as root
+    [[ $(whoami) != root ]] && return 1
+
     # Warn for specification of more than a country
     if [[ ${#} -gt 1 ]]; then
         warn "This function uses one parameter only."
@@ -109,22 +112,27 @@ function pia_ovpnconnect {
 
     # Use PIA DNS servers in resolv.conf
     echo -e "nameserver 209.222.18.222\nnameserver 209.222.18.218" | \
-        check_sudo tee /etc/resolv.conf > /dev/null
+        tee /etc/resolv.conf > /dev/null
 
     # Make resolv.conf read-only
-    check_sudo chattr +i /etc/resolv.conf
+    chattr +i /etc/resolv.conf
 
     # Restart name server cache daemon
     # TODO: Non-Arch based?
-    check_sudo su -c "nscd -K && nscd"
+    nscd -K
+    nscd
 
     # Connect with supplied country name in the background
     info "Establishing connection to ${1}..."
-    check_sudo openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 3600 &> /dev/null
+    openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 3600 &> /dev/null
 
     # Upon disconnection, warn it
     warn "Connection has been terminated."
 
     # Make resolv.conf read/write
-    check_sudo chattr -i /etc/resolv.conf
+    chattr -i /etc/resolv.conf
+}
+
+function pia_ovpnconnect {
+    check_sudo su -c ". ${SCRIPTDIR}/env/global && $(declare -f pia_ovpnconnect-default) && pia_ovpnconnect-default ${*}"
 }
