@@ -36,7 +36,8 @@ function warn {
 function check_sudo {
     info "Checking for sudo; please enter password if prompted."
     if echo -n "  " && sudo -v 2> /dev/null; then
-        sudo "${@}"
+        echo # Just to accomodate aesthetics
+        [[ ${#} != 0 ]] && sudo "${@}"
         return ${?}
     else
         warn "Current user isn't a sudo!"
