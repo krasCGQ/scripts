@@ -47,11 +47,6 @@ function pia_ovpnsetup {
         shift
     done
 
-    # Make sure user has sudo
-    info "Checking for sudo; please enter password if prompted."
-    ! sudo -v 2> /dev/null && \
-        { warn "Current user isn't a sudo!"; return 1; }
-
     # Create temporary directory and enter it
     mkdir -p ${TMP_DIR}
     cd ${TMP_DIR} || return 1
@@ -75,7 +70,7 @@ function pia_ovpnsetup {
 
     # Move everything to /etc/openvpn/client and set correct permissions
     info "Moving configuration files to /etc/openvpn..."
-    sudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
+    check_sudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
 
     # Go back to previous directory and remove temporary directory
     cd - > /dev/null || return 1
@@ -89,8 +84,8 @@ function pia_ovpnsetup {
 
     # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
     info "Saving credientials to ${AUTH_FILE}..."
-    echo -e "${USER}\n${PASS}" | sudo tee ${AUTH_FILE} > /dev/null
-    sudo su -c "chown root:network ${AUTH_FILE} && chmod 600 ${AUTH_FILE}"
+    echo -e "${USER}\n${PASS}" | check_sudo tee ${AUTH_FILE} > /dev/null
+    check_sudo su -c "chown root:network ${AUTH_FILE} && chmod 600 ${AUTH_FILE}"
 
     # And... it's done.
     info "The operation completed successfully."
@@ -112,29 +107,24 @@ function pia_ovpnconnect {
     [[ -z $(command -v openvpn) ]] && \
         { warn "Please install openvpn package before continuing."; return 1; }
 
-    # Make sure user has sudo
-    info "Checking for sudo; please enter password if prompted."
-    ! sudo -v 2> /dev/null && \
-        { warn "Current user isn't a sudo!"; return 1; }
-
     # Use PIA DNS servers in resolv.conf
     echo -e "nameserver 209.222.18.222\nnameserver 209.222.18.218" | \
-        sudo tee /etc/resolv.conf > /dev/null
+        check_sudo tee /etc/resolv.conf > /dev/null
 
     # Make resolv.conf read-only
-    sudo chattr +i /etc/resolv.conf
+    check_sudo chattr +i /etc/resolv.conf
 
     # Restart name server cache daemon
     # TODO: Non-Arch based?
-    sudo su -c "nscd -K && nscd"
+    check_sudo su -c "nscd -K && nscd"
 
     # Connect with supplied country name in the background
     info "Establishing connection to ${1}..."
-    sudo openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 3600 &> /dev/null
+    check_sudo openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 3600 &> /dev/null
 
     # Upon disconnection, warn it
     warn "Connection has been terminated."
 
     # Make resolv.conf read/write
-    sudo chattr -i /etc/resolv.conf
+    check_sudo chattr -i /etc/resolv.conf
 }

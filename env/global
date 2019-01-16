@@ -31,3 +31,15 @@ function warn {
         shift
     done
 }
+
+# Making sure user has sudo before executing command
+function check_sudo {
+    info "Checking for sudo; please enter password if prompted."
+    if sudo -v 2> /dev/null; then
+        sudo "${@}"
+        return ${?}
+    else
+        warn "Current user isn't a sudo!"
+        return 1
+    fi
+}
