@@ -44,7 +44,7 @@ export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 # Parse current branch in git repository
 function parse_git_branch {
     local BRANCH
-    BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/')
+    BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/^* //')
 
     if [[ -n ${BRANCH} ]]; then
         # Don't give extra brackets if project isn't at any branch or is currently detached
