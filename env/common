@@ -4,12 +4,8 @@
 # Copyright (C) 2017-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Text styles
-BLD=$(tput bold)
-RST=$(tput sgr0)
-
-# Export script directory at the beginning
-SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
+# Import treewide environment script
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/global
 
 # Import Telegram Chat ID fetching function if exists
 [[ -f ${SCRIPTDIR}/tg_chatid ]] && \
@@ -44,24 +40,6 @@ export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
     { TELEGRAM_TOKEN=$(cat "${SCRIPTDIR}"/tg_token);
       TELEGRAM_CHAT=$(get_chatid kud_community);
       export TELEGRAM_TOKEN TELEGRAM_CHAT; }
-
-# Prints a message with a dash
-function info {
-    echo "- ${1}"
-    while [[ ${#} -ge 2 ]]; do
-        echo "  ${2}"
-        shift
-    done
-}
-
-# Prints a message with an exclamation point
-function warn {
-    echo "! ${1}" >&2
-    while [[ ${#} -ge 2 ]]; do
-        echo "  ${2}" >&2
-        shift
-    done
-}
 
 # Parse current branch in git repository
 function parse_git_branch {

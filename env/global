@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# shellcheck source=/dev/null
+# Treewide environment setup
+# Copyright (C) 2017-2019 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Export script directory at the beginning
+SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
+
+# Text styles
+BLD=$(tput bold)
+RST=$(tput sgr0)
+
+# Export variables to satisfy shellcheck requirements
+export SCRIPTDIR BLD RST
+
+# Prints a message with a dash
+function info {
+    echo "- ${1}"
+    while [[ ${#} -ge 2 ]]; do
+        echo "  ${2}"
+        shift
+    done
+}
+
+# Prints a message with an exclamation point
+function warn {
+    echo "! ${1}" >&2
+    while [[ ${#} -ge 2 ]]; do
+        echo "  ${2}" >&2
+        shift
+    done
+}
