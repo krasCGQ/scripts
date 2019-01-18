@@ -371,7 +371,7 @@ function build() {
           -DLLVM_INCLUDE_EXAMPLES=OFF \
           -DLLVM_INCLUDE_TESTS=OFF \
           -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64" \
-          -DLLVM_USE_LINKER=gold \
+          -DLLVM_USE_LINKER="$(for LD in lld gold bfd; do command -v ld.${LD} &>/dev/null && break; done; echo ${LD})" \
           -DLLVM_VERSION_SUFFIX="-r${LLVM_SVN_REVISION:?}" \
           "${LLVM_FOLDER}" || die "There was an error running cmake!"
 
