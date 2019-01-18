@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2018 Nathan Chancellor
 #
-# Copyright (C) 2018 Albert I (krasCGQ)
+# Copyright (C) 2018-2019 Albert I (krasCGQ)
 #
 # Clang compilation script
 
@@ -30,9 +30,6 @@ START=$(date +"%s")
 # Easy to use version variables
 STABLE_VERSION=7
 MASTER_VERSION=8
-
-# Set ME variable if on my server
-[[ $(uname -n) = "flashbox" ]] && ME=true
 
 ###############
 #             #
@@ -68,13 +65,8 @@ function parse_parameters() {
             "-s"|"--stable")
                 VERSION=${STABLE_VERSION} ;;
 
-            "-T"|"--test")
+            "-t"|"--test")
                 TEST=true ;;
-
-            "-t"|"--telegram")
-                TG=true
-                TG_MSG_FILE=$(mktemp)
-                trap 'rm -f "${TG_MSG_FILE}"' EXIT ;;
 
             "-u"|"--update-only")
                 UPDATE_ONLY=true ;;
@@ -88,17 +80,6 @@ function parse_parameters() {
 
         shift
     done
-
-    if [[ -n ${TG} ]]; then
-        {
-            echo "\`\`\`"
-            echo "Currently executing..."
-            echo
-            echo "$(basename "${0}") ${PARAMS}"
-            echo "\`\`\`"
-        } > "${TG_MSG_FILE}"
-        notify "$(cat "${TG_MSG_FILE}")"
-    fi
 
     # The master branch is compiled by default
     [[ -z ${VERSION} ]] && VERSION=${MASTER_VERSION}
@@ -148,7 +129,7 @@ function git_sync() {(
         # Set URL based on folder
         case ${FOLDER} in
             "clang")
-                [[ -n ${ME} ]] && URL_PREFIX=git@github.com: || URL_PREFIX=https://github.com/
+                URL_PREFIX=https://github.com/
                 URL=${URL_PREFIX}nathanchance/$(basename "${FOLDER}").git ;;
             "extra")
                 URL=${LLVM_ORG}clang-tools-extra ;;
@@ -179,7 +160,6 @@ function git_sync() {(
         else
             [[ -z ${LOCAL_CHANGES} ]] && git reset --hard origin/"${BRANCH}"
             git rebase upstream/"${BRANCH}" || die "There was an error rebasing ${FOLDER}!"
-            [[ -z ${LOCAL_CHANGES} && -n ${ME} ]] && git push -f
         fi
     elif [[ ${FOLDER} =~ "binutils" ]]; then
         git fetch origin "${BRANCH}" || die "There was an error fetching updates for ${FOLDER}!"
@@ -276,8 +256,6 @@ function cleanup() {
 function build() {
     header "Building Clang"
 
-    [[ -n ${TG} ]] && notify "\`Beginning build of Clang ${VERSION}...\`"
-
     [[ -n ${STOCK} ]] && URL_PREFIX=${LLVM_ORG} || URL_PREFIX=https://github.com/nathanchance/
 
     cmake -G Ninja \
@@ -314,34 +292,12 @@ function build() {
     TIME_STRING="$(format_time "${START}" "$(date +"%s")")"
     if [[ -n ${SUCCESS} ]]; then
         VERSION_STRING=$(clang_version "${BUILD_FOLDER}"/bin/clang)
-        if [[ -n ${TG} ]]; then
-            {
-                echo "\`\`\`"
-                echo "Clang ${VERSION} build was successful!"
-                echo
-                echo "Time elapsed: ${TIME_STRING,,}"
-                echo
-                echo "Version string: ${VERSION_STRING}"
-                echo "\`\`\`"
-            } > "${TG_MSG_FILE}"
-            notify "$(cat "${TG_MSG_FILE}")"
-        fi
         header "SUCCESS!" "${GRN}"
         echo "${BOLD}Time elapsed:${RST} ${TIME_STRING,,}"
         echo
         echo "${BOLD}Version string:${RST} ${VERSION_STRING}"
         echo
     else
-        if [[ -n ${TG} ]]; then
-            {
-                echo "\`\`\`"
-                echo "Error while building Clang ${VERSION}!"
-                echo
-                echo "Time elapsed: ${TIME_STRING,,}"
-                echo "\`\`\`"
-            } > "${TG_MSG_FILE}"
-            notify "$(cat "${TG_MSG_FILE}")"
-        fi
         header "ERROR BUILDING!"
         display_error "Time elapsed: ${TIME_STRING,,}"
         exit
