@@ -163,10 +163,6 @@ function parse_parameters() {
             "-u"|"--update-only")
                 UPDATE_ONLY=true ;;
 
-            "-v"|"--vendor")
-                shift && enforce_value "${@}"
-                VENDOR=${1} ;;
-
             *) die "Invalid parameter specified!" ;;
         esac
 
@@ -177,7 +173,7 @@ function parse_parameters() {
     [[ -z ${VERSION} ]] && VERSION=${MASTER_VERSION}
 
     # Folder that will hold the final compiled toolchain
-    [[ -z ${INSTALL_FOLDER} ]] && INSTALL_FOLDER=${TC_FOLDER}/${VENDOR:+"${VENDOR,,}-"}clang-${VERSION}.x${TEST:+"-test"}
+    [[ -z ${INSTALL_FOLDER} ]] && INSTALL_FOLDER=${TC_FOLDER}/clang-${VERSION}.x${TEST:+"-test"}
 
     # Set compiler
     CC=$(command -v clang || command -v gcc)
@@ -328,7 +324,6 @@ function build() {
 
     cmake -G Ninja \
           -DCLANG_REPOSITORY_STRING="${URL_PREFIX}clang" \
-          -DCLANG_VENDOR="${VENDOR:+"${VENDOR} "}" \
           -DCLANG_VERSION_SUFFIX="-r${CLANG_SVN_REVISION:?}" \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_C_COMPILER="${CC}" \
