@@ -36,8 +36,8 @@ THREADS=$(($(nproc --all) + 1))
 START=$(date +"%s")
 
 # Easy to use version variables
-STABLE_VERSION=7
-MASTER_VERSION=8
+STABLE_VERSION=8
+MASTER_VERSION=9
 
 ###############
 #             #
