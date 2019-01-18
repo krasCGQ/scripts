@@ -18,6 +18,9 @@
 # Folder that will house the source and build files
 MAIN_FOLDER=${HOME}/clang-build
 
+# Folder that will hold binutils source
+BINUTILS_FOLDER=${MAIN_FOLDER}/binutils
+
 # Folder that will hold the main LLVM source
 LLVM_FOLDER=${MAIN_FOLDER}/llvm
 
@@ -279,13 +282,13 @@ function sync_all() {
     # Define the git URL for global use
     LLVM_ORG=https://git.llvm.org/git/
 
+    git_sync binutils
     git_sync llvm
     svn_revision llvm
 
     mkdir -p "${LLVM_FOLDER}/tools"
     cd "${LLVM_FOLDER}/tools" || die "Error creating tools folder!"
 
-    git_sync binutils
     git_sync clang
     svn_revision clang
     git_sync lld
@@ -334,7 +337,7 @@ function build() {
           -DCMAKE_CXX_FLAGS="-O3 -march=native -mtune=native" \
           -DLINK_POLLY_INTO_TOOLS=ON \
           -DCMAKE_INSTALL_PREFIX="${INSTALL_FOLDER}" \
-          -DLLVM_BINUTILS_INCDIR="${LLVM_FOLDER}/tools/binutils/include" \
+          -DLLVM_BINUTILS_INCDIR="${BINUTILS_FOLDER}/include" \
           -DLLVM_CCACHE_BUILD=ON \
           -DLLVM_ENABLE_BINDINGS=OFF \
           -DLLVM_ENABLE_OCAMLDOC=OFF \
