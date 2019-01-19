@@ -1,6 +1,6 @@
 [submodule "telegram"]
 	path = telegram
 	url = git://github.com/fabianonline/telegram.sh
-[submodule "nathan"]
-	path = nathan
-	url = git://github.com/krasCGQ/nathan-scripts
+[submodule "patches"]
+	path = patches
+	url = git://github.com/krasCGQ/patches
