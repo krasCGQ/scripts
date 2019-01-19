@@ -15,6 +15,9 @@
 #             #
 ###############
 
+# Actual folder this script is located
+SCRIPT_FOLDER="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+
 # Folder that will house the source and build files
 MAIN_FOLDER=${HOME}/clang-build
 
@@ -203,7 +206,8 @@ function sync_all() {
 
         git -C "${SRC_FOLDER}" clone -b "${BRANCH}" ${LLVM_URL} || die "Error cloning LLVM!"
     fi
-    GIT_REVISION=$(git -C "${LLVM_FOLDER}" show -s --format=%H origin/"${BRANCH}")
+    GIT_REVISION=$(printf "r%s-%s" "$(git -C "${LLVM_FOLDER}" rev-list --count HEAD)" "$(git -C "${LLVM_FOLDER}" rev-parse --short HEAD)")
+    git -C "${LLVM_FOLDER}" apply -v -3 "${SCRIPT_FOLDER}"/patches/llvm-project/0001-Add-CLANG_VERSION_SUFFIX-to-extend-the-version-strin.patch || die "Apply CLANG_VERSION_SUFFIX patch failed!"
 
     # Update binutils repo
     if [[ -d ${BINUTILS_FOLDER} ]]; then
@@ -234,7 +238,7 @@ function build() {
 
     cmake -Wno-dev \
           -G Ninja \
-          -DCLANG_REPOSITORY_STRING="${LLVM_URL} ${GIT_REVISION}" \
+          -DCLANG_VERSION_SUFFIX="-${GIT_REVISION}" \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_C_COMPILER="${CC}" \
           -DCMAKE_C_FLAGS="-O3 -march=native -mtune=native" \
