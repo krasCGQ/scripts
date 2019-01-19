@@ -137,8 +137,6 @@ function add_remote() {
 
 
 function parse_parameters() {
-    PARAMS="${*}"
-
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
             "-b"|"--build-only")
@@ -150,9 +148,6 @@ function parse_parameters() {
             "-i"|"--install-root")
                 shift && enforce_value "${@}"
                 INSTALL_ROOT=${1} ;;
-
-            "-S"|"--stock")
-                STOCK=true ;;
 
             "-s"|"--stable")
                 VERSION=${STABLE_VERSION} ;;
