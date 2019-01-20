@@ -259,7 +259,7 @@ function build() {
     time ninja && SUCCESS=true
     TIME_STRING="$(format_time "${START}" "$(date +"%s")")"
     if [[ -n ${SUCCESS} ]]; then
-        VERSION_STRING=$(clang_version "${BUILD_FOLDER}"/bin/clang)
+        VERSION_STRING=$("${BUILD_FOLDER}"/bin/clang --version | head -1)
         header "SUCCESS!" "${GRN}"
         echo "${BOLD}Time elapsed:${RST} ${TIME_STRING,,}"
         echo
