@@ -203,6 +203,7 @@ function sync_all() {
     fi
     GIT_REVISION=$(printf "r%s-%s" "$(git -C "${LLVM_FOLDER}" rev-list --count HEAD)" "$(git -C "${LLVM_FOLDER}" rev-parse --short HEAD)")
     git -C "${LLVM_FOLDER}" apply -v -3 "${SCRIPT_FOLDER}"/patches/llvm-project/0001-Add-CLANG_VERSION_SUFFIX-to-extend-the-version-strin.patch || die "Apply CLANG_VERSION_SUFFIX patch failed!"
+    git -C "${LLVM_FOLDER}" apply -v -3 "${SCRIPT_FOLDER}"/patches/llvm-project/0002-Add-LLD_VERSION_SUFFIX-to-extend-lld-version-string.patch || die "Apply LLD_VERSION_SUFFIX patch failed!"
 
     # Update binutils repo
     if [[ -d ${BINUTILS_FOLDER} ]]; then
@@ -239,8 +240,9 @@ function build() {
           -DCMAKE_C_FLAGS="-O3 -march=native -mtune=native" \
           -DCMAKE_CXX_COMPILER="${CXX}" \
           -DCMAKE_CXX_FLAGS="-O3 -march=native -mtune=native" \
-          -DLINK_POLLY_INTO_TOOLS=ON \
           -DCMAKE_INSTALL_PREFIX="${INSTALL_FOLDER}" \
+          -DLINK_POLLY_INTO_TOOLS=ON \
+          -DLLD_VERSION_SUFFIX="-${GIT_REVISION}" \
           -DLLVM_BINUTILS_INCDIR="${BINUTILS_FOLDER}/include" \
           -DLLVM_CCACHE_BUILD=ON \
           -DLLVM_ENABLE_BINDINGS=OFF \
