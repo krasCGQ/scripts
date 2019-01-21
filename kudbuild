@@ -153,7 +153,7 @@ if [[ -z ${STOCK} ]]; then
     GCC_COMPILER=linaro/aarch64-linux-gnu-8.x/bin/aarch64-linux-gnu-
     GCC32_COMPILER=linaro/arm-linux-gnueabi-8.x/bin/arm-linux-gnueabi-
     [[ ${COMPILER} == clang ]] && \
-        CLANG_COMPILER=clang-8.x
+        CLANG_COMPILER=clang-9.x
 else
     GCC_COMPILER=aarch64-linux-android-4.9/bin/aarch64-linux-androidkernel-
     GCC32_COMPILER=arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
@@ -253,8 +253,10 @@ if [[ ${COMPILER} == clang ]]; then
                    "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" )
 
     # Export custom compiler string
-    KBUILD_COMPILER_STRING=$("${CLANG_PATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
-    export KBUILD_COMPILER_STRING
+    if [[ -n ${STOCK} ]]; then
+        KBUILD_COMPILER_STRING=$("${CLANG_PATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+        export KBUILD_COMPILER_STRING
+    fi
 fi
 
 # Clean build directory
