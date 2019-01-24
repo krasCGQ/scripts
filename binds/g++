@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Clang C++ compiler alias for G++
-# Copyright (C) 2018 Albert I (krasCGQ)
+# Copyright (C) 2018-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # This script is designed to be executed on several environments that hardcoded

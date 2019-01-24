@@ -124,7 +124,11 @@ function pia_ovpnconnect-default {
 
     # Connect with supplied country name in the background
     info "Establishing connection to ${1}..."
-    openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 3600 &> /dev/null
+    while :; do
+        trap 'break' INT TERM
+        openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 720 &> /dev/null
+        warn "Reconnecting to ${1}..."
+    done
 
     # Upon disconnection, warn it
     warn "Connection has been terminated."
