@@ -12,7 +12,7 @@
 DEFAULT_PATH=$(command -v clang || exit 1)
 
 # Define custom Clang path if any
-CLANG_PATH=/opt/kud/clang-8.x/bin/clang
+CLANG_PATH=/opt/kud/clang-9.x/bin/clang
 
 # Warnings to disable (if any)
 WARNINGS=( "address-of-packed-member" "gnu-variable-sized-type-not-at-end"
