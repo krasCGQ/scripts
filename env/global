@@ -35,10 +35,10 @@ function warn {
 # Making sure user has sudo before executing command
 function check_sudo {
     info "Checking for sudo; please enter password if prompted."
-    if sudo -v 2> /dev/null; then
+    if [[ $(sudo -v 2> /dev/null; echo ${?}) -eq 0 ]]; then
         [[ ${#} != 0 ]] && sudo "${@}"
         return ${?}
-    else
+    elif [[ ${?} -eq 1 ]]; then
         warn "Current user isn't a sudo!"
         return 1
     fi
