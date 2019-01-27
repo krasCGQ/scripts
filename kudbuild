@@ -322,6 +322,7 @@ fi
 
 # Notify successful build completion
 tg_post "${MSG} Completed!"
+unset STARTED
 
 # Upload kernel zip if requested, else the end
 if [[ -n ${UPLOAD} ]]; then
