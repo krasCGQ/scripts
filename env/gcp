@@ -7,5 +7,7 @@ KBUILD_BUILD_HOST=KudProject
 
 export TZ GPG_TTY KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
+alias tmux='force_color_prompt=yes tmux'
+
 eval "$(ssh-agent -s)"
 ssh-add "${HOME}"/.ssh/id_ed25519
