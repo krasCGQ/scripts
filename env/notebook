@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
-[[ $(whoami) != krascgq || $(hostname) != KudNotebook ]] && return 1
+[[ $(whoami) == krascgq ]] && [[ $(hostname) == KudNotebook || $(hostname) == LNVNB161216 ]] || return 1
 
 # Import common environment script
 # shellcheck source=/dev/null
