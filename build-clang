@@ -19,7 +19,7 @@
 SCRIPT_FOLDER="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Folder that will house the source and build files
-MAIN_FOLDER=${HOME}/clang-build
+MAIN_FOLDER=${HOME}/KudProject/clang
 
 # Folder that will hold binutils source
 BINUTILS_FOLDER=${MAIN_FOLDER}/binutils
@@ -199,7 +199,7 @@ function sync_all() {
     else
         header "Cloning LLVM"
 
-        git -C "${SRC_FOLDER}" clone -b "${BRANCH}" ${LLVM_URL} || die "Error cloning LLVM!"
+        git -C "${MAIN_FOLDER}" clone -b "${BRANCH}" ${LLVM_URL} || die "Error cloning LLVM!"
     fi
     GIT_REVISION=$(printf "r%s-%s" "$(git -C "${LLVM_FOLDER}" rev-list --count HEAD)" "$(git -C "${LLVM_FOLDER}" rev-parse --short HEAD)")
     git -C "${LLVM_FOLDER}" apply -v -3 "${SCRIPT_FOLDER}"/patches/llvm-project/0001-Add-CLANG_VERSION_SUFFIX-to-extend-the-version-strin.patch || die "Apply CLANG_VERSION_SUFFIX patch failed!"
@@ -213,7 +213,7 @@ function sync_all() {
     else
         header "Cloning binutils"
 
-        git -C "${SRC_FOLDER}" clone --single-branch -b master git://sourceware.org/git/binutils-gdb.git binutils || die "Error cloning binutils"
+        git -C "${MAIN_FOLDER}" clone --single-branch -b master git://sourceware.org/git/binutils-gdb.git binutils || die "Error cloning binutils"
     fi
 
     [[ -n ${UPDATE_ONLY} ]] && exit
