@@ -5,7 +5,7 @@
 
 # Setup Private Internet Access configuration files for OpenVPN
 function pia_ovpnsetup {
-    # Local functions
+    # Local variables
     local AUTH_FILE CONFIG EXTRA_ARGS MODE PASS TMP_DIR USER
 
     # Temporary directory to fetch and manage configuration files
@@ -94,6 +94,9 @@ function pia_ovpnsetup {
 # Wrapper to connect to Private Internet Access with OpenVPN
 # TODO: Country shortcode
 function pia_ovpnconnect-default {
+    # Local variables
+    local CONFIG PORT PROTOCOL
+
     # Don't run function if not as root
     [[ $(whoami) != root ]] && return 1
 
@@ -110,6 +113,13 @@ function pia_ovpnconnect-default {
     [[ -z $(command -v openvpn) ]] && \
         { warn "Please install openvpn package before continuing."; return 1; }
 
+    # OpenVPN config file
+    CONFIG=/etc/openvpn/client/"${1}".ovpn
+
+    # Passed to killswitch's 2nd argument to bypass rules
+    PORT=$(grep 'remote ' "${CONFIG}" | cut -d ' ' -f 3)
+    PROTOCOL=$(grep proto "${CONFIG}" | cut -d ' ' -f 2)
+
     # Use PIA DNS servers in resolv.conf
     echo -e "nameserver 209.222.18.222\nnameserver 209.222.18.218" | \
         tee /etc/resolv.conf > /dev/null
@@ -118,20 +128,28 @@ function pia_ovpnconnect-default {
     chattr +i /etc/resolv.conf
 
     # Restart name server cache daemon
-    # TODO: Non-Arch based?
+    # TODO: For other distros?
     nscd -K
     nscd
+
+    # Enable VPN kill switch
+    info "Enabling VPN kill switch..."
+    "${SCRIPTDIR}"/killswitch on "${PORT}/${PROTOCOL}" > /dev/null
 
     # Connect with supplied country name in the background
     info "Establishing connection to ${1}..."
     while :; do
         trap 'break' INT TERM
-        openvpn --config /etc/openvpn/client/"${1}".ovpn --auth-nocache --keepalive 60 720 &> /dev/null
+        openvpn --config "${CONFIG}" --auth-nocache --keepalive 60 720 > /dev/null
         warn "Reconnecting to ${1}..."
     done
 
     # Upon disconnection, warn it
     warn "Connection has been terminated."
+
+    # Disable VPN kill switch
+    info "Disabling VPN kill switch..."
+    "${SCRIPTDIR}"/killswitch off "${PORT}/${PROTOCOL}" > /dev/null
 
     # Make resolv.conf read/write
     chattr -i /etc/resolv.conf
