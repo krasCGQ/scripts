@@ -19,24 +19,36 @@ trap '' INT
 
 trap die ERR
 
-if [[ ${#} -eq 1 ]]; then
+if [[ ${#} -eq 1 || ${#} -eq 2 ]]; then
+    if [[ -n ${2} ]] && ! echo "${2}" | grep -q "/"; then
+        die "Invalid parameter specified!"
+    fi
+
     case ${1} in
         # Disable kill switch
         -d|--disable|off)
             CONFIG=( "default allow outgoing"
-                     "delete allow out on tun0" ) ;;
+                     "delete allow out on tun0" )
+
+            [[ -n ${2} ]] && \
+                CONFIG+=( "delete allow out 53/udp"
+                          "delete allow out ${2}" ) ;;
 
         # Enable kill switch
         -e|--enable|on)
             CONFIG=( "default deny outgoing"
-                     "allow out on tun0" ) ;;
+                     "allow out on tun0" )
+
+            [[ -n ${2} ]] && \
+                CONFIG+=( "allow out 53/udp"
+                          "allow out ${2}" ) ;;
 
         # Suicide
         *)
             die "Invalid parameter specified!" ;;
     esac
 else
-    die "No or more than one parameter specified!"
+    die "No or more than two parameters specified!"
 fi
 
 for COMMAND in "${CONFIG[@]}"; do
