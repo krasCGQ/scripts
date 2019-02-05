@@ -117,8 +117,15 @@ function pia_ovpnconnect-default {
     CONFIG=/etc/openvpn/client/"${1}".ovpn
 
     # Passed to killswitch's 2nd argument to bypass rules
+    SERVER=$(grep 'remote ' "${CONFIG}" | cut -d ' ' -f 2)
     PORT=$(grep 'remote ' "${CONFIG}" | cut -d ' ' -f 3)
     PROTOCOL=$(grep proto "${CONFIG}" | cut -d ' ' -f 2)
+
+    # If .ip-address.saved is exist, probably it wasn't disconnected properly
+    if [[ -f ${SCRIPTDIR}/.ip-address.saved ]]; then
+        warn "Redundant rules detected! Disabling VPN kill switch..."
+        "${SCRIPTDIR}"/killswitch off "${SERVER}" "${PORT}/${PROTOCOL}" > /dev/null
+    fi
 
     # Use PIA DNS servers in resolv.conf
     echo -e "nameserver 209.222.18.222\nnameserver 209.222.18.218" | \
@@ -134,7 +141,7 @@ function pia_ovpnconnect-default {
 
     # Enable VPN kill switch
     info "Enabling VPN kill switch..."
-    "${SCRIPTDIR}"/killswitch on "${PORT}/${PROTOCOL}" > /dev/null
+    "${SCRIPTDIR}"/killswitch on "${SERVER}" "${PORT}/${PROTOCOL}" > /dev/null
 
     # Connect with supplied country name in the background
     info "Establishing connection to ${1}..."
@@ -149,7 +156,7 @@ function pia_ovpnconnect-default {
 
     # Disable VPN kill switch
     info "Disabling VPN kill switch..."
-    "${SCRIPTDIR}"/killswitch off "${PORT}/${PROTOCOL}" > /dev/null
+    "${SCRIPTDIR}"/killswitch off "${SERVER}" "${PORT}/${PROTOCOL}" > /dev/null
 
     # Make resolv.conf read/write
     chattr -i /etc/resolv.conf
