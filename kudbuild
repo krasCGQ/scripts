@@ -322,7 +322,8 @@ if [[ -z ${BUILD_ONLY} ]]; then
         cd "${AK2}" || \
             die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
 
-        zip -qr9 "${ZIP}" ./* -x README.md -x ./*.zip
+        7za a -bso0 -mx=9 -mpass=15 -mmt="${THREADS}" "${ZIP}" \
+            ./* -x'!'README.md -xr'!'*.zip
 
         if [[ -n ${RELEASE} ]]; then
             # Remove existing release zip if available
