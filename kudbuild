@@ -302,6 +302,8 @@ if [[ -z ${BUILD_ONLY} ]]; then
             cp -f "${OUT}"/arch/arm64/boot/dts/qcom/"${DTB}"-${VARIANT}.dtb "${AK2}"/${VARIANT}/"${DTB}".dtb
         done
     elif [[ ${DEVICE} == X00T ]]; then
+        [[ ! -d ${AK2}/modules/vendor/lib/modules ]] && \
+            mkdir -p "${AK2}"/modules/vendor/lib/modules
         rm -f "${AK2}"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
         cp -f "${OUT}"/arch/arm64/boot/Image.gz-dtb "${AK2}"
         for MODULE in "${OUT}"/**/*.ko; do
