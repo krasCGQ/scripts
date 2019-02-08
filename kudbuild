@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1004
 # KudProject kernel build script
-# Copyright (C) 2018 Albert I (krasCGQ)
+# Copyright (C) 2018-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 ## Import common environment script
@@ -150,22 +150,37 @@ THREADS=$(nproc --all)
 
 # GCC and Clang (if used) compilers
 if [[ -z ${STOCK} ]]; then
-    GCC_COMPILER=linaro/aarch64-linux-gnu-8.x/bin/aarch64-linux-gnu-
-    GCC32_COMPILER=linaro/arm-linux-gnueabi-8.x/bin/arm-linux-gnueabi-
+    # Aarch64 toolchain
+    GCC_64BIT_PATH=linaro/aarch64-linux-gnu-8.x/bin
+    GCC_64BIT_COMPILER=aarch64-linux-gnu-
+
+    # Aarch32 toolchain, required for compat vDSO
+    GCC_32BIT_PATH=linaro/arm-linux-gnueabi-8.x/bin
+    GCC_32BIT_COMPILER=arm-linux-gnueabi-
+
+    # Clang, if used
     [[ ${COMPILER} == clang ]] && \
-        CLANG_COMPILER=clang-9.x
+        CLANG_PATH=clang-9.x/bin
 else
-    GCC_COMPILER=aarch64-linux-android-4.9/bin/aarch64-linux-androidkernel-
-    GCC32_COMPILER=arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
+    # Aarch64 toolchain
+    GCC_64BIT_PATH=aarch64-linux-android-4.9/bin
+    GCC_64BIT_COMPILER=aarch64-linux-androidkernel-
+
+    # Aarch32 toolchain, required for compat vDSO
+    GCC_32BIT_PATH=arm-linux-androideabi-4.9/bin
+    GCC_32BIT_COMPILER=arm-linux-androideabi-
+
+    # Clang, if used
     [[ ${COMPILER} == clang ]] && \
-        CLANG_COMPILER=android-clang/clang-${CLANG_VERSION}
+        CLANG_PATH=android-clang/clang-${CLANG_VERSION}/bin
 fi
 
-# Set prefixes here
-GCC_PREFIX=${OPT_DIR}/${GCC_COMPILER}
-GCC32_PREFIX=${OPT_DIR}/${GCC32_COMPILER}
+# Set PATHs here to be used later while building
+GCC_64BIT_PATH=${OPT_DIR}/${GCC_64BIT_PATH}
+GCC_32BIT_PATH=${OPT_DIR}/${GCC_32BIT_PATH}
+GCC_PATHs=${GCC_64BIT_PATH}:${GCC_32BIT_PATH}
 [[ ${COMPILER} == clang ]] && \
-    CLANG_PATH=${OPT_DIR}/${CLANG_COMPILER}/bin/clang
+    CLANG_PATH=${OPT_DIR}/${CLANG_PATH}
 
 # Kernel build variables
 AK2=${ROOT_DIR}/AnyKernel2/${DEVICE}
@@ -209,7 +224,7 @@ sleep 1
     { warn "Assigning Clang version is only meant for AOSP Clang, disabling.";
       unset CLANG_VERSION; }
 
-for VARIABLE in ${GCC_PREFIX}gcc ${GCC32_PREFIX}gcc ${CLANG_PATH}; do
+for VARIABLE in ${GCC_64BIT_PATH}/${GCC_64BIT_COMPILER}gcc ${GCC_32BIT_PATH}/${GCC_32BIT_COMPILER}gcc ${CLANG_PATH}/clang; do
     find ${VARIABLE} &> /dev/null || \
         die "${BLD}$(basename "${VARIABLE}")${RST} doesn't exist in defined path."
 done
@@ -239,13 +254,13 @@ if [[ -n $(command -v ccache) ]]; then
 fi
 
 # Append (or set) CROSS_COMPILE{,_ARM32}
-CROSS_COMPILE+=${GCC_PREFIX}
-CROSS_COMPILE_ARM32+=${GCC32_PREFIX}
+CROSS_COMPILE+=${GCC_64BIT_COMPILER}
+CROSS_COMPILE_ARM32+=${GCC_32BIT_COMPILER}
 
 # If Clang is used
 if [[ ${COMPILER} == clang ]]; then
     # Additionally also append (or set) CC
-    CC+=${CLANG_PATH}
+    CC+=clang
 
     # Define additional parameters that'll be passed to make
     CLANG_EXTRAS=( "CC=${CC}"
@@ -254,7 +269,7 @@ if [[ ${COMPILER} == clang ]]; then
 
     # Export custom compiler string
     if [[ -n ${STOCK} ]]; then
-        KBUILD_COMPILER_STRING=$("${CLANG_PATH}" --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+        KBUILD_COMPILER_STRING=$(${CLANG_PATH}/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
         export KBUILD_COMPILER_STRING
     fi
 fi
@@ -268,6 +283,7 @@ make ARCH=${ARCH} O="${OUT}" clean &> /dev/null
 
 # Let's build the kernel!
 info "Building kernel..."
+PATH=$([[ -n ${CLANG_PATH} ]] && echo "${CLANG_PATH}:")${GCC_PATHs}:${PATH} \
 make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
      CROSS_COMPILE_ARM32="${CROSS_COMPILE_ARM32}" "${CLANG_EXTRAS[@]}" \
      -j"${THREADS}" > /dev/null
