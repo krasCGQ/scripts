@@ -79,6 +79,10 @@ function pia_ovpnsetup {
         sed -i 's|auth-user-pass|auth-user-pass /etc/openvpn/pia-auth.conf|' "${CONFIG}"
     done
 
+    # Remove existing configuration files if any
+    info "Removing existing configuration files..."
+    check_sudo rm -rf /etc/openvpn/client/*
+
     # Move everything to /etc/openvpn/client and set correct permissions
     info "Moving configuration files to /etc/openvpn..."
     check_sudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
@@ -87,16 +91,18 @@ function pia_ovpnsetup {
     cd - > /dev/null || return 1
     rm -rf ${TMP_DIR}
 
-    # Prompt user to enter Private Internet Access credientials
-    echo -n "- Please enter your PIA username: "
-    read -r USER
-    echo -n "- Please enter your PIA password: "
-    read -r PASS
+    if [[ ! -f ${AUTH_FILE} ]]; then
+        # Prompt user to enter Private Internet Access credientials
+        echo -n "- Please enter your PIA username: "
+        read -r USER
+        echo -n "- Please enter your PIA password: "
+        read -r PASS
 
-    # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
-    info "Saving credientials to ${AUTH_FILE}..."
-    echo -e "${USER}\n${PASS}" | check_sudo tee ${AUTH_FILE} > /dev/null
-    check_sudo su -c "chown root:network ${AUTH_FILE} && chmod 600 ${AUTH_FILE}"
+        # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
+        info "Saving credientials to ${AUTH_FILE}..."
+        echo -e "${USER}\n${PASS}" | check_sudo tee ${AUTH_FILE} > /dev/null
+        check_sudo su -c "chown root:network ${AUTH_FILE} && chmod 600 ${AUTH_FILE}"
+    fi
 
     # And... it's done.
     info "The operation completed successfully."
