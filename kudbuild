@@ -60,80 +60,84 @@ function git_pretty {
 
 ## Parse parameters
 
-if [[ ${#} -ge 1 ]]; then
-    while [[ ${#} -ge 1 ]]; do
-        case ${1} in
-            # REQUIRED
-            -c |--compiler)
-                shift
+function parse_params {
+    if [[ ${#} -ge 1 ]]; then
+        while [[ ${#} -ge 1 ]]; do
+            case ${1} in
+                # REQUIRED
+                -c |--compiler)
+                    shift
 
-                # Only Clang or GCC is supported, case insensitive
-                if [[ ${1,,} == clang || ${1,,} == gcc ]]; then
-                    COMPILER=${1,,}
-                else
-                    die "Invalid value specified!"
-                fi ;;
-            -d |--device)
-                shift
+                    # Only Clang or GCC is supported, case insensitive
+                    if [[ ${1,,} == clang || ${1,,} == gcc ]]; then
+                        COMPILER=${1,,}
+                    else
+                        die "Invalid value specified!"
+                    fi ;;
+                -d |--device)
+                    shift
 
-                # Only mido and X00T are supported for now
-                if [[ ${1,,} == mido ]]; then
-                    DEVICE=${1,,}
-                elif [[ ${1^^} == X00T ]]; then
-                    DEVICE=${1^^}
-                else
-                    die "Invalid value specified!"
-                fi ;;
+                    # Only mido and X00T are supported for now
+                    if [[ ${1,,} == mido ]]; then
+                        DEVICE=${1,,}
+                    elif [[ ${1^^} == X00T ]]; then
+                        DEVICE=${1^^}
+                    else
+                        die "Invalid value specified!"
+                    fi ;;
 
-            # OPTIONAL
-            -b |--build-only)
-                BUILD_ONLY=true ;;
-            -cv|--clang-version)
-                shift
+                # OPTIONAL
+                -b |--build-only)
+                    BUILD_ONLY=true ;;
+                -cv|--clang-version)
+                    shift
 
-                # Only latest versions of Clang 5-8 are supported
-                if [[ ${1} -eq 5 ]]; then
-                    CLANG_VERSION=4053586
-                elif [[ ${1} -eq 6 ]]; then
-                    CLANG_VERSION=4691093
-                elif [[ ${1} -eq 7 ]]; then
-                    CLANG_VERSION=r328903
-                elif [[ ${1} -eq 8 ]]; then
-                    CLANG_VERSION=r349610
-                else
-                    die "Invalid version specified!"
-                fi ;;
-            -r |--release)
-                shift
+                    # Only latest versions of Clang 5-8 are supported
+                    if [[ ${1} -eq 5 ]]; then
+                        CLANG_VERSION=4053586
+                    elif [[ ${1} -eq 6 ]]; then
+                        CLANG_VERSION=4691093
+                    elif [[ ${1} -eq 7 ]]; then
+                        CLANG_VERSION=r328903
+                    elif [[ ${1} -eq 8 ]]; then
+                        CLANG_VERSION=r349610
+                    else
+                        die "Invalid version specified!"
+                    fi ;;
+                -r |--release)
+                    shift
 
-                # Only integers are accepted here
-                if [[ -z ${1//[0-9]} ]]; then
-                    RELEASE=${1}
-                else
-                    die "Invalid version specified!"
-                fi ;;
-            -s |--stock)
-                STOCK=true ;;
-            -u |--upload)
-                # Will be ignored if BUILD_ONLY=true
-                UPLOAD=true ;;
+                    # Only integers are accepted here
+                    if [[ -z ${1//[0-9]} ]]; then
+                        RELEASE=${1}
+                    else
+                        die "Invalid version specified!"
+                    fi ;;
+                -s |--stock)
+                    STOCK=true ;;
+                -u |--upload)
+                    # Will be ignored if BUILD_ONLY=true
+                    UPLOAD=true ;;
 
-            # Unsupported parameter
-            *)
-                warn "Unrecognized parameter specified: \"${1}\"" ;;
-        esac
-        shift
-    done
-else
-    die "No parameter specified!"
-fi
+                # Unsupported parameter
+                *)
+                    warn "Unrecognized parameter specified: \"${1}\"" ;;
+            esac
+            shift
+        done
+    else
+        die "No parameter specified!"
+    fi
+}
+
+parse_params "${@}"
 
 # X00T: Check early and enforce use of AOSP Clang
 if [[ ${DEVICE} == X00T  && -z ${STOCK} ]]; then
     warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk.";
-    STOCK=true;
     # Clang 8 as default if '-cv' isn't assigned
-    [[ -z ${CLANG_VERSION} ]] && CLANG_VERSION=r346389c
+    # shellcheck disable=SC2046
+    parse_params -s $([[ -z ${CLANG_VERSION} ]] && echo "-cv" "8")
 
     sleep 1
 fi
