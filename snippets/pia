@@ -134,14 +134,14 @@ function pia_ovpnconnect-default {
     # Make resolv.conf read-only
     chattr +i /etc/resolv.conf
 
+    # Enable VPN kill switch
+    info "Enabling VPN kill switch..."
+    "${SCRIPTDIR}"/killswitch on "${SERVER}" "${PORT}/${PROTOCOL}" > /dev/null
+
     # Restart name server cache daemon
     # TODO: For other distros?
     nscd -K
     nscd
-
-    # Enable VPN kill switch
-    info "Enabling VPN kill switch..."
-    "${SCRIPTDIR}"/killswitch on "${SERVER}" "${PORT}/${PROTOCOL}" > /dev/null
 
     # Connect with supplied country name in the background
     info "Establishing connection to ${1}..."
