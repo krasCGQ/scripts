@@ -32,6 +32,11 @@ function pia_ovpnsetup {
     # Only one type at a time, latter function will override already assigned
     while [[ ${#} -ge 1 ]]; do
         case ${1} in
+            # AEAD
+            -a|--aead)
+                # For now only TCP
+                [[ ${MODE} == tcp ]] && AEAD=true ;;
+
             # TCP
             -t|--tcp)
                 MODE=tcp ;;
@@ -53,8 +58,14 @@ function pia_ovpnsetup {
 
     # Fetch recommended configuration files
     info "Fetching configuration files..."
-    [[ ${MODE} == tcp ]] && EXTRA_ARGS=-tcp
-    curl -sO https://www.privateinternetaccess.com/openvpn/openvpn${EXTRA_ARGS}.zip
+    [[ ${MODE} == tcp ]] && EXTRA_ARGS+=-tcp
+    if [[ -n ${AEAD} ]]; then
+        EXTRA_ARGS+=-aead
+        # This is hosted on my VPS since PIA doesn't provide it by default
+        curl -sO https://dl.wafuu.id/.files/openvpn${EXTRA_ARGS}.zip
+    else
+        curl -sO https://www.privateinternetaccess.com/openvpn/openvpn${EXTRA_ARGS}.zip
+    fi
 
     # Extract configuration files and remove the archive
     info "Extracting configuration files..."
