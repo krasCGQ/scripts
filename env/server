@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Environment setup for my servers
+# Copyright (C) 2017-2018 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Where we're now? Save output of `hostname` to be used later
+SERVER=$(hostname)
+
+# Don't setup if not in correct server
+[[ ${SERVER} == wafuu.id || ${SERVER} == rimuru ]] || return 1
+
+# Import common environment script
+# shellcheck source=/dev/null
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
+
+# Aliases
+alias tmux='force_color_prompt=yes tmux'
+alias update='sudo su -c "apt update && apt-get dist-upgrade -y"'
+
+# Shortcut for ssh-agent setup
+function ssh_setup {
+    # Do an unconditional check
+    [[ ! -f ${HOME}/.ssh/id_ed25519 ]] && \
+        { warn "Please generate an SSH key before using this command."; return 1; }
+
+    # The actual setup is here
+    eval "$(ssh-agent -s)"
+    ssh-add "${HOME}"/.ssh/id_ed25519
+}
+
+# The most convenient part
+export PS1='\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]$(parse_git_branch)\[\e[1;32m\] \$\[\e[0m\] '
+
+# Finally, run ssh_setup on tmux sessions
+[[ -n ${TMUX} ]] && ssh_setup
