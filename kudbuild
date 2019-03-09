@@ -92,7 +92,7 @@ function parse_params {
                 -cv|--clang-version)
                     shift
 
-                    # Only latest versions of Clang 5-8 are supported
+                    # Only latest versions of Clang 5-9 are supported
                     if [[ ${1} -eq 5 ]]; then
                         CLANG_VERSION=4053586
                     elif [[ ${1} -eq 6 ]]; then
@@ -100,7 +100,9 @@ function parse_params {
                     elif [[ ${1} -eq 7 ]]; then
                         CLANG_VERSION=r328903
                     elif [[ ${1} -eq 8 ]]; then
-                        CLANG_VERSION=r349610
+                        CLANG_VERSION=r349610b
+                    elif [[ ${1} -eq 9 ]]; then
+                        CLANG_VERSION=r353983
                     else
                         die "Invalid version specified!"
                     fi ;;
@@ -135,9 +137,9 @@ parse_params "${@}"
 # X00T: Check early and enforce use of AOSP Clang
 if [[ ${DEVICE} == X00T  && -z ${STOCK} ]]; then
     warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk.";
-    # Clang 8 as default if '-cv' isn't assigned
+    # Clang 9 as default if '-cv' isn't assigned
     # shellcheck disable=SC2046
-    parse_params -s $([[ -z ${CLANG_VERSION} ]] && echo "-cv" "8")
+    parse_params -s $([[ -z ${CLANG_VERSION} ]] && echo "-cv" "9")
 
     sleep 1
 fi
