@@ -107,7 +107,9 @@ function bmt_build {
     esac
 
     # Common configuration flags
-    COMMON_FLAGS=( "--target=${TARGET}" "--prefix=${BMT_DIR}/${TARGET}"
+    COMMON_FLAGS=( "CFLAGS=-g0 -O2 -fstack-protector-strong"
+                   "CXXFLAGS=-g0 -O2 -fstack-protector-strong"
+                   "--target=${TARGET}" "--prefix=${BMT_DIR}/${TARGET}"
                    "--disable-multilib" "--disable-werror" )
 
     # Save current PATH as OLD_PATH
