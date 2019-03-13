@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Extension to any environment script
+# Copyright (C) 2019 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Red, for usage with pr_err()
+RED="\033[01;31m"
+
+# Number of threads
+THREADS=$(nproc --all)
+
+# Export locally unused variables to satisfy shellcheck requirements
+export THREADS
+
+# Prints informational message(s) in bold
+function pr_info {
+    echo
+    for i in "${@}"; do
+        echo -e "${BLD}${i}${RST}" >&2
+    done
+    echo
+}
+
+# Prints error message(s) in bold red
+function pr_err {
+    pr_info "${RED}${@}"
+}
