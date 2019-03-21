@@ -19,7 +19,7 @@
 SCRIPT_FOLDER="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Folder that will house the source and build files
-MAIN_FOLDER=${HOME}/KudProject/clang
+MAIN_FOLDER=${HOME}/build/clang
 
 # Folder that will hold binutils source
 BINUTILS_FOLDER=${MAIN_FOLDER}/binutils
