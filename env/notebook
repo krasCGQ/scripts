@@ -154,7 +154,7 @@ function dkms_rebuild {
     [[ $(whoami) != root ]] && return 1
 
     # Local variables
-    local BIND_DIR DKMS_MODULE KERNEL
+    local BIND_DIR DKMS_MODULE FAILED KERNEL
 
     # Location of wrappers
     BIND_DIR=${SCRIPTDIR}/binds
@@ -176,19 +176,25 @@ function dkms_rebuild {
         # Reinstall DKMS module
         info "Reinstalling DKMS module: ${DKMS_MODULE}"
         { dkms uninstall "${DKMS_MODULE}" -k "${KERNEL}";
-          dkms install "${DKMS_MODULE}" -k "${KERNEL}"; } > /dev/null || return 1
+          dkms install "${DKMS_MODULE}" -k "${KERNEL}"; } > /dev/null || FAILED=true
     done
 
     # Umount wrappers
-    { umount /usr/bin/gcc;
-      umount /usr/bin/g++; } || return 1
+    umount /usr/bin/gcc
+    umount /usr/bin/g++
 
-    # Restart systemd-modules-load service
-    info "The operation completed successfully. Restarting systemd-modules-load..."
-    systemctl restart systemd-modules-load
+    if [[ -z ${FAILED} ]]; then
+        # Restart systemd-modules-load service
+        info "The operation completed successfully. Restarting systemd-modules-load..."
+        systemctl restart systemd-modules-load
 
-    # Function ends...
-    info "Done."
+        # Function ends...
+        info "Done."
+    else
+        warn "Failed to re-install DKMS module(s)." \
+             "Please re-install desired DKMS module(s) and run this function again."
+        return 1
+    fi
 }
 alias dkms_rebuild='check_sudo su -c ". ${SCRIPTDIR}/env/global && $(declare -f dkms_rebuild) && dkms_rebuild"'
 
