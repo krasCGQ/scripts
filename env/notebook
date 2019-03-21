@@ -148,5 +148,49 @@ function opus_convert {
         { warn "There's nothing to do."; return 1; }
 }
 
+# Rebuild DKMS modules of currently installed kernel with Clang
+function dkms_rebuild {
+    # Don't run function if not as root
+    [[ $(whoami) != root ]] && return 1
+
+    # Local variables
+    local BIND_DIR DKMS_MODULE KERNEL
+
+    # Location of wrappers
+    BIND_DIR=${SCRIPTDIR}/binds
+
+    # Current kernel running on system
+    KERNEL=$(uname -r)
+
+    # Make sure session is running kernel that exists in /usr/lib/modules
+    [[ ! -d /usr/lib/modules/${KERNEL} ]] && \
+        { warn "Current kernel doesn't exist in /usr/lib/modules." \
+               "Do you recently updated the kernel and need to reboot?"; return 1; }
+
+    # Bind mount gcc and g++ Clang wrappers to /usr/bin
+    { mount --bind "${BIND_DIR}"/gcc /usr/bin/gcc;
+      mount --bind "${BIND_DIR}"/g++ /usr/bin/g++; } || return 1
+
+    # List DKMS modules that we're going to reinstall
+    for DKMS_MODULE in $(dkms status | grep "${KERNEL}" | cut -d "," -f 1,2 | sed -e 's|, |/|g'); do
+        # Reinstall DKMS module
+        info "Reinstalling DKMS module: ${DKMS_MODULE}"
+        { dkms uninstall "${DKMS_MODULE}" -k "${KERNEL}";
+          dkms install "${DKMS_MODULE}" -k "${KERNEL}"; } > /dev/null || return 1
+    done
+
+    # Umount wrappers
+    { umount /usr/bin/gcc;
+      umount /usr/bin/g++; } || return 1
+
+    # Restart systemd-modules-load service
+    info "The operation completed successfully. Restarting systemd-modules-load..."
+    systemctl restart systemd-modules-load
+
+    # Function ends...
+    info "Done."
+}
+alias dkms_rebuild='check_sudo su -c ". ${SCRIPTDIR}/env/global && $(declare -f dkms_rebuild) && dkms_rebuild"'
+
 # Last, but my most convenient part
 export PS1='\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]$(parse_git_branch)\[\e[1;36m\] \$\[\e[0m\] '
