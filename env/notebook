@@ -13,6 +13,7 @@
 # Set up aliases
 alias neofetch='neofetch --package_managers off --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
 alias update='sudo su -c "pacman -Sy && powerpill -Su --noconfirm"'
+alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
 # Export new PATH containing local binaries, ccache-backed compiler symlinks, and perl modules
 export PATH=${HOME}/.files/bin:/usr/lib/ccache/bin:${PATH}:/usr/bin/vendor_perl
