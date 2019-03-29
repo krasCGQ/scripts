@@ -155,7 +155,7 @@ function dkms_rebuild {
     [[ $(whoami) != root ]] && return 1
 
     # Local variables
-    local BIND_DIR DKMS_MODULE FAILED KERNEL
+    local BIND_DIR DKMS_MODULE FAILED FORCED_SIG KERNEL
 
     # Location of wrappers
     BIND_DIR=${SCRIPTDIR}/binds
@@ -185,9 +185,19 @@ function dkms_rebuild {
     umount /usr/bin/g++
 
     if [[ -z ${FAILED} ]]; then
-        # Restart systemd-modules-load service
-        info "The operation completed successfully. Restarting systemd-modules-load..."
-        systemctl restart systemd-modules-load
+        # Check for module signature force check config on current kernel
+        [[ -f /proc/config.gz ]] && \
+            FORCED_SIG=$(gzip -cd /proc/config.gz | grep MODULE_SIG_FORCE=y) || \
+            FORCED_SIG=$(grep MODULE_SIG_FORCE=y /proc/config)
+
+        if [[ -z ${FORCED_SIG} ]]; then
+            # Restart systemd-modules-load service
+            info "The operation completed successfully. Restarting systemd-modules-load..."
+            systemctl restart systemd-modules-load
+        else
+            # Skip service restart as we've no idea how to sign these modules
+            warn "Module signature force check enabled, skipping service restart..."
+        fi
 
         # Function ends...
         info "Done."
