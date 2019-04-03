@@ -102,7 +102,7 @@ function parse_params {
                     elif [[ ${1} -eq 8 ]]; then
                         CLANG_VERSION=r349610b
                     elif [[ ${1} -eq 9 ]]; then
-                        CLANG_VERSION=r353983
+                        CLANG_VERSION=r353983b
                     else
                         die "Invalid version specified!"
                     fi ;;
