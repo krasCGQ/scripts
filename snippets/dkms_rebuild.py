@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Rebuild DKMS modules of currently running kernel with Clang
 # Copyright (C) 2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -61,7 +62,7 @@ if failed is not True:
     if path.exists('/proc/config.gz') is True:
         forced_sig = run_process('gzip -cd /proc/config.gz | grep MODULE_SIG_FORCE=y')
     else:
-        forced_sig = run_process('grep', 'MODULE_SIG_FORCE=y', '/proc/config')
+        forced_sig = run_process('grep MODULE_SIG_FORCE=y /proc/config')
 
     if forced_sig.stdout.decode('utf-8').rstrip() == '':
         # Restart systemd-modules-load service
