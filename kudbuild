@@ -157,11 +157,11 @@ THREADS=$(nproc --all)
 # GCC and Clang (if used) compilers
 if [[ -z ${STOCK} ]]; then
     # Aarch64 toolchain
-    GCC_64BIT_PATH=linaro/aarch64-linux-gnu-8.x/bin
+    GCC_64BIT_PATH=aarch64-linux-gnu/bin
     GCC_64BIT_COMPILER=aarch64-linux-gnu-
 
     # Aarch32 toolchain, required for compat vDSO
-    GCC_32BIT_PATH=linaro/arm-linux-gnueabi-8.x/bin
+    GCC_32BIT_PATH=arm-linux-gnueabi/bin
     GCC_32BIT_COMPILER=arm-linux-gnueabi-
 
     # Clang, if used
