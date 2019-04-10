@@ -5,7 +5,7 @@
 
 import subprocess
 
-from os import environ, geteuid, path, uname
+from os import environ, path, uname
 from sys import stderr
 
 # Common function for running a specific process
