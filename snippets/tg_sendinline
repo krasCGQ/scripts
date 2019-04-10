@@ -50,6 +50,12 @@ function tg_sendinline {
                         return 1
                     fi ;;
 
+                # OPTIONAL
+                -b  |--break)
+                    INLINE+="
+            ],"
+                    unset ROW_COUNT ;;
+
                 # EVERYTHING ELSE: Send as part of message instead
                 *)
                     TEXT+="${1}\n" ;;
