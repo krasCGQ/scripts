@@ -3,9 +3,8 @@
 # Copyright (C) 2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import subprocess
-
 from os import environ, path, uname
+from subprocess import CalledProcessError, PIPE, run
 from sys import stderr
 
 # Common function for running a specific process
@@ -13,9 +12,9 @@ def run_process(cmd):
     global result
 
     try:
-        result = subprocess.run([cmd], shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = run([cmd], shell=True, check=True, stdout=PIPE, stderr=PIPE)
 
-    except subprocess.CalledProcessError:
+    except CalledProcessError:
         result.stderr.decode('utf-8')
 
         return False
