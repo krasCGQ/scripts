@@ -40,20 +40,20 @@ def sync_tarball(name, version, ext, url):
 
     # Delete all leftovers
     for i in range(0, len(leftovers)):
-        if isdir(leftovers[i]) is True:
+        if isdir(leftovers[i]):
             rm('-rf', leftovers[i])
 
         else:
             remove(leftovers[i])
 
-    if isdir(source) is False:
+    if not isdir(source):
         # Remove file of the same source name
-        if exists(source) is True:
+        if exists(source):
             remove(source)
 
         # Fetch source tarball with curl if it doesn't exist
         # TODO: aria2 / Axel / Wget support?
-        if exists(tarball) is False:
+        if not exists(tarball):
             curl('-LO', url + tarball)
 
         try: # extract source tarball
@@ -76,8 +76,8 @@ def bmt_sync():
     print("Updating sources...")
 
     # Create working directory if it doesn't exist
-    if isdir(bmt_dir) is False:
-        if exists(bmt_dir) is True:
+    if not isdir(bmt_dir):
+        if exists(bmt_dir):
             remove(bmt_dir)
 
         mkdir(bmt_dir)

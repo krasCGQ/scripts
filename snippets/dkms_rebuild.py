@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from os import environ, path, uname
+from os.path import exists, isdir
 from subprocess import CalledProcessError, PIPE, run
 from sys import stderr
 
@@ -32,7 +33,7 @@ wrapper_dir = environ['SCRIPTDIR'] + '/binds'
 kernel = uname()[2]
 
 # Make sure session is running kernel that exists in /usr/lib/modules
-if path.isdir('/usr/lib/modules/' + kernel) is False:
+if not isdir('/usr/lib/modules/' + kernel):
     raise FileNotFoundError("Current kernel doesn't exist in /usr/lib/modules.")
 
 # Bind mount gcc and g++ Clang wrappers to /usr/bin
@@ -58,7 +59,7 @@ run_process('sudo umount /usr/bin/g++')
 
 if failed is not True:
     # Check for module signature force check config on current kernel
-    if path.exists('/proc/config.gz') is True:
+    if exists('/proc/config.gz'):
         forced_sig = run_process('gzip -cd /proc/config.gz | grep MODULE_SIG_FORCE=y')
     else:
         forced_sig = run_process('grep MODULE_SIG_FORCE=y /proc/config')
