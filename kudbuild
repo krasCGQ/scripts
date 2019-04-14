@@ -154,8 +154,8 @@ OPT_DIR=/opt/kud
 # Number of threads used
 THREADS=$(nproc --all)
 
-# GCC and Clang (if used) compilers
-if [[ -z ${STOCK} ]]; then
+# GCC compiler
+if [[ -z ${STOCK} ]] || [[ ${COMPILER} == clang && ${DEVICE} == mido ]]; then
     # Aarch64 toolchain
     GCC_64BIT_PATH=aarch64-linux-gnu/bin
     GCC_64BIT_COMPILER=aarch64-linux-gnu-
@@ -163,10 +163,6 @@ if [[ -z ${STOCK} ]]; then
     # Aarch32 toolchain, required for compat vDSO
     GCC_32BIT_PATH=arm-linux-gnueabi/bin
     GCC_32BIT_COMPILER=arm-linux-gnueabi-
-
-    # Clang, if used
-    [[ ${COMPILER} == clang ]] && \
-        CLANG_PATH=clang-9.x/bin
 else
     # Aarch64 toolchain
     GCC_64BIT_PATH=aarch64-linux-android-4.9/bin
@@ -175,8 +171,13 @@ else
     # Aarch32 toolchain, required for compat vDSO
     GCC_32BIT_PATH=arm-linux-androideabi-4.9/bin
     GCC_32BIT_COMPILER=arm-linux-androideabi-
+fi
 
-    # Clang, if used
+# Clang (if used) compiler
+if [[ -z ${STOCK} ]]; then
+    [[ ${COMPILER} == clang ]] && \
+        CLANG_PATH=clang-9.x/bin
+else
     [[ ${COMPILER} == clang ]] && \
         CLANG_PATH=android-clang/clang-${CLANG_VERSION}/bin
 fi
@@ -195,10 +196,6 @@ NAME=KudKernel
 OUT=${ROOT_DIR}/kernels/build/${DEVICE}
 [[ -n ${RELEASE} ]] && \
     export KBUILD_BUILD_VERSION=${RELEASE}
-
-# mido build ships both treble and non-treble DTBs
-[[ ${DEVICE} == mido ]] && \
-    DTB=msm8953-qrd-sku3-${DEVICE}
 
 # Default message for posting to Telegram
 MSG="${NAME} (${DEVICE}) build:"
@@ -295,27 +292,15 @@ make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
      -j"${THREADS}" > /dev/null
 
 if [[ -z ${BUILD_ONLY} ]]; then
-    # Clean and copy kernel image and DTBs (mido only) to AnyKernel2 folder
+    # Clean and copy kernel image, DTBs and modules to AnyKernel2 folder
     info "Cleaning and copying required file(s) to AnyKernel2 folder..."
-    if [[ ${DEVICE} == mido ]]; then
-        for VARIANT in kernel {,non}treble; do
-            [[ ! -d ${AK2}/${VARIANT} ]] && \
-                mkdir "${AK2}"/${VARIANT}
-        done
-        rm -rf "${AK2}"/{kernel,{,non}treble}/*
-        cp -f "${OUT}"/arch/arm64/boot/Image.gz "${AK2}"/kernel
-        for VARIANT in {,non}treble; do
-            cp -f "${OUT}"/arch/arm64/boot/dts/qcom/"${DTB}"-${VARIANT}.dtb "${AK2}"/${VARIANT}/"${DTB}".dtb
-        done
-    elif [[ ${DEVICE} == X00T ]]; then
-        [[ ! -d ${AK2}/modules/vendor/lib/modules ]] && \
-            mkdir -p "${AK2}"/modules/vendor/lib/modules
-        rm -f "${AK2}"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
-        cp -f "${OUT}"/arch/arm64/boot/Image.gz-dtb "${AK2}"
-        for MODULE in "${OUT}"/**/*.ko; do
-            cp -f "${MODULE}" "${AK2}"/modules/vendor/lib/modules
-        done
-    fi
+    [[ ! -d ${AK2}/modules/vendor/lib/modules ]] && \
+        mkdir -p "${AK2}"/modules/vendor/lib/modules
+    rm -f "${AK2}"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
+    cp -f "${OUT}"/arch/arm64/boot/Image.gz-dtb "${AK2}"
+    for MODULE in "${OUT}"/**/*.ko; do
+        cp -f "${MODULE}" "${AK2}"/modules/vendor/lib/modules 2> /dev/null || continue
+    done
 
     # Export here to be picked later
     ZIP=${NAME}-${DEVICE}-$(date +%s).zip
