@@ -2,26 +2,46 @@
 
 This small repository hosts personal scripts used on my PCs and build server. They'll always be updated when needed. If you feel any of these scripts suit your needs, feel free to use, star this repository and revisit whenever the scripts get updated. Adjustments to your directories _may be_ needed.
 
+In order to be able to use these scripts, please run these commands accordingly:
+
+```
+# Some Bash scripts
+$ git submodule update --init # or clone this repository recursively
+
+# Python 3 scripts
+$ sudo pip3 install -r requirements.txt
+```
+
 Enjoy!
 
-## Standalone Scripts List
+## Standalone Shell Scripts List
 
-* `isl_update`: Cron-like script to update [my ISL fork](https://github.com/krasCGQ/isl) every 18 hours.
+* `build-clang`: Clang build script (mostly modified for my local environment and changes adjusted from [khusika/build-tools-clang](https://github.com/khusika/build-tools-clang))
 * `killswitch`: VPN kill switch enabler/disabler for UFW (requires `sudo` privileges as `ufw` is only visible to `root` user); only supports VPN connected through `tun0`
-* `kudbuild`: KudKernel build script; only supports mido ([non]treble) and X00T.
-* `update_crosstool`: Automatically update projects and apply crosstool-NG patches to them (requires sources to be shallow cloned first, and point `variables_list` and `projects_list` to the respective, right folders)
+* `kudbuild`: KudKernel build script; only supports mido (treble) and X00T
 
-## Snippets List
+## Bash Snippets List
 
-* `build-clang`: [Nathan Chancellor](https://github.com/nathanchance)'s build-clang script wrapper; executes his script inside a subshell to avoid messing with current environment.
+* `bmt`: ELF (bare-metal) GCC toolchain build script (to be deprecated in favor of Python 3 script port; only bmt_build() left)
+* `pia`: Setup and connect to Private Internet Access using OpenVPN CLI with MACE DNS and VPN kill switch enabled (thus depends on `killswitch`)
 * `rom_sign`: Android ROM signing wrapper; run `rom_sign` at root of your ROM source after sourcing.
+* `tg_sendinline`: Send Telegram posts with inline button URLs using Bot API
+
+## Python Snippets List
+
+* `bmt.py`: ELF (bare-metal) GCC toolchain build script (only bmt_sync() ported from Bash for now)
+* `dkms_rebuild.py`: Rebuild DKMS modules of currently running kernel with Clang via gcc and g++ wrappers
+
+## Credits
+
+* [Nathan Chancellor (nathanchance)](https://github.com/nathanchance) - `build-clang` script, which has been modified accordingly on this repository
 
 ## License
 
 ### All scripts in this repository (except submodules)
 
 ```
-Copyright (C) 2017-2018 Albert I (krasCGQ)
+Copyright (C) 2017-2019 Albert I (krasCGQ)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -42,7 +62,7 @@ Complete license can be read [here](./LICENSE).
 ### Also applies to [snippets/rom_sign](./snippets/rom_sign)
 
 ```
-Copyright 2017-2018 Albert I (krasCGQ)
+Copyright 2017-2019 Albert I (krasCGQ)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
