@@ -3,7 +3,7 @@
 # Copyright (C) 2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from os import environ, path, uname
+from os import environ, uname
 from os.path import exists, isdir
 from subprocess import CalledProcessError, PIPE, run
 from sys import stderr
