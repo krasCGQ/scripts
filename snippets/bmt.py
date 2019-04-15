@@ -16,7 +16,7 @@ def parse_params():
     params = ArgumentParser(description="A script that allows you to build ELF (bare-metal) GCC toolchain from source.")
     shared = params.add_mutually_exclusive_group()
     params.add_argument('-a', '--arch', choices=['aarch64', 'arm', 'x86_64'],
-                        help='build toolchain for selected target.', required=True)
+                        help="build toolchain for selected target.", required=True)
     shared.add_argument('-s', '--sync-only', dest='sync_only', action='store_true',
                         help="don't build toolchain, just sync sources.")
     shared.add_argument('-b', '--build-only', dest='build_only', action='store_true',
