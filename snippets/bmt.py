@@ -1,12 +1,28 @@
 #!/usr/bin/env python3
+# ELF (bare-metal) GCC toolchain compilation script
 # Copyright (C) 2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from argparse import ArgumentParser
 from contextlib import suppress
 from glob import glob
 from os import chdir, environ, getcwd, mkdir, remove, symlink
 from os.path import exists, isdir
-from sh import ErrorReturnCode_2, ErrorReturnCode_128, curl, git, rm, tar
+from sh import ErrorReturnCode_2, ErrorReturnCode_128, curl, git, make, nproc, rm, tar
+from subprocess import DEVNULL, PIPE, run
+
+# Parse parameters
+def parse_params():
+    params = ArgumentParser(description="A script that allows you to build ELF (bare-metal) GCC toolchain from source.")
+    shared = params.add_mutually_exclusive_group()
+    params.add_argument('-a', '--arch', choices=['aarch64', 'arm', 'x86_64'],
+                        help='build toolchain for selected target.', required=True)
+    shared.add_argument('-s', '--sync-only', dest='sync_only', action='store_true',
+                        help="don't build toolchain, just sync sources.")
+    shared.add_argument('-b', '--build-only', dest='build_only', action='store_true',
+                        help="don't sync sources, just build toolchain.")
+
+    return vars(params.parse_args())
 
 # Sync sources from git repository
 def sync_git(name, url):
@@ -101,6 +117,78 @@ def bmt_sync():
     # Function ending
     print("Done")
 
+# Run ./configure with specified parameters
+def configure(project, flags):
+    # Common configuration flags
+    common_flags = ['CFLAGS="-g0 -O2 -fstack-protector-strong"',
+                    'CXXFLAGS="-g0 -O2 -fstack-protector-strong"',
+                    '--target=' + target, '--prefix=' + bmt_dir + '/' + target,
+                    '--disable-multilib', '--disable-werror']
+
+    run('./../' + project + '/configure ' + ' '.join(common_flags) + ' ' + flags, shell=True, check=True, stdout=DEVNULL)
+
+# Build bare-metal toolchain
+def bmt_build():
+    # Set toolchain directory to PATH
+    environ['PATH'] = bmt_dir + '/' + target + '/bin:' + environ['PATH']
+
+    # Number of threads
+    threads = str(nproc('--all')).rstrip()
+
+    # Enter working directory
+    chdir(bmt_dir)
+
+    # Re-create build folders
+    print("Cleaning working directory...")
+    rm(glob('build-*'), '-rf')
+    mkdir('build-binutils')
+    mkdir('build-gcc')
+
+    # Remove target toolchain
+    rm('-rf', target)
+
+    # Build Binutils
+    chdir('build-binutils')
+
+    print("Configuring Binutils...")
+    configure('binutils', '--disable-gdb --enable-gold')
+
+    print("Building Binutils...")
+    make('-j' + threads)
+
+    print("Installing Binutils...")
+    make('install', '-j' + threads)
+
+    # Build GCC
+    chdir('../build-gcc')
+
+    print("Configuring GCC...")
+    configure('gcc', '--enable-languages=c --without-headers')
+
+    print("Building GCC...")
+    make('all-gcc', '-j' + threads)
+
+    print("Installing GCC...")
+    make('install-gcc', '-j' + threads)
+
+    print("Building libgcc for target...")
+    make('all-target-libgcc', '-j' + threads)
+
+    print("Installing libgcc for target...")
+    make('install-target-libgcc', '-j' + threads)
+
+    chdir(bmt_dir)
+
+# Print toolchain information to userspace
+def bmt_summary():
+    # Toolchain version
+    version = run(bmt_dir + '/' + target + '/bin/' + target + '-gcc --version | head -1', shell=True, stdout=PIPE)
+
+    # Print summary
+    print("Successfully built toolchain with the following details:\n"
+          "Version     : " + version.stdout.decode('utf-8').rstrip() + "\n"
+          "Install Path: " + bmt_dir + '/' + target)
+
 # Origin where the script is executed
 current_dir = getcwd()
 
@@ -108,7 +196,20 @@ current_dir = getcwd()
 bmt_dir = environ['HOME'] + '/build/bmt'
 
 try: # run default commands
-    bmt_sync()
+    args = parse_params()
+
+    if not args['build_only']:
+        bmt_sync()
+
+    if not args['sync_only']:
+        # Define target toolchain
+        if args['arch'] == 'arm': # ARM
+            target = args['arch'] + '-eabi'
+        else: # AArch64 and x86_64
+            target = args['arch'] + '-elf'
+
+        bmt_build()
+        bmt_summary()
 
 except: # go back to origin, avoid stranding nowhere
     chdir(current_dir)

@@ -22,14 +22,13 @@ Enjoy!
 
 ## Bash Snippets List
 
-* `bmt`: ELF (bare-metal) GCC toolchain build script (to be deprecated in favor of Python 3 script port; only bmt_build() left)
 * `pia`: Setup and connect to Private Internet Access using OpenVPN CLI with MACE DNS and VPN kill switch enabled (thus depends on `killswitch`)
 * `rom_sign`: Android ROM signing wrapper; run `rom_sign` at root of your ROM source after sourcing.
 * `tg_sendinline`: Send Telegram posts with inline button URLs using Bot API
 
 ## Python Snippets List
 
-* `bmt.py`: ELF (bare-metal) GCC toolchain build script (only bmt_sync() ported from Bash for now)
+* `bmt.py`: ELF (bare-metal) GCC toolchain build script
 * `dkms_rebuild.py`: Rebuild DKMS modules of currently running kernel with Clang via gcc and g++ wrappers
 
 ## Credits
