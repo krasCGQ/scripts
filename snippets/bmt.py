@@ -30,7 +30,6 @@ def sync_git(name, url):
 
     try:
         git('-C', name, 'status')
-
     except ErrorReturnCode_128:
         git.clone(url, name, depth='1', b='master')
 
@@ -58,14 +57,12 @@ def sync_tarball(name, version, ext, url):
     for i in range(0, len(leftovers)):
         if isdir(leftovers[i]):
             rm('-rf', leftovers[i])
-
         else:
             remove(leftovers[i])
 
     if not isdir(source):
         # Remove file of the same source name
-        if exists(source):
-            remove(source)
+        remove(source)
 
         # Fetch source tarball with curl if it doesn't exist
         # TODO: aria2 / Axel / Wget support?
@@ -74,7 +71,6 @@ def sync_tarball(name, version, ext, url):
 
         try: # extract source tarball
             tar('xf', tarball)
-
         except ErrorReturnCode_2: # delete it, corrupted download
             remove(tarball)
             raise
@@ -88,14 +84,11 @@ def bmt_sync():
     # GNU Project download URL
     gnu_dir = 'https://ftp.gnu.org/gnu/'
 
-    # Function start
     print("Updating sources...")
 
     # Create working directory if it doesn't exist
     if not isdir(bmt_dir):
-        if exists(bmt_dir):
-            remove(bmt_dir)
-
+        remove(bmt_dir)
         mkdir(bmt_dir)
 
     # Switch to working directory
@@ -114,8 +107,7 @@ def bmt_sync():
     # Switch back to origin
     chdir(current_dir)
 
-    # Function ending
-    print("Done")
+    print("Done.")
 
 # Run ./configure with specified parameters
 def configure(project, flags):
