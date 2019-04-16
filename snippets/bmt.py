@@ -25,16 +25,25 @@ def parse_params():
     return vars(params.parse_args())
 
 # Sync sources from git repository
-def sync_git(name, url):
-    print("Syncing %s..." %(name))
+def sync_git(project):
+    # Linaro Git URL
+    linaro_dir = 'git://git.linaro.org/toolchain/'
+
+    # Set repo name
+    if project == 'binutils': # binutils-gdb
+        repo = project + '-gdb'
+    else: # gcc
+        repo = project
+
+    print("Syncing %s..." %(project))
 
     try:
-        git('-C', name, 'status')
+        git('-C', project, 'status')
     except ErrorReturnCode_128:
-        git.clone(url, name, depth='1', b='master')
+        git.clone(linaro_dir + repo, project, depth='1', b='master')
 
-    git('-C', name, 'fetch', 'origin', 'master')
-    git('-C', name, 'reset', 'origin/master', hard=True)
+    git('-C', project, 'fetch', 'origin', 'master')
+    git('-C', project, 'reset', 'origin/master', hard=True)
 
 # Download and extract certain version of a tarball
 def sync_tarball(name, version, ext, url):
@@ -95,8 +104,8 @@ def bmt_sync():
     chdir(bmt_dir)
 
     # Binutils and GCC
-    sync_git('binutils', 'git://sourceware.org/git/binutils-gdb')
-    sync_git('gcc', 'git://gcc.gnu.org/git/gcc')
+    sync_git('binutils')
+    sync_git('gcc')
 
     # GMP, ISL, MPC, MPFR
     sync_tarball('gmp', '6.1.2', 'xz', gnu_dir + 'gmp/')
