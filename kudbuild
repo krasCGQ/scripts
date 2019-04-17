@@ -19,14 +19,14 @@ function tg_post {
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
     [[ -n ${STARTED} ]] && \
-        tg_post "${MSG} Interrupted - Signal Interrupt"
+        tg_post "${MSG} SIGINT"
 
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
 function tg_error {
-    tg_post "${MSG} Interrupted - Build Error(s)"
+    tg_post "${MSG} SIGERR"
 
     exit "${STATUS}"
 }
@@ -198,7 +198,7 @@ OUT=${ROOT_DIR}/kernels/build/${DEVICE}
     export KBUILD_BUILD_VERSION=${RELEASE}
 
 # Default message for posting to Telegram
-MSG="${NAME} (${DEVICE}) build:"
+MSG="${NAME} #${DEVICE} build:"
 
 ## Commands
 
@@ -236,7 +236,7 @@ done
     die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
 
 # Begin script
-tg_post "${MSG} Started!"
+tg_post "${MSG} BEGIN"
 info "Starting build script..."
 sleep 1
 
@@ -331,7 +331,7 @@ if [[ -z ${BUILD_ONLY} ]]; then
 fi
 
 # Notify successful build completion
-tg_post "${MSG} Completed!"
+tg_post "${MSG} END"
 unset STARTED
 
 # Upload kernel zip if requested, else the end
@@ -341,7 +341,7 @@ if [[ -n ${UPLOAD} ]]; then
         info "Uploading ${ZIP} to Telegram..."
         tg_post "Uploading test build to CI channel..."
         "${TELEGRAM}" -f "${AK2}/${ZIP}" -c "-1001494373196" \
-            "New test build available with latest commit: $(git_pretty)" || \
+            "New #${DEVICE} test build with HEAD at commit $(git_pretty)" || \
             { warn "Failed to upload ${ZIP}.";
               tg_post "Failed to upload the build."; }
     else
