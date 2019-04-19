@@ -75,3 +75,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
+## My own setup script
+
+```
+# Update packages
+$ pkg update
+
+# Install curl
+$ pkg install curl
+
+# Run setup script
+$ curl -sL https://github.com/krasCGQ/scripts/raw/master/setup/termux.bash -o - | bash
+```
