@@ -200,6 +200,9 @@ OUT=${ROOT_DIR}/kernels/build/${DEVICE}
 # Default message for posting to Telegram
 MSG="${NAME} #${DEVICE} build:"
 
+# Default kernel build username for CI builds
+[[ -z ${RELEASE} ]] && export KBUILD_BUILD_USER=BuildCI
+
 ## Commands
 
 # Run this inside kernel source
