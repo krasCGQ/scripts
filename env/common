@@ -58,26 +58,46 @@ function parse_git_branch {
 
 # Sign flashable zip with zipsigner
 function zipsigner {
+    local SIGNATURE SIGNED UNSIGNED
+
     [[ -z $(command -v java) ]] && \
         { warn "Please install any of OpenJDK version before continuing."; return 1; }
 
     [[ -z ${ZIPSIGNER} ]] && \
         { warn "${BLD}ZIPSIGNER${RST} variable is empty. Refusing to continue."; return 1; }
 
-    [[ ${#} -lt 2 ]] && \
-        { warn "${BLD}Usage:${RST} zipsigner <unsigned-zip> <signed-zip>"; return 1; }
-
     [[ ! -f ${ZIPSIGNER} ]] && \
         { warn "${BLD}$(basename "${ZIPSIGNER}")${RST} doesn't exist in defined path."; return 1; }
 
-    [[ ! -f ${1} ]] && \
-        { warn "${BLD}$(basename "${1}")${RST} doesn't exist in defined path."; return 1; }
+    if [[ ${#} -ge 1 ]]; then
+        while [[ ${#} -ge 1 ]]; do
+            case ${1} in
+                -s|--signing-key)
+                    shift
+                    SIGNATURE=${1} ;;
+                *)
+                    UNSIGNED=${1}
+                    shift
+                    [[ -n ${1} ]] && SIGNED=${1} \
+                                  || SIGNED=${UNSIGNED/.zip/-signed.zip} ;;
+            esac
+            shift
+        done
+    else
+        warn "${BLD}Usage:${RST} zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
+             "If signed-zip is undefined, it'll default to zip name + signed."
+        return 1
+    fi
 
-    [[ ! -d $(dirname "${2}") ]] && \
-        mkdir -p "$(dirname "${2}")"
+    [[ ! -f ${UNSIGNED} ]] && \
+        { warn "${BLD}$(basename "${UNSIGNED}")${RST} doesn't exist in defined path."; return 1; }
 
-    info "Signing $(basename "${1}") as $(basename "${2}")..."
-    if $(command -v java) -jar "${ZIPSIGNER}" "${1}" "${2}"; then
+    [[ ! -d $(dirname "${SIGNED}") ]] && \
+        mkdir -p "$(dirname "${SIGNED}")"
+
+    info "Signing $(basename "${UNSIGNED}") as $(basename "${SIGNED}")..."
+    # TODO: Something better than this?
+    if $(command -v java) -jar "${ZIPSIGNER}" ${SIGNATURE}{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "${UNSIGNED}" "${SIGNED}"; then
         info "The operation completed successfully."
     else
         local STATUS=${?}
