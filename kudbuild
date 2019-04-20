@@ -12,21 +12,21 @@
 
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
 function tg_post {
-    "${TELEGRAM}" "$(for POST in "${@}"; do echo "${POST}"; done)" \
+    "${TELEGRAM}" -M "$(for POST in "${@}"; do echo "${POST}"; done)" \
         &> /dev/null || return 0
 }
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
     [[ -n ${STARTED} ]] && \
-        tg_post "${MSG} SIGINT"
+        tg_post "${MSG} \`SIGINT\`"
 
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
 function tg_error {
-    tg_post "${MSG} SIGERR"
+    tg_post "${MSG} \`SIGERR\`"
 
     exit "${STATUS}"
 }
@@ -198,7 +198,7 @@ OUT=${ROOT_DIR}/kernels/build/${DEVICE}
     export KBUILD_BUILD_VERSION=${RELEASE}
 
 # Default message for posting to Telegram
-MSG="${NAME} #${DEVICE} build:"
+MSG="*${NAME}* #${DEVICE} *build:*"
 
 # Default kernel build username for CI builds
 [[ -z ${RELEASE} ]] && export KBUILD_BUILD_USER=BuildCI
@@ -239,7 +239,7 @@ done
     die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
 
 # Begin script
-tg_post "${MSG} BEGIN"
+tg_post "${MSG} \`BEGIN\`"
 info "Starting build script..."
 sleep 1
 
@@ -334,7 +334,7 @@ if [[ -z ${BUILD_ONLY} ]]; then
 fi
 
 # Notify successful build completion
-tg_post "${MSG} END"
+tg_post "${MSG} \`END\`"
 unset STARTED
 
 # Upload kernel zip if requested, else the end
@@ -361,6 +361,11 @@ if [[ -n ${UPLOAD} ]]; then
                  rsync -qP --relative "${RELEASE_ZIP}" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"${KERNEL_DIR}"/; }; then
                 info "${RELEASE_ZIP} uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
+                TELEGRAM_CHAT="-1001368407111 -1001494373196" \
+                tg_post "*New KudKernel build is available!*" \
+                        "*Name:* ${RELEASE_ZIP}" \
+                        "*Build Date:* $(sed '4q;d' "${OUT}"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)"
+                        "*Downloads:* [Webserver](https://dl.wafuu.id/${KERNEL_DIR}/${RELEASE_ZIP}) | [OSDN](https://osdn.net/dl/kudproject/${KERNEL_DIR}/${RELEASE_ZIP})"
             else
                 warn "Failed to upload ${RELEASE_ZIP}."
             fi
@@ -369,7 +374,7 @@ if [[ -n ${UPLOAD} ]]; then
 fi
 
 # Notify latest commit and end script
-tg_post "Latest commit: $(git_pretty)"
+tg_post "*Latest commit:* \`$(git_pretty)\`"
 info "That's it. Job well done!"
 
 # Unset globstar
