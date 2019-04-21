@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # shellcheck source=/dev/null
 # Common environment setup
 # Copyright (C) 2017-2019 Albert I (krasCGQ)
@@ -41,20 +41,21 @@ export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
       TELEGRAM_CHAT=$(get_chatid kud_community);
       export TELEGRAM_TOKEN TELEGRAM_CHAT; }
 
-# Parse current branch in git repository
-function parse_git_branch {
-    local BRANCH
-    BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/^* //')
+# Bash: Parse current branch in git repository
+if [[ -n ${BASH} ]]; then
+    function parse_git_branch {
+        local BRANCH
+        BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/^* //')
 
-    if [[ -n ${BRANCH} ]]; then
-        # Don't give extra brackets if project isn't at any branch or is currently detached
-        [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && \
-            BRANCH="(${BRANCH})"
+        if [[ -n ${BRANCH} ]]; then
+            # Don't give extra brackets if project isn't at any branch or is currently detached
+            [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && BRANCH="(${BRANCH})"
 
-        # This is what we want to stdout
-        echo " ${BRANCH}"
-    fi
-}
+            # This is what we want to stdout
+            echo " ${BRANCH}"
+        fi
+    }
+fi
 
 # Sign flashable zip with zipsigner
 function zipsigner {

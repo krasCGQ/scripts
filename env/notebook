@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # Environment setup for my notebook
 # Copyright (C) 2017-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -149,5 +149,5 @@ function opus_convert {
         { warn "There's nothing to do."; return 1; }
 }
 
-# Last, but my most convenient part
-export PS1='\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]$(parse_git_branch)\[\e[1;36m\] \$\[\e[0m\] '
+# Last, but my most convenient part; only apply with Bash
+[[ -n ${BASH} ]] && export PS1='\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]$(parse_git_branch)\[\e[1;36m\] \$\[\e[0m\] '

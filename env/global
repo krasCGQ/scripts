@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # shellcheck source=/dev/null
 # Treewide environment setup
 # Copyright (C) 2017-2019 Albert I (krasCGQ)

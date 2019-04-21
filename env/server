@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # Environment setup for my servers
 # Copyright (C) 2017-2018 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -28,8 +28,8 @@ function ssh_setup {
     ssh-add "${HOME}"/.ssh/id_ed25519
 }
 
-# The most convenient part
-export PS1='\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]$(parse_git_branch)\[\e[1;32m\] \$\[\e[0m\] '
+# The most convenient part; only apply with Bash
+[[ -n ${BASH} ]] && export PS1='\[\e[1;32m\]\u@\h\[\e[1;37m\] \W\[\e[1;33m\]$(parse_git_branch)\[\e[1;32m\] \$\[\e[0m\] '
 
 # Finally, run ssh_setup on tmux sessions
 [[ -n ${TMUX} ]] && ssh_setup
