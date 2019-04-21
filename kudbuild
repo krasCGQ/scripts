@@ -325,7 +325,8 @@ if [[ -z ${BUILD_ONLY} ]]; then
                 rm -f "${RELEASE_ZIP}"
 
             # Sign zip for release
-            zipsigner "${ZIP}" "${RELEASE_ZIP}"
+            zipsigner -s ${HOME}/.android-certs/releasekey \
+                "${ZIP}" "${RELEASE_ZIP}"
 
             # Delete 'unsigned' zip
             rm -f "${ZIP}"
