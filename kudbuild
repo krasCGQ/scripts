@@ -11,7 +11,7 @@
 ## Functions
 
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
-function tg_post {
+tg_post() {
     "${TELEGRAM}" -M "$(for POST in "${@}"; do echo "${POST}"; done)" \
         &> /dev/null || return 0
 }
@@ -25,14 +25,14 @@ trap '{
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
-function tg_error {
+tg_error() {
     tg_post "${MSG} \`SIGERR\`"
 
     exit "${STATUS}"
 }
 
 # Prints message to stderr and exit script, OR call tg_error function
-function die {
+die() {
     [[ -z ${STATUS} && -n ${STARTED} ]] && \
         STATUS=${?}
 
@@ -54,13 +54,13 @@ trap '{
 }' ERR
 
 # git log --pretty alias
-function git_pretty {
+git_pretty() {
     git log --pretty=format:"%h (\"%s\")" -1
 }
 
 ## Parse parameters
 
-function parse_params {
+parse_params() {
     if [[ ${#} -ge 1 ]]; then
         while [[ ${#} -ge 1 ]]; do
             case ${1} in

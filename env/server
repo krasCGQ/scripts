@@ -18,7 +18,7 @@ alias tmux='force_color_prompt=yes tmux'
 alias update='sudo su -c "apt update && apt-get dist-upgrade -y"'
 
 # Shortcut for ssh-agent setup
-function ssh_setup {
+ssh_setup() {
     # Do an unconditional check
     [[ ! -f ${HOME}/.ssh/id_ed25519 ]] && \
         { warn "Please generate an SSH key before using this command."; return 1; }

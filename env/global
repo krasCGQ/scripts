@@ -15,7 +15,7 @@ RST=$(tput sgr0)
 export SCRIPTDIR BLD RST
 
 # Prints a message with a dash
-function info {
+info() {
     echo "- ${1}"
     while [[ ${#} -ge 2 ]]; do
         echo "  ${2}"
@@ -24,7 +24,7 @@ function info {
 }
 
 # Prints a message with an exclamation point
-function warn {
+warn() {
     echo "! ${1}" >&2
     while [[ ${#} -ge 2 ]]; do
         echo "  ${2}" >&2
@@ -33,7 +33,7 @@ function warn {
 }
 
 # Making sure user has sudo before executing command
-function check_sudo {
+check_sudo() {
     info "Checking for sudo; please enter password if prompted."
     if [[ $(sudo -v 2> /dev/null; echo ${?}) -eq 0 ]]; then
         [[ ${#} != 0 ]] && sudo "${@}"

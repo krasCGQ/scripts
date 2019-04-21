@@ -7,7 +7,7 @@
 # https://thetinhat.com/tutorials/misc/linux-vpn-drop-protection-firewall.html
 # Modified to be as dead simple and minimal as possible.
 
-function die {
+die() {
     [[ -n ${1} ]] && \
         echo "! ${1}"
 

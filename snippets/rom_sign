@@ -13,7 +13,7 @@
 # Refer to the following AOSP documentation on how things work:
 # https://source.android.com/devices/tech/ota/sign_builds
 
-function rom_sign {
+rom_sign() {
     # Mark variables as local
     local NO_BACKUPTOOL BACKUP_FLAG
 

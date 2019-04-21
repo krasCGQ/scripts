@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Setup Private Internet Access configuration files for OpenVPN
-function pia_ovpnsetup {
+pia_ovpnsetup() {
     # Local variables
     local AUTH_FILE CONFIG EXTRA_ARGS MODE PASS TMP_DIR USER
 
@@ -110,7 +110,7 @@ function pia_ovpnsetup {
 
 # Wrapper to connect to Private Internet Access with OpenVPN
 # TODO: Country shortcode
-function pia_ovpnconnect-default {
+pia_ovpnconnect-default() {
     # Local variables
     local CONFIG PORT PROTOCOL
 
@@ -179,6 +179,6 @@ function pia_ovpnconnect-default {
     chattr -i /etc/resolv.conf
 }
 
-function pia_ovpnconnect {
+pia_ovpnconnect() {
     check_sudo su -c ". ${SCRIPTDIR}/env/global && $(declare -f pia_ovpnconnect-default) && pia_ovpnconnect-default ${*}"
 }

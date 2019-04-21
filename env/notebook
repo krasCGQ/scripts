@@ -19,7 +19,7 @@ alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 export PATH=${HOME}/.files/bin:${SCRIPTDIR}/bin:/usr/lib/ccache/bin:${PATH}
 
 # (Re)Pack FLAC files with maximum compression and ReplayGain applied
-function flac_pack {
+flac_pack() {
     # Mark functions as local
     local BASE_NAME LIST OLD_LIST REPACK SONG
 
@@ -126,7 +126,7 @@ function flac_pack {
 }
 
 # Convert all FLAC, WAV, and/or AIFF files to Opus
-function opus_convert {
+opus_convert() {
     # Ask to install opus-tools package if opusenc doesn't exist
     [[ -z $(command -v opusenc) ]] && \
         { warn "Please install opus-tools package before continuing."; return 1; }

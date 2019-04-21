@@ -43,7 +43,7 @@ export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
 # Bash: Parse current branch in git repository
 if [[ -n ${BASH} ]]; then
-    function parse_git_branch {
+    parse_git_branch() {
         local BRANCH
         BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/^* //')
 
@@ -58,7 +58,7 @@ if [[ -n ${BASH} ]]; then
 fi
 
 # Sign flashable zip with zipsigner
-function zipsigner {
+zipsigner() {
     local SIGNATURE SIGNED UNSIGNED
 
     if [[ -z $(command -v java) ]]; then
@@ -97,6 +97,6 @@ function zipsigner {
 
 # Wrapper to automatically merge latest Linux stable revision to working branch
 # Usage: korg_merge <revision-to-merge>
-function korg_merge {
+korg_merge() {
     git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux v"${1}" --signoff
 }
