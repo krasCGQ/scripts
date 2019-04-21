@@ -16,7 +16,6 @@ Enjoy!
 
 ## Standalone Shell Scripts List
 
-* `build-clang`: Clang build script (mostly modified for my local environment and changes adjusted from [khusika/build-tools-clang](https://github.com/khusika/build-tools-clang))
 * `killswitch`: VPN kill switch enabler/disabler for UFW (requires `sudo` privileges as `ufw` is only visible to `root` user); only supports VPN connected through `tun0`
 * `kudbuild`: KudKernel build script; only supports mido (treble) and X00T
 

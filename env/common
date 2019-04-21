@@ -100,3 +100,29 @@ zipsigner() {
 korg_merge() {
     git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux v"${1}" --signoff
 }
+
+# ClangBuiltLinux's build-llvm.py wrapper
+build-clang() {
+    local ARCH BUILD_DIR CURRENT_DIR INSTALL_DIR WORK_DIR
+    ARCH="AArch64;ARM;X86"
+    BUILD_DIR=${HOME}/build/clang
+    CURRENT_DIR=$(pwd)
+    INSTALL_DIR=/opt/kud/clang
+    WORK_DIR=${SCRIPTDIR}/clang
+
+    [[ ! -f ${WORK_DIR}/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
+
+    cd "${WORK_DIR}" || return 1
+
+    [[ ! -d ${BUILD_DIR} ]] && mkdir -p "${BUILD_DIR}"
+    [[ ! -L build ]] && { rm -rf build; ln -sf "${BUILD_DIR}" build; }
+
+    ./build-llvm.py -I ${INSTALL_DIR} -t ${ARCH}
+
+    cd "${CURRENT_DIR}" || return 1
+}
+
+# ClangBuiltLinux's build-binutils.py wrapper
+build-binutils() {
+    "${SCRIPTDIR}"/clang/build-binutils.py -I /opt/kud/binutils -t x86_64
+}

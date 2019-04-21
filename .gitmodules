@@ -1,6 +1,7 @@
 [submodule "telegram"]
 	path = telegram
 	url = git://github.com/fabianonline/telegram.sh
-[submodule "patches"]
-	path = patches
-	url = git://github.com/krasCGQ/patches
+[submodule "clang"]
+	path = clang
+	url = git://github.com/nathanchance/tc-build
+	branch = python-bringup
