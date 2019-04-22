@@ -176,7 +176,7 @@ fi
 # Clang (if used) compiler
 if [[ -z ${STOCK} ]]; then
     [[ ${COMPILER} == clang ]] && \
-        CLANG_PATH=clang-9.x/bin
+        CLANG_PATH=clang/bin
 else
     [[ ${COMPILER} == clang ]] && \
         CLANG_PATH=android-clang/clang-${CLANG_VERSION}/bin
