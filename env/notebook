@@ -11,7 +11,7 @@
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
 # Set up aliases
-alias neofetch='neofetch --package_managers off --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
+alias neofetch='neofetch --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
 alias update='sudo su -c "pacman -Sy && powerpill -Su --noconfirm"'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
