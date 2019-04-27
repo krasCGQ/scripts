@@ -12,7 +12,7 @@
 
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
 tg_post() {
-    "${TELEGRAM}" -M "$(for POST in "${@}"; do echo "${POST}"; done)" \
+    "${TELEGRAM}" -M -D "$(for POST in "${@}"; do echo "${POST}"; done)" \
         &> /dev/null || return 0
 }
 
@@ -28,7 +28,11 @@ trap '{
 tg_error() {
     tg_post "${MSG} \`SIGERR\`"
 
-    exit "${STATUS}"
+    if [[ -n ${STATUS} ]]; then
+        exit "${STATUS}"
+    else
+        exit 1
+    fi
 }
 
 # Prints message to stderr and exit script, OR call tg_error function
@@ -362,11 +366,11 @@ if [[ -n ${UPLOAD} ]]; then
                  rsync -qP --relative "${RELEASE_ZIP}" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"${KERNEL_DIR}"/; }; then
                 info "${RELEASE_ZIP} uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
-                TELEGRAM_CHAT="-1001368407111 -1001494373196" \
+                TELEGRAM_CHAT="-1001368407111 -1001181003922" \
                 tg_post "*New KudKernel build is available!*" \
-                        "*Name:* ${RELEASE_ZIP}" \
-                        "*Build Date:* $(sed '4q;d' "${OUT}"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)"
-                        "*Downloads:* [Webserver](https://dl.wafuu.id/${KERNEL_DIR}/${RELEASE_ZIP}) | [OSDN](https://osdn.net/dl/kudproject/${KERNEL_DIR}/${RELEASE_ZIP})"
+                        "*Name:* \`${RELEASE_ZIP}\`" \
+                        "*Build Date:* \`$(sed '4q;d' "${OUT}"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
+                        "*Downloads:* [Webserver](https://dl.wafuu.id/${KERNEL_DIR}/${RELEASE_ZIP}) - [CDN](https://dl-cdn.wafuu.id/${KERNEL_DIR}/${RELEASE_ZIP}) | [OSDN](https://osdn.net/dl/kudproject/${RELEASE_ZIP})"
             else
                 warn "Failed to upload ${RELEASE_ZIP}."
             fi
