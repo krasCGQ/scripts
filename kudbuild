@@ -358,7 +358,7 @@ if [[ -n ${UPLOAD} ]]; then
                 die "$(basename "${AK2}") doesn't exist in defined path."
 
             info "Uploading ${RELEASE_ZIP}..."
-            if { rsync -qP -e 'ssh -p 1983' --relative "${RELEASE_ZIP}" kud@rimuru.wafuu.id:/var/www/dl.wafuu.id/"${KERNEL_DIR}"/;
+            if { rsync -qP -e 'ssh -p 1983' --relative "${RELEASE_ZIP}" kud@dl.wafuu.id:/var/www/dl.wafuu.id/"${KERNEL_DIR}"/;
                  rsync -qP --relative "${RELEASE_ZIP}" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"${KERNEL_DIR}"/; }; then
                 info "${RELEASE_ZIP} uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
