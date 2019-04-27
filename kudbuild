@@ -166,7 +166,7 @@ if [[ -z ${STOCK} ]] || [[ ${COMPILER} == clang && ${DEVICE} == mido ]]; then
 else
     # Aarch64 toolchain
     GCC_64BIT_PATH=aarch64-linux-android-4.9/bin
-    GCC_64BIT_COMPILER=aarch64-linux-androidkernel-
+    GCC_64BIT_COMPILER=aarch64-linux-android-
 
     # Aarch32 toolchain, required for compat vDSO
     GCC_32BIT_PATH=arm-linux-androideabi-4.9/bin
