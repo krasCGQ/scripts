@@ -30,10 +30,6 @@ Enjoy!
 * `bmt.py`: ELF (bare-metal) GCC toolchain build script
 * `dkms_rebuild.py`: Rebuild DKMS modules of currently running kernel with Clang via gcc and g++ wrappers
 
-## Credits
-
-* [Nathan Chancellor (nathanchance)](https://github.com/nathanchance) - `build-clang` script, which has been modified accordingly on this repository
-
 ## License
 
 ### All scripts in this repository (except submodules)
@@ -73,17 +69,4 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-```
-
-## My own setup script
-
-```
-# Update packages
-$ pkg update
-
-# Install curl
-$ pkg install curl
-
-# Run setup script
-$ curl -sL https://github.com/krasCGQ/scripts/raw/master/setup/termux.bash -o - | bash
 ```
