@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
-[[ $(whoami) == krascgq ]] && [[ $(hostname) == KudNotebook || $(hostname) == LNVNB161216 ]] || return 1
+[[ $(hostname) == harutsuki || $(hostname) == strelka ]] || return 1
 
 # Import common environment script
 # shellcheck source=/dev/null
@@ -12,6 +12,7 @@
 
 # Set up aliases
 alias neofetch='neofetch --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
+alias sys2sbin='sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
 alias update='sudo su -c "pacman -Sy && powerpill -Su --noconfirm"'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
@@ -149,5 +150,33 @@ opus_convert() {
         { warn "There's nothing to do."; return 1; }
 }
 
+# Setup environment for AOSP building
+aosp_init() {(
+    [[ $(whoami) != root ]] && return 1
+
+    # Load zRAM module with 2 block devices
+    modprobe zram num_devices=2
+
+    # zRAM setup
+    for block in 0 1; do
+        echo lz4hc > /sys/block/zram${block}/comp_algorithm
+        echo 8G > /sys/block/zram${block}/disksize
+    done
+
+    # zRAM swap
+    mkswap /dev/zram0
+    swapon --priority 100 /dev/zram0
+
+    # zRAM /tmp
+    mkfs.ext4 /dev/zram1
+    mount -o nosuid,nodev,noatime,discard /dev/zram1 /tmp
+    chmod 777 /tmp
+
+    # Mount AOSP source sparse image
+    mount -o nosuid,nodev,compress=zstd \
+        /home/krascgq/KudProject/android.img /mnt/android
+) || return 1; }
+alias aosp_init='check_sudo su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
+
 # Last, but my most convenient part; only apply with Bash
-[[ -n ${BASH} ]] && export PS1='\[\e[1;36m\]\u@\h\[\e[1;37m\] \W\[\e[1;34m\]$(parse_git_branch)\[\e[1;36m\] \$\[\e[0m\] '
+[[ -n ${BASH} ]] && export PS1='\[\e[1;36m\]\W\[\e[1;34m\]$(parse_git_branch)\[\e[0m\] 〉'
