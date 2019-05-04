@@ -111,6 +111,7 @@ build-clang() {
     WORK_DIR=${SCRIPTDIR}/clang
 
     [[ ! -f ${WORK_DIR}/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
+    [[ -d ${INSTALL_DIR} ]] && mv -f ${INSTALL_DIR}{,-old}
 
     cd "${WORK_DIR}" || return 1
 
