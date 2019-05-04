@@ -3,5 +3,4 @@
 	url = git://github.com/fabianonline/telegram.sh
 [submodule "clang"]
 	path = clang
-	url = git://github.com/nathanchance/tc-build
-	branch = python-bringup
+	url = git://github.com/ClangBuiltLinux/tc-build
