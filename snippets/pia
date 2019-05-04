@@ -110,7 +110,7 @@ pia_ovpnsetup() {
 
 # Wrapper to connect to Private Internet Access with OpenVPN
 # TODO: Country shortcode
-pia_ovpnconnect-default() {
+_pia_ovpnconnect() {
     # Local variables
     local CONFIG PORT PROTOCOL
 
@@ -180,5 +180,5 @@ pia_ovpnconnect-default() {
 }
 
 pia_ovpnconnect() {
-    check_sudo su -c ". ${SCRIPTDIR}/env/global && $(declare -f pia_ovpnconnect-default) && pia_ovpnconnect-default ${*}"
+    check_sudo su -c ". ${SCRIPTDIR}/env/global && $(declare -f _pia_ovpnconnect) && _pia_ovpnconnect ${*}"
 }
