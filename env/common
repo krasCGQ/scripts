@@ -32,6 +32,9 @@ USE_CCACHE=true
 KBUILD_BUILD_USER=krasCGQ
 KBUILD_BUILD_HOST=KudProject
 
+# ClangBuiltLinux's tc-build build directory
+CBL_DIR=${HOME}/build/clang
+
 # Export some variables to satisfy shellcheck requirements
 export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
@@ -103,27 +106,23 @@ korg_merge() {
 
 # ClangBuiltLinux's build-llvm.py wrapper
 build-clang() {
-    local ARCH BUILD_DIR CURRENT_DIR INSTALL_DIR WORK_DIR
+    local ARCH INSTALL_DIR
     ARCH="AArch64;ARM;X86"
-    BUILD_DIR=${HOME}/build/clang
-    CURRENT_DIR=$(pwd)
     INSTALL_DIR=/opt/kud/clang
-    WORK_DIR=${SCRIPTDIR}/clang
 
-    [[ ! -f ${WORK_DIR}/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
+    [[ ! -f ${SCRIPTDIR}/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
     [[ -d ${INSTALL_DIR} ]] && mv -f ${INSTALL_DIR}{,-old}
 
-    cd "${WORK_DIR}" || return 1
-
-    [[ ! -d ${BUILD_DIR} ]] && mkdir -p "${BUILD_DIR}"
-    [[ ! -L build ]] && { rm -rf build; ln -sf "${BUILD_DIR}" build; }
-
-    ./build-llvm.py -I ${INSTALL_DIR} -t ${ARCH}
-
-    cd "${CURRENT_DIR}" || return 1
+    "${SCRIPTDIR}"/clang/build-llvm.py -B "${CBL_DIR}" -I ${INSTALL_DIR} -t ${ARCH} --thin-lto -u
 }
 
 # ClangBuiltLinux's build-binutils.py wrapper
 build-binutils() {
-    "${SCRIPTDIR}"/clang/build-binutils.py -I /opt/kud/binutils -t x86_64
+    local ARCH INSTALL_DIR
+    ARCH=x86_64
+    INSTALL_DIR=/opt/kud/binutils
+
+    [[ ! -f ${SCRIPTDIR}/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
+
+    "${SCRIPTDIR}"/clang/build-binutils.py -B "${CBL_DIR}" -I ${INSTALL_DIR} -t ${ARCH} -u
 }
