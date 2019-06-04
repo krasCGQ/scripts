@@ -86,8 +86,8 @@ parse_params() {
                 -d |--device)
                     shift
 
-                    # Only mido and X00T are supported for now
-                    if [[ ${1,,} == mido ]]; then
+                    # Only grus, mido and X00T are supported for now
+                    if [[ ${1,,} == grus || ${1,,} == mido ]]; then
                         DEVICE=${1,,}
                     elif [[ ${1^^} == X00T ]]; then
                         DEVICE=${1^^}
@@ -203,6 +203,8 @@ AK2=${ROOT_DIR}/AnyKernel2/${DEVICE}
 ARCH=arm64
 NAME=KudKernel
 OUT=${ROOT_DIR}/kernels/build/${DEVICE}
+[[ ${DEVICE} == grus ]] && OUT=$OUT-tmp
+DTS_DIR="${OUT}"/arch/arm64/boot/dts/qcom
 [[ -n ${RELEASE} ]] && \
     export KBUILD_BUILD_VERSION=${RELEASE}
 
@@ -294,6 +296,8 @@ fi
 info "Cleaning build directory..."
 # TODO: Completely clean build?
 make ARCH=${ARCH} O="${OUT}" clean &> /dev/null
+# Make rule doesn't cover *.dtbo and manually created dtbo.img
+[[ ${DEVICE} == grus ]] && rm -rf "${OUT}"/arch/arm64/boot/dts/qcom/{*.dtbo,dtbo.img}
 
 # TODO: Generate defconfig if it doesn't exist
 
@@ -303,6 +307,13 @@ PATH=$([[ -n ${CLANG_PATH} ]] && echo "${CLANG_PATH}:")${GCC_PATHs}:${PATH} \
 make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
      CROSS_COMPILE_ARM32="${CROSS_COMPILE_ARM32}" "${CLANG_EXTRAS[@]}" \
      -j"${THREADS}" > /dev/null
+
+# Build dtbo.img for grus
+if [[ ${DEVICE} == grus ]]; then
+    info "Creating dtbo.img..."
+    python2 "${SCRIPTDIR}"/libufdt/utils/src/mkdtboimg.py \
+        create "${DTS_DIR}"/dtbo.img --page_size=4096 "${DTS_DIR}"/*.dtbo
+fi
 
 if [[ -z ${BUILD_ONLY} ]]; then
     # Clean and copy kernel image, DTBs and modules to AnyKernel2 folder

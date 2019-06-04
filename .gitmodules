@@ -5,3 +5,6 @@
 	path = clang
 	url = git://github.com/nathanchance/tc-build
 	branch = personal
+[submodule "libufdt"]
+	path = libufdt
+	url = https://android.googlesource.com/platform/system/libufdt
