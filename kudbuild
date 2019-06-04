@@ -16,17 +16,22 @@ tg_post() {
         &> /dev/null || return 0
 }
 
+# Show build script duration
+show_duration() {
+    echo "Duration: $(date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)')"
+}
+
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
     [[ -n ${STARTED} ]] && \
-        tg_post "${MSG} \`SIGINT\`"
+        tg_post "${MSG} \`SIGINT\`" "$(show_duration)"
 
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
 tg_error() {
-    tg_post "${MSG} \`SIGERR\`"
+    tg_post "${MSG} \`SIGERR\`" "$(show_duration)"
 
     if [[ -n ${STATUS} ]]; then
         exit "${STATUS}"
@@ -243,8 +248,9 @@ done
     die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
 
 # Begin script
-tg_post "${MSG} \`BEGIN\`"
 info "Starting build script..."
+tg_post "${MSG} \`BEGIN\`"
+START_TIME=$(date +%s)
 sleep 1
 
 # Explicitly declare build script startup
@@ -339,7 +345,7 @@ if [[ -z ${BUILD_ONLY} ]]; then
 fi
 
 # Notify successful build completion
-tg_post "${MSG} \`END\`"
+tg_post "${MSG} \`END\`" "$(show_duration)"
 unset STARTED
 
 # Upload kernel zip if requested, else the end
