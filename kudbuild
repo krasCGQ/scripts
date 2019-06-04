@@ -239,7 +239,7 @@ sleep 1
     { warn "Assigning Clang version is only meant for AOSP Clang, disabling.";
       unset CLANG_VERSION; }
 
-for VARIABLE in ${GCC_64BIT_PATH}/${GCC_64BIT_COMPILER}gcc ${GCC_32BIT_PATH}/${GCC_32BIT_COMPILER}gcc ${CLANG_PATH}/clang; do
+for VARIABLE in ${GCC_64BIT_PATH}/${GCC_64BIT_COMPILER}gcc ${GCC_32BIT_PATH}/${GCC_32BIT_COMPILER}gcc ${CLANG_PATH:+${CLANG_PATH}/clang}; do
     find ${VARIABLE} &> /dev/null || \
         die "${BLD}$(basename "${VARIABLE}")${RST} doesn't exist in defined path."
 done
