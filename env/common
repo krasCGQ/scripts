@@ -5,57 +5,51 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import treewide environment script
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/global
-
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/global
 # Import Telegram Chat ID fetching function if exists
-[[ -f ${SCRIPTDIR}/tg_chatid ]] && \
-    . "${SCRIPTDIR}"/tg_chatid
+[[ -f $SCRIPTDIR/tg_chatid ]] && source "$SCRIPTDIR"/tg_chatid
 
-## Aliases
-
-# Set up common aliases
+# Aliases
 alias nano='nano -au'
 alias wget='wget -c -t 0 --retry-connrefused'
 
-## Variables
-
 # Required for GPG signing
 GPG_TTY=$(tty)
-
 # GNU nano for text editor
 EDITOR=nano
-
 # Use ccache for faster compiling
 USE_CCACHE=true
-
 # My kernel identity in nutshell
 KBUILD_BUILD_USER=krasCGQ
 KBUILD_BUILD_HOST=KudProject
-
 # ClangBuiltLinux's tc-build build directory
-CBL_DIR=${HOME}/build/clang
-
+CBL_DIR=$HOME/build/clang
 # Export some variables to satisfy shellcheck requirements
 export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
 # Import Telegram bot token and chat ID (KudProject Community)
-[[ -f ${SCRIPTDIR}/tg_token && -f ${SCRIPTDIR}/tg_chatid ]] && \
-    { TELEGRAM_TOKEN=$(cat "${SCRIPTDIR}"/tg_token);
-      TELEGRAM_CHAT=$(get_chatid kud_community);
-      export TELEGRAM_TOKEN TELEGRAM_CHAT; }
+if [[ -f $SCRIPTDIR/tg_token && -f $SCRIPTDIR/tg_chatid ]]; then
+    TELEGRAM_TOKEN=$(cat "$SCRIPTDIR"/tg_token)
+    TELEGRAM_CHAT=$(get_chatid kud_community)
+    export TELEGRAM_TOKEN TELEGRAM_CHAT
+fi
+
+# Wrapper to automatically merge latest Linux stable revision to working branch
+# Usage: korg_merge <revision-to-merge>
+korg_merge() { git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux v"$1" --signoff; }
 
 # Bash: Parse current branch in git repository
-if [[ -n ${BASH} ]]; then
+if [[ -n $BASH ]]; then
     parse_git_branch() {
         local BRANCH
         BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/^* //')
 
-        if [[ -n ${BRANCH} ]]; then
+        if [[ -n $BRANCH ]]; then
             # Don't give extra brackets if project isn't at any branch or is currently detached
-            [[ ${BRANCH} != "("* && ${BRANCH} != *")" ]] && BRANCH="(${BRANCH})"
+            [[ $BRANCH != "("*")" ]] && BRANCH="($BRANCH)"
 
             # This is what we want to stdout
-            echo " ${BRANCH}"
+            echo " $BRANCH"
         fi
     }
 fi
@@ -67,41 +61,34 @@ zipsigner() {
     if [[ -z $(command -v java) ]]; then
         warn "Please install any of OpenJDK version before continuing."
         return 1
-    elif [[ -z ${ZIPSIGNER} || ! -f ${ZIPSIGNER} ]]; then
-        warn "${BLD}ZIPSIGNER${RST} is empty or doesn't exist. Refusing to continue."
+    elif [[ -z $ZIPSIGNER || ! -f $ZIPSIGNER ]]; then
+        warn "${BLD}ZIPSIGNER$RST is empty or doesn't exist. Refusing to continue."
         return 1
-    elif [[ ${#} -lt 1 ]]; then
-        warn "${BLD}Usage:${RST} zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
+    elif [[ $# -lt 1 ]]; then
+        warn "${BLD}Usage:$RST zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
              "If signed-zip is undefined, it'll default to zip name + signed."
         return 1
     fi
 
-    while [[ ${#} -ge 1 ]]; do
-        case ${1} in
-            -s|--signing-key)
-                shift
-                SIGNATURE=${1} ;;
+    while [[ $# -ge 1 ]]; do
+        case $1 in
+            -s|--signing-key) shift
+                SIGNATURE=$1 ;;
+
             *)
-                UNSIGNED=${1}
+                UNSIGNED=$1
                 shift
-                [[ -n ${1} ]] && SIGNED=${1} \
-                              || SIGNED=${UNSIGNED/.zip/-signed.zip} ;;
+                [[ -n $1 ]] && SIGNED=$1 || SIGNED=${UNSIGNED/.zip/-signed.zip} ;;
         esac
         shift
     done
 
-    [[ ! -d $(dirname "${SIGNED}") ]] && \
-        mkdir -p "$(dirname "${SIGNED}")"
+    # Create target folder if it doesn't exist
+    [[ ! -d $(dirname "$SIGNED") ]] && mkdir -p "$(dirname "$SIGNED")"
 
-    info "Signing $(basename "${UNSIGNED}") as $(basename "${SIGNED}")..."
+    info "Signing $(basename "$UNSIGNED") as $(basename "$SIGNED")..."
     # TODO: Something better than this?
-    $(command -v java) -jar "${ZIPSIGNER}" "${SIGNATURE}"{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "${UNSIGNED}" "${SIGNED}"
-}
-
-# Wrapper to automatically merge latest Linux stable revision to working branch
-# Usage: korg_merge <revision-to-merge>
-korg_merge() {
-    git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux v"${1}" --signoff
+    java -jar "$ZIPSIGNER" "$SIGNATURE"{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "$UNSIGNED" "$SIGNED"
 }
 
 # ClangBuiltLinux's build-llvm.py wrapper
@@ -110,10 +97,10 @@ build-clang() {
     ARCH="AArch64;ARM;X86"
     INSTALL_DIR=/opt/kud/clang
 
-    [[ ! -f ${SCRIPTDIR}/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
-    [[ -d ${INSTALL_DIR} ]] && mv -f ${INSTALL_DIR}{,-old}
+    [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
+    [[ -d $INSTALL_DIR ]] && mv -f $INSTALL_DIR{,-old}
 
-    "${SCRIPTDIR}"/clang/build-llvm.py -B "${CBL_DIR}" -I ${INSTALL_DIR} -t ${ARCH} --thin-lto -u
+    "$SCRIPTDIR"/clang/build-llvm.py -B "$CBL_DIR" -I $INSTALL_DIR -t $ARCH --thin-lto -u
 }
 
 # ClangBuiltLinux's build-binutils.py wrapper
@@ -122,7 +109,7 @@ build-binutils() {
     ARCH=x86_64
     INSTALL_DIR=/opt/kud/binutils
 
-    [[ ! -f ${SCRIPTDIR}/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
+    [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
 
-    "${SCRIPTDIR}"/clang/build-binutils.py -B "${CBL_DIR}" -I ${INSTALL_DIR} -t ${ARCH} -u
+    "$SCRIPTDIR"/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t $ARCH -u
 }

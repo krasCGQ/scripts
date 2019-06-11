@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
-[[ $(hostname) == harutsuki || $(hostname) == strelka ]] || return 1
+[[ $(hostname) = harutsuki || $(hostname) = strelka ]] || return 1
 
 # Import common environment script
 # shellcheck source=/dev/null
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
 
-# Set up aliases
+# Aliases
 alias neofetch='neofetch --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
 alias reflector='sudo reflector --save /etc/pacman.d/mirrorlist --sort rate --threads 8 --ipv4'
 alias sys2sbin='sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
@@ -18,7 +18,7 @@ alias update='sudo su -c "pacman -Sy && powerpill -Su --noconfirm"'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
 # Export new PATH containing local binaries, ccache-backed compiler symlinks, and perl modules
-export PATH=${HOME}/.files/bin:${SCRIPTDIR}/bin:/usr/lib/ccache/bin:${PATH}
+export PATH=$HOME/.files/bin:$SCRIPTDIR/bin:/usr/lib/ccache/bin:$PATH
 
 # (Re)Pack FLAC files with maximum compression and ReplayGain applied
 flac_pack() {
@@ -26,12 +26,11 @@ flac_pack() {
     local BASE_NAME LIST OLD_LIST REPACK SONG
 
     # Make sure FLAC package is installed
-    [[ -z $(command -v flac) ]] && \
-        { warn "Please install flac package before continuing."; return 1; }
+    [[ -z $(command -v flac) ]] && { warn "Please install flac package before continuing."; return 1; }
 
     # Parse parameters
-    while [[ ${#} -ge 1 ]]; do
-        case ${1} in
+    while [[ $# -ge 1 ]]; do
+        case $1 in
             # Request repacking of existing FLAC files
             -r |--repack)
                 REPACK=true ;;
@@ -42,27 +41,25 @@ flac_pack() {
 
             # Unrecognized parameter, skip
             *)
-                warn "Unrecognized parameter specified: \"${1}\"" ;;
+                warn "Unrecognized parameter specified: \"$1\"" ;;
         esac
         shift
     done
 
     # If repack requested
-    if [[ -n ${REPACK} ]]; then
+    if [[ -n $REPACK ]]; then
         # List FLAC files to repack
         for SONG in ./*.flac; do
-            LIST+=( "$(basename "${SONG}")" )
+            LIST+=( "$(basename "$SONG")" )
         done
 
         # Exit function if nothing to repack
-        [[ -z ${LIST[*]} || ${LIST[*]} == "*.flac" ]] && \
-            { warn "Repack requested, but there's nothing to do."; return 1; }
+        [[ -z ${LIST[*]} || ${LIST[*]} = "*.flac" ]] && { warn "Repack requested, but there's nothing to do."; return 1; }
 
         # Unpack FLAC files
         for SONG in "${LIST[@]}"; do
-            info "Unpacking \"${SONG}\"..."
-            flac --delete-input-file --totally-silent -d "${SONG}" || \
-                { warn "Failed to unpack \"${SONG}\"."; return 1; }
+            info "Unpacking \"$SONG\"..."
+            flac --delete-input-file --totally-silent -d "$SONG" || { warn "Failed to unpack \"$SONG\"."; return 1; }
         done
     fi
 
@@ -74,52 +71,47 @@ flac_pack() {
 
         # Based on values OLD_LIST array, we set values for PCM files
         for SONG in "${OLD_LIST[@]}"; do
-            BASE_NAME="$(basename "${SONG}" | sed -e s/.flac//)"
+            BASE_NAME="$(basename "$SONG" | sed -e s/.flac//)"
             for FORMAT in aiff wav; do
-                if [[ -f ${BASE_NAME}.${FORMAT} ]]; then
-                    LIST+=( "${BASE_NAME}.${FORMAT}" )
+                if [[ -f $BASE_NAME.$FORMAT ]]; then
+                    LIST+=( "$BASE_NAME.$FORMAT" )
                     break
                 fi
             done
         done
-
     # Else, list all supported PCM audio files
     else
         for SONG in ./*; do
-            BASE_NAME="$(basename "${SONG}")"
-            case "${BASE_NAME}" in
+            BASE_NAME="$(basename "$SONG")"
+            case "$BASE_NAME" in
                 # AIFF/WAV PCM file
                 *.aiff|*.wav)
-                    LIST+=( "${BASE_NAME}" ) ;;
+                    LIST+=( "$BASE_NAME" ) ;;
 
                 # FLAC file, already packed
                 *.flac)
-                    warn "Skipping already packed audio file: ${BASE_NAME}" ;;
+                    warn "Skipping already packed audio file: $BASE_NAME" ;;
 
                 # Unsupported audio/file format
                 *)
-                    [[ ${BASE_NAME} != "*" ]] && \
-                        warn "Skipping unsupported file/audio format: ${BASE_NAME}" ;;
+                    [[ $BASE_NAME != "*" ]] && warn "Skipping unsupported file/audio format: $BASE_NAME" ;;
             esac
         done
     fi
 
     # Exit function if nothing to pack
-    [[ -z ${LIST[*]} ]] && \
-        { warn "There's nothing to do."; return 1; }
+    [[ -z ${LIST[*]} ]] && { warn "There's nothing to do."; return 1; }
 
     # Pack PCM audio files with maximum compression
     for SONG in "${LIST[@]}"; do
-        info "Packing \"${SONG}\"..."
-        flac --delete-input-file --totally-silent -V8 "${SONG}" || \
-            { warn "Failed to pack \"${SONG}\"."; return 1; }
+        info "Packing \"$SONG\"..."
+        flac --delete-input-file --totally-silent -V8 "$SONG" || { warn "Failed to pack \"$SONG\"."; return 1; }
     done
 
     # Embed ReplayGain if requested
-    if [[ -n ${REPLAY_GAIN} ]]; then
+    if [[ -n $REPLAY_GAIN ]]; then
         # Just to make sure that no ReplayGain metadata exist
         metaflac --remove-replay-gain ./*.flac
-
         # Apply (new) ReplayGain metadata to all songs in same folder
         metaflac --add-replay-gain ./*.flac
     fi
@@ -130,25 +122,22 @@ flac_pack() {
 # Convert all FLAC, WAV, and/or AIFF files to Opus
 opus_convert() {
     # Ask to install opus-tools package if opusenc doesn't exist
-    [[ -z $(command -v opusenc) ]] && \
-        { warn "Please install opus-tools package before continuing."; return 1; }
+    [[ -z $(command -v opusenc) ]] && { warn "Please install opus-tools package before continuing."; return 1; }
 
     for SONG in ./*; do
-        case "${SONG}" in
+        case "$SONG" in
             *.aiff|*.flac|*.wav)
                 # Declare that we have something to do!
                 SUPPORTED=true
 
                 # Not supporting wildcards for converting
                 opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 \
-                    "${SONG}" \
-                    "$(basename "${SONG}" | sed 's/\(.*\)\..*/\1/').ogg" || \
-                    return 1 ;;
+                    "$SONG" "$(basename "$SONG" | sed 's/\(.*\)\..*/\1/').ogg" || return 1 ;;
         esac
     done
 
-    [[ -z ${SUPPORTED} ]] && \
-        { warn "There's nothing to do."; return 1; }
+    # Return non-zero status if nothing to do
+    [[ -z $SUPPORTED ]] && { warn "There's nothing to do."; return 1; }
 }
 
 # Setup environment for AOSP building
@@ -180,4 +169,4 @@ aosp_init() {(
 alias aosp_init='check_sudo su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
 
 # Last, but my most convenient part; only apply with Bash
-[[ -n ${BASH} ]] && export PS1='\[\e[1;36m\]\W\[\e[1;34m\]$(parse_git_branch)\[\e[0m\] 〉'
+[[ -n $BASH ]] && export PS1='\[\e[1;36m\]\W\[\e[1;34m\]$(parse_git_branch)\[\e[0m\] 〉'

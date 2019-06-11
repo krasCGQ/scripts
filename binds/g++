@@ -16,9 +16,9 @@ CLANG_PATH=/opt/kud/clang/bin/clang++
 
 # Check if compiler exists and executable
 if [ -x "$CLANG_PATH" ]; then
-    CLANG_EXECUTABLE=${CLANG_PATH}
+    CLANG_EXECUTABLE=$CLANG_PATH
 elif [ -x "$DEFAULT_PATH" ]; then
-    CLANG_EXECUTABLE=${DEFAULT_PATH}
+    CLANG_EXECUTABLE=$DEFAULT_PATH
 fi
 
 # Actual command - please note that "$@" can't be quoted

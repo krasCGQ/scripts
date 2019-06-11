@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Wrapper for sending Telegram posts with inline buttons
-# Copyright (C) 2018 Albert I (krasCGQ)
+# Copyright (C) 2018-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Based and expanded from https://stackoverflow.com/a/49063573.
@@ -10,128 +10,100 @@ tg_sendinline() {
     local COUNT INLINE INLINE_TEXT INLINE_URL ON_SAME_ROW REQUEST ROW_COUNT TEXT
 
     # Parse parameters
-    if [[ ${#} -ge 1 ]]; then
-        while [[ ${#} -ge 1 ]]; do
-            case ${1} in
-                # REQUIRED
-                -in |--inline-name)
-                    shift
+    while [[ $# -ge 1 ]]; do
+        case $1 in
+            # REQUIRED
+            -in |--inline-name) shift
+                INLINE_TEXT=$1 ;;
 
-                    INLINE_TEXT="${1}" ;;
-                -inr|--inline-name-row)
-                    shift
+            -inr|--inline-name-row) shift
+                INLINE_TEXT=$1
+                ON_SAME_ROW=true ;;
 
-                    INLINE_TEXT="${1}"
-                    ON_SAME_ROW=true ;;
-                -iu |--inline-url)
-                    shift
+            -iu |--inline-url) shift
+                INLINE_URL=$1 ;;
 
-                    INLINE_URL="${1}" ;;
-                -iur|--inline-url-row)
-                    shift
+            -iur|--inline-url-row) shift
+                INLINE_URL=$1
+                ON_SAME_ROW=true ;;
 
-                    INLINE_URL="${1}"
-                    ON_SAME_ROW=true ;;
+            # REQUIRED, BUT CAN BE SET EXTERNALLY
+            -c  |--chat-id) shift
+                local TELEGRAM_CHAT
+                TELEGRAM_CHAT=$1 ;;
 
-                # REQUIRED, BUT CAN BE SET EXTERNALLY
-                -c  |--chat-id)
-                    shift
+            -t  |--token) shift
+                [[ $1 != *:* ]] && { warn "Invalid value specified!"; return 1; }
+                local TELEGRAM_TOKEN
+                TELEGRAM_TOKEN=$1 ;;
 
-                    local TELEGRAM_CHAT
-                    TELEGRAM_CHAT=${1} ;;
-                -t  |--token)
-                    shift
-
-                    if [[ ${1} == *:* ]]; then
-                        local TELEGRAM_TOKEN
-                        TELEGRAM_TOKEN=${1}
-                    else
-                        warn "Invalid value specified!"
-                        return 1
-                    fi ;;
-
-                # OPTIONAL
-                -b  |--break)
-                    INLINE+="
-            ],"
-                    unset ROW_COUNT ;;
-
-                # EVERYTHING ELSE: Send as part of message instead
-                *)
-                    TEXT+="${1}\n" ;;
-            esac
-            shift
-
-            # Inline buttons set up
-            if [[ -n ${INLINE_TEXT} && -n ${INLINE_URL} ]]; then
-                if [[ -n ${ON_SAME_ROW} ]]; then
-                    [[ -n ${ROW_COUNT} || (-z ${ROW_COUNT} && -n ${COUNT}) ]] && \
-                        INLINE+=","
-
-                    [[ -z ${ROW_COUNT} ]] && \
-                        ROW_COUNT=1 || \
-                        ROW_COUNT=$((ROW_COUNT + 1))
-                else
-                    if [[ -n ${COUNT} && -z ${ROW_COUNT} ]]; then
-                        INLINE+=","
-                    elif [[ -n ${ROW_COUNT} ]]; then
-                        INLINE+="
-            ],"
-                        unset ROW_COUNT
-                    fi
-
-                    [[ -z ${COUNT} ]] && \
-                        COUNT=1 || \
-                        COUNT=$((COUNT + 1))
-                fi
-
-                [[ -z ${ROW_COUNT} || ( ${ROW_COUNT} == 1 && -n ${ON_SAME_ROW} ) ]] && \
-                    INLINE+="
-            [
-                {" || \
-                    INLINE+="
-                {"
-
+            # OPTIONAL
+            -b  |--break)
                 INLINE+="
-                    \"text\": \"${INLINE_TEXT}\",
-                    \"url\": \"${INLINE_URL}\""
+            ],"
+                unset ROW_COUNT ;;
 
-                [[ -n ${ON_SAME_ROW} ]] && \
+            # EVERYTHING ELSE: Send as part of message instead
+            *)
+                TEXT+="$1\n" ;;
+        esac
+        shift
+
+        # Inline buttons set up
+        if [[ -n $INLINE_TEXT && -n $INLINE_URL ]]; then
+            if [[ -n $ON_SAME_ROW ]]; then
+                [[ -n $ROW_COUNT || (-z $ROW_COUNT && -n $COUNT) ]] && INLINE+=","
+                [[ -z $ROW_COUNT ]] && ROW_COUNT=1 || ROW_COUNT=$((ROW_COUNT + 1))
+            else
+                if [[ -n $COUNT && -z $ROW_COUNT ]]; then
+                    INLINE+=","
+                elif [[ -n $ROW_COUNT ]]; then
                     INLINE+="
-                }" || \
-                    INLINE+="
+            ],"
+                    unset ROW_COUNT
+                fi
+                [[ -z $COUNT ]] && COUNT=1 || COUNT=$((COUNT + 1))
+            fi
+            [[ -z $ROW_COUNT || ( $ROW_COUNT = 1 && -n $ON_SAME_ROW ) ]] && INLINE+="
+            [
+                {" || INLINE+="
+                {"
+            INLINE+="
+                    \"text\": \"$INLINE_TEXT\",
+                    \"url\": \"$INLINE_URL\""
+            [[ -n $ON_SAME_ROW ]] && INLINE+="
+                }" || INLINE+="
                 }
             ]"
-
-                unset INLINE_{TEXT,URL} ON_SAME_ROW
-            fi
-        done
-    fi
+            unset INLINE_{TEXT,URL} ON_SAME_ROW
+        fi
+    done
 
     # Make sure we have token of the bot and target chat ID
-    [[ -z ${TELEGRAM_TOKEN} || -z ${TELEGRAM_CHAT} ]] && \
-        { warn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."; return 1; }
-
+    if [[ -z $TELEGRAM_TOKEN || -z $TELEGRAM_CHAT ]]; then
+        warn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."
+        return 1
     # If no inline buttons to include, abort the function
-    [[ -z ${INLINE} ]] && \
-        { warn "INLINE is empty. Do you really want to use this function?"; return 1; }
+    elif [[ -z $INLINE ]]; then
+        warn "INLINE is empty. Do you really want to use this function?"
+        return 1
+    fi
 
     # Add missing ending square bracket if needed
-    [[ $(echo "${INLINE}" | tail -c 2) == "}" ]] && \
-        INLINE+="
+    [[ $(echo "$INLINE" | tail -c 2) = "}" ]] && INLINE+="
             ]"
 
     # Request JSON
     REQUEST="{
-    \"chat_id\": \"${TELEGRAM_CHAT}\",
-    \"text\": \"$(echo -e "${TEXT}")\",
+    \"chat_id\": \"$TELEGRAM_CHAT\",
+    \"text\": \"$(echo -e "$TEXT")\",
     \"reply_markup\": {
-        \"inline_keyboard\": [${INLINE}
+        \"inline_keyboard\": [$INLINE
         ]
     }
 }"
 
     # Post using provided request JSON
-    curl -s -X POST https://api.telegram.org/bot"${TELEGRAM_TOKEN}"/sendMessage \
-         -H "Content-Type: application/json" -d "${REQUEST}" &> /dev/null
+    curl -s -X POST https://api.telegram.org/bot"$TELEGRAM_TOKEN"/sendMessage \
+         -H "Content-Type: application/json" -d "$REQUEST" &> /dev/null
 }

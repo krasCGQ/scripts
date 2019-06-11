@@ -1,170 +1,129 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1004
 # KudProject kernel build script
 # Copyright (C) 2018-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 ## Import common environment script
 # shellcheck source=/dev/null
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
 
 ## Functions
 
+# 'git log --pretty' alias
+git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
-tg_post() {
-    "${TELEGRAM}" -M -D "$(for POST in "${@}"; do echo "${POST}"; done)" \
-        &> /dev/null || return 0
-}
-
+tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &> /dev/null || return 0; }
 # Show build script duration
-show_duration() {
-    echo "Duration: $(date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)')"
-}
+show_duration() { echo "Duration: $(date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)')"; }
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
-    [[ -n ${STARTED} ]] && \
-        tg_post "${MSG} \`SIGINT\`" "$(show_duration)"
-
+    [[ -n $STARTED ]] && tg_post "$MSG \`SIGINT\`" "$(show_duration)"
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
 tg_error() {
-    tg_post "${MSG} \`SIGERR\`" "$(show_duration)"
-
-    if [[ -n ${STATUS} ]]; then
-        exit "${STATUS}"
-    else
-        exit 1
-    fi
+    tg_post "$MSG \`SIGERR\`" "$(show_duration)"
+    [[ -n $STATUS ]] && exit "$STATUS" || exit 1
 }
 
 # Prints message to stderr and exit script, OR call tg_error function
 die() {
-    [[ -z ${STATUS} && -n ${STARTED} ]] && \
-        STATUS=${?}
-
-    warn "${1}"
-
-    if [[ -n ${STARTED} ]]; then
-        tg_error
-    else
-        exit 1
-    fi
+    [[ -z $STATUS && -n $STARTED ]] && STATUS=$?
+    warn "$1"
+    [[ -n ${STARTED} ]] && tg_error || exit 1
 }
 
 # Whenever script fails, save exit status and run tg_error
 trap '{
-    [[ -n ${STARTED} ]] && \
-        STATUS=${?}
-
+    [[ -n $STARTED ]] && STATUS=$?
     tg_error
 }' ERR
-
-# git log --pretty alias
-git_pretty() {
-    git log --pretty=format:"%h (\"%s\")" -1
-}
 
 ## Parse parameters
 
 parse_params() {
-    if [[ ${#} -ge 1 ]]; then
-        while [[ ${#} -ge 1 ]]; do
-            case ${1} in
-                # REQUIRED
-                -c |--compiler)
-                    shift
+    [[ $# -eq 0 ]] && die "No parameter specified!"
+    while [[ $# -ge 1 ]]; do
+        case $1 in
+            # REQUIRED
+            -c |--compiler) shift
+                # Only Clang or GCC is supported, case insensitive
+                COMPILER=${1,,}
+                [[ $COMPILER != clang && $COMPILER != gcc ]] && die "Invalid value specified!" ;;
 
-                    # Only Clang or GCC is supported, case insensitive
-                    if [[ ${1,,} == clang || ${1,,} == gcc ]]; then
-                        COMPILER=${1,,}
-                    else
-                        die "Invalid value specified!"
-                    fi ;;
-                -d |--device)
-                    shift
+            -d |--device) shift
+                # Only grus, mido and X00T are supported for now
+                if [[ ${1,,} = grus || ${1,,} = mido ]]; then
+                    DEVICE=${1,,}
+                elif [[ ${1^^} = X00T ]]; then
+                    DEVICE=${1^^}
+                else
+                    die "Invalid value specified!"
+                fi ;;
 
-                    # Only grus, mido and X00T are supported for now
-                    if [[ ${1,,} == grus || ${1,,} == mido ]]; then
-                        DEVICE=${1,,}
-                    elif [[ ${1^^} == X00T ]]; then
-                        DEVICE=${1^^}
-                    else
-                        die "Invalid value specified!"
-                    fi ;;
+            # OPTIONAL
+            -b |--build-only)
+                BUILD_ONLY=true ;;
 
-                # OPTIONAL
-                -b |--build-only)
-                    BUILD_ONLY=true ;;
-                -cv|--clang-version)
-                    shift
+            -cv|--clang-version) shift
+                # Only latest versions of Clang 5-9 are supported
+                case $1 in
+                    5) CLANG_VERSION=4053586 ;;
+                    6) CLANG_VERSION=4691093 ;;
+                    7) CLANG_VERSION=r328903 ;;
+                    8) CLANG_VERSION=r349610b ;;
+                    9) CLANG_VERSION=r353983b ;;
+                    *) die "Invalid version specified!" ;;
+                esac ;;
 
-                    # Only latest versions of Clang 5-9 are supported
-                    if [[ ${1} -eq 5 ]]; then
-                        CLANG_VERSION=4053586
-                    elif [[ ${1} -eq 6 ]]; then
-                        CLANG_VERSION=4691093
-                    elif [[ ${1} -eq 7 ]]; then
-                        CLANG_VERSION=r328903
-                    elif [[ ${1} -eq 8 ]]; then
-                        CLANG_VERSION=r349610b
-                    elif [[ ${1} -eq 9 ]]; then
-                        CLANG_VERSION=r353983b
-                    else
-                        die "Invalid version specified!"
-                    fi ;;
-                -r |--release)
-                    shift
+            -r |--release) shift
+                # Only integers are accepted here
+                if [[ -z ${1//[0-9]} ]]; then
+                    RELEASE=$1
+                else
+                    die "Invalid version specified!"
+                fi ;;
 
-                    # Only integers are accepted here
-                    if [[ -z ${1//[0-9]} ]]; then
-                        RELEASE=${1}
-                    else
-                        die "Invalid version specified!"
-                    fi ;;
-                -s |--stock)
-                    STOCK=true ;;
-                -u |--upload)
-                    # Will be ignored if BUILD_ONLY=true
-                    UPLOAD=true ;;
+            -s |--stock)
+                STOCK=true ;;
 
-                # Unsupported parameter
-                *)
-                    warn "Unrecognized parameter specified: \"${1}\"" ;;
-            esac
-            shift
-        done
-    else
-        die "No parameter specified!"
-    fi
+            -u |--upload)
+                # Will be ignored if BUILD_ONLY=true
+                UPLOAD=true ;;
+
+            # Unsupported parameter, skip
+            *)
+                warn "Unrecognized parameter specified: \"$1\"" ;;
+        esac
+        shift
+    done
 }
 
-parse_params "${@}"
+parse_params "$@"
 
 # X00T: Check early and enforce use of AOSP Clang
-if [[ ${DEVICE} == X00T  && -z ${STOCK} ]]; then
-    warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk.";
+if [[ $DEVICE = X00T  && -z $STOCK ]]; then
+    warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk."
     # Clang 9 as default if '-cv' isn't assigned
     # shellcheck disable=SC2046
-    parse_params -s $([[ -z ${CLANG_VERSION} ]] && echo "-cv" "9")
-
+    parse_params -s $(test -z $CLANG_VERSION && echo "-cv" "9")
     sleep 1
 fi
 
 ## Variables
 
 # Paths
-TELEGRAM="${SCRIPTDIR}"/telegram/telegram
-ROOT_DIR=${HOME}/KudProject
+TELEGRAM=$SCRIPTDIR/telegram/telegram
+ROOT_DIR=$HOME/KudProject
 OPT_DIR=/opt/kud
 
 # Number of threads used
 THREADS=$(nproc --all)
 
 # GCC compiler
-if [[ -z ${STOCK} ]] || [[ ${COMPILER} == clang && ${DEVICE} == mido ]]; then
+if [[ -z $STOCK ]] || [[ $COMPILER = clang && $DEVICE = mido ]]; then
     # Aarch64 toolchain
     GCC_64BIT_PATH=aarch64-linux-gnu/bin
     GCC_64BIT_COMPILER=aarch64-linux-gnu-
@@ -183,87 +142,78 @@ else
 fi
 
 # Clang (if used) compiler
-if [[ -z ${STOCK} ]]; then
-    [[ ${COMPILER} == clang ]] && \
-        CLANG_PATH=clang/bin
-else
-    [[ ${COMPILER} == clang ]] && \
-        CLANG_PATH=android-clang/clang-${CLANG_VERSION}/bin
+if [[ $COMPILER = clang ]]; then
+    [[ -z $STOCK ]] && CLANG_PATH=clang/bin || CLANG_PATH=android-clang/clang-$CLANG_VERSION/bin
 fi
 
 # Set PATHs here to be used later while building
-GCC_64BIT_PATH=${OPT_DIR}/${GCC_64BIT_PATH}
-GCC_32BIT_PATH=${OPT_DIR}/${GCC_32BIT_PATH}
-GCC_PATHs=${GCC_64BIT_PATH}:${GCC_32BIT_PATH}
-[[ ${COMPILER} == clang ]] && \
-    CLANG_PATH=${OPT_DIR}/${CLANG_PATH}
+GCC_64BIT_PATH=$OPT_DIR/$GCC_64BIT_PATH
+GCC_32BIT_PATH=$OPT_DIR/$GCC_32BIT_PATH
+GCC_PATHs=$GCC_64BIT_PATH:$GCC_32BIT_PATH
+[[ $COMPILER = clang ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
 
 # Kernel build variables
-AK2=${ROOT_DIR}/AnyKernel2/${DEVICE}
+AK2=$ROOT_DIR/AnyKernel2/$DEVICE
 ARCH=arm64
 NAME=KudKernel
-OUT=${ROOT_DIR}/kernels/build/${DEVICE}
-[[ ${DEVICE} == grus ]] && OUT=$OUT-tmp
-DTS_DIR="${OUT}"/arch/arm64/boot/dts/qcom
-[[ -n ${RELEASE} ]] && \
-    export KBUILD_BUILD_VERSION=${RELEASE}
+OUT=$ROOT_DIR/kernels/build/$DEVICE
+[[ $DEVICE = grus ]] && OUT=$OUT-tmp
+DTS_DIR=$OUT/arch/arm64/boot/dts/qcom
+[[ -n $RELEASE ]] && export KBUILD_BUILD_VERSION=$RELEASE
 
 # Default message for posting to Telegram
-MSG="*${NAME}* #${DEVICE} *build:*"
+MSG="*$NAME* #$DEVICE *build:*"
 
 # Default kernel build username for CI builds
-[[ -z ${RELEASE} ]] && export KBUILD_BUILD_USER=BuildCI
+[[ -z $RELEASE ]] && export KBUILD_BUILD_USER=BuildCI
 
 ## Commands
 
 # Run this inside kernel source
-[[ ! -f Makefile || ! -d kernel ]] && \
-    die "Please run this script inside kernel source folder!"
+[[ ! -f Makefile || ! -d kernel ]] && die "Please run this script inside kernel source folder!"
 
 # Unset these variables if they're set
 for VARIABLE in CROSS_COMPILE{,_ARM32} CC; do
-    [[ -n ${VARIABLE} ]] && \
-        unset ${VARIABLE}
+    [[ -n $VARIABLE ]] && unset $VARIABLE
 done
 
 # Sanity checks
 info "Running sanity checks..."
 sleep 1
 
-[[ -z ${COMPILER} || -z ${DEVICE} ]] && \
-    die "Missing required option(s)!"
-
-[[ -n ${UPLOAD} && -n ${BUILD_ONLY} ]] && \
-    { warn "Requested to only build but upload was assigned, disabling.";
-      unset UPLOAD; }
-
-[[ -n ${CLANG_VERSION} && -z ${STOCK} ]] && \
-    { warn "Assigning Clang version is only meant for AOSP Clang, disabling.";
-      unset CLANG_VERSION; }
-
-for VARIABLE in ${GCC_64BIT_PATH}/${GCC_64BIT_COMPILER}gcc ${GCC_32BIT_PATH}/${GCC_32BIT_COMPILER}gcc ${CLANG_PATH:+${CLANG_PATH}/clang}; do
-    find ${VARIABLE} &> /dev/null || \
-        die "${BLD}$(basename "${VARIABLE}")${RST} doesn't exist in defined path."
+# Missing compiler and device choices
+[[ -z $COMPILER || -z $DEVICE ]] && die "Missing required option(s)!"
+# Requested to only build; upload option is practically doing nothing
+if [[ -n $UPLOAD && -n $BUILD_ONLY ]]; then
+    warn "Requested to only build but upload was assigned, disabling."
+    unset UPLOAD
+fi
+# We're not going to assume Clang version for non-AOSP one
+if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
+    warn "Assigning Clang version is only meant for AOSP Clang, disabling."
+    unset CLANG_VERSION
+fi
+# Missing GCC and/or Clang
+for VARIABLE in $GCC_64BIT_PATH/${GCC_64BIT_COMPILER}gcc $GCC_32BIT_PATH/${GCC_32BIT_COMPILER}gcc ${CLANG_PATH:+$CLANG_PATH/clang}; do
+    find ${VARIABLE} &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
+# Missing device's AnyKernel resource
+[[ ! -d $AK2 ]] && die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
 
-[[ ! -d ${AK2} ]] && \
-    die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
-
-# Begin script
+# Script beginning
 info "Starting build script..."
-tg_post "${MSG} \`BEGIN\`"
+tg_post "$MSG \`BEGIN\`"
+# Explicitly declare build script startup
+STARTED=true
 START_TIME=$(date +%s)
 sleep 1
 
-# Explicitly declare build script startup
-STARTED=true
-
-# Set globstar so '**' is recursive
+# Make '**' recursive
 shopt -s globstar
 
 # Always use ccache for faster compiling if exists in PATH
 if [[ -n $(command -v ccache) ]]; then
-    if [[ ${COMPILER} == clang ]]; then
+    if [[ $COMPILER = clang ]]; then
         CC+="ccache "
     else
         CROSS_COMPILE+="ccache "
@@ -272,22 +222,22 @@ if [[ -n $(command -v ccache) ]]; then
 fi
 
 # Append (or set) CROSS_COMPILE{,_ARM32}
-CROSS_COMPILE+=${GCC_64BIT_COMPILER}
-CROSS_COMPILE_ARM32+=${GCC_32BIT_COMPILER}
+CROSS_COMPILE+=$GCC_64BIT_COMPILER
+CROSS_COMPILE_ARM32+=$GCC_32BIT_COMPILER
 
-# If Clang is used
-if [[ ${COMPILER} == clang ]]; then
+# Clang-only setup
+if [[ $COMPILER = clang ]]; then
     # Additionally also append (or set) CC
     CC+=clang
 
     # Define additional parameters that'll be passed to make
-    CLANG_EXTRAS=( "CC=${CC}"
+    CLANG_EXTRAS=( "CC=$CC"
                    "CLANG_TRIPLE=aarch64-linux-gnu"
                    "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" )
 
-    # Export custom compiler string
-    if [[ -n ${STOCK} ]]; then
-        KBUILD_COMPILER_STRING=$(${CLANG_PATH}/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+    # Export custom compiler string for AOSP variant
+    if [[ -n $STOCK ]]; then
+        KBUILD_COMPILER_STRING=$($CLANG_PATH/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
         export KBUILD_COMPILER_STRING
     fi
 fi
@@ -295,112 +245,106 @@ fi
 # Clean build directory
 info "Cleaning build directory..."
 # TODO: Completely clean build?
-make ARCH=${ARCH} O="${OUT}" clean &> /dev/null
-# Make rule doesn't cover *.dtbo and manually created dtbo.img
-[[ ${DEVICE} == grus ]] && rm -rf "${OUT}"/arch/arm64/boot/dts/qcom/{*.dtbo,dtbo.img}
+make ARCH=$ARCH O="$OUT" clean &> /dev/null
+# grus: Make rule doesn't cover *.dtbo and manually created dtbo.img
+[[ $DEVICE = grus ]] && rm -rf "$OUT"/arch/arm64/boot/dts/qcom/{*.dtbo,dtbo.img}
 
 # TODO: Generate defconfig if it doesn't exist
 
 # Let's build the kernel!
 info "Building kernel..."
-PATH=$([[ -n ${CLANG_PATH} ]] && echo "${CLANG_PATH}:")${GCC_PATHs}:${PATH} \
-make ARCH=${ARCH} O="${OUT}" CROSS_COMPILE="${CROSS_COMPILE}" \
-     CROSS_COMPILE_ARM32="${CROSS_COMPILE_ARM32}" "${CLANG_EXTRAS[@]}" \
-     -j"${THREADS}" > /dev/null
+PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$GCC_PATHs:$PATH \
+make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
+     CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
+     -j"$THREADS" > /dev/null
 
 # Build dtbo.img for grus
-if [[ ${DEVICE} == grus ]]; then
+if [[ $DEVICE = grus ]]; then
     info "Creating dtbo.img..."
-    python2 "${SCRIPTDIR}"/libufdt/utils/src/mkdtboimg.py \
-        create "${DTS_DIR}"/dtbo.img --page_size=4096 "${DTS_DIR}"/*.dtbo
+    python2 "$SCRIPTDIR"/libufdt/utils/src/mkdtboimg.py \
+        create "$DTS_DIR"/dtbo.img --page_size=4096 "$DTS_DIR"/*.dtbo
 fi
 
-if [[ -z ${BUILD_ONLY} ]]; then
-    # Clean and copy kernel image, DTBs and modules to AnyKernel2 folder
+if [[ -z $BUILD_ONLY ]]; then
+    # Clean and copy kernel image and modules (if exists) to AnyKernel folder
     info "Cleaning and copying required file(s) to AnyKernel2 folder..."
-    [[ ! -d ${AK2}/modules/vendor/lib/modules ]] && \
-        mkdir -p "${AK2}"/modules/vendor/lib/modules
-    rm -f "${AK2}"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
-    cp -f "${OUT}"/arch/arm64/boot/Image.gz-dtb "${AK2}"
-    for MODULE in "${OUT}"/**/*.ko; do
-        cp -f "${MODULE}" "${AK2}"/modules/vendor/lib/modules 2> /dev/null || continue
+    [[ ! -d $AK2/modules/vendor/lib/modules ]] && mkdir -p "$AK2"/modules/vendor/lib/modules
+    rm -f "$AK2"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
+    cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK2"
+    for MODULE in "$OUT"/**/*.ko; do
+        # Don't fail with no modules in out folder
+        cp -f "$MODULE" "$AK2"/modules/vendor/lib/modules 2> /dev/null || continue
     done
 
     # Export here to be picked later
-    ZIP=${NAME}-${DEVICE}-$(date +%s).zip
-    [[ -n ${RELEASE} ]] && \
-        RELEASE_ZIP=${NAME}-${DEVICE}-r${RELEASE}-$(date +%Y%m%d).zip
+    ZIP=$NAME-$DEVICE-$(date +%s).zip
+    [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
-    info "Creating ${ZIP}..."
+    info "Creating $ZIP..."
     (
-        cd "${AK2}" || \
-            die "${BLD}$(basename "${AK2}")${RST} doesn't exist in defined path."
+        # Unlikely to fail; but we have to define this way to satisfy shellcheck
+        cd "$AK2" || die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
 
-        7za a -bso0 -mx=9 -mpass=15 -mmt="${THREADS}" "${ZIP}" \
+        7za a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" \
             ./* -x'!'README.md -xr'!'*.zip
 
-        if [[ -n ${RELEASE} ]]; then
+        if [[ -n $RELEASE ]]; then
             # Remove existing release zip if available
-            [[ -f ${RELEASE_ZIP} ]] && \
-                rm -f "${RELEASE_ZIP}"
+            [[ -f $RELEASE_ZIP ]] && rm -f "$RELEASE_ZIP"
 
             # Sign zip for release
-            zipsigner -s "${HOME}"/.android-certs/releasekey \
-                "${ZIP}" "${RELEASE_ZIP}"
+            zipsigner -s "$HOME"/.android-certs/releasekey "$ZIP" "$RELEASE_ZIP"
 
             # Delete 'unsigned' zip
-            rm -f "${ZIP}"
+            rm -f "$ZIP"
         fi
     )
 fi
 
 # Notify successful build completion
-tg_post "${MSG} \`END\`" "$(show_duration)"
+tg_post "$MSG \`END\`" "$(show_duration)"
 unset STARTED
 
 # Upload kernel zip if requested, else the end
-if [[ -n ${UPLOAD} ]]; then
-    if [[ -z ${RELEASE} ]]; then
+if [[ -n $UPLOAD ]]; then
+    if [[ -z $RELEASE ]]; then
         # To Telegram
-        info "Uploading ${ZIP} to Telegram..."
+        info "Uploading $ZIP to Telegram..."
         tg_post "Uploading test build to CI channel..."
-        "${TELEGRAM}" -f "${AK2}/${ZIP}" -c "-1001494373196" \
-            "New #${DEVICE} test build with HEAD at commit $(git_pretty)" || \
-            { warn "Failed to upload ${ZIP}.";
-              tg_post "Failed to upload the build."; }
+        if ! "$TELEGRAM" -f "$AK2/$ZIP" -c "-1001494373196" \
+            "New #$DEVICE test build with HEAD at commit $(git_pretty)"; then
+            warn "Failed to upload $ZIP."
+            tg_post "Failed to upload the build."
+        fi
     else
         # or to webserver for release zip
         (
             # Kernel path
-            KERNEL_DIR=kernels/${DEVICE}
+            KERNEL_DIR=kernels/$DEVICE
 
-            cd "${AK2}" || \
-                die "$(basename "${AK2}") doesn't exist in defined path."
+            # Unlikely to fail; but we have to define this way to satisfy shellcheck
+            cd "$AK2" || die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
 
-            info "Uploading ${RELEASE_ZIP}..."
-            if { rsync -qP -e 'ssh -p 1983' --relative "${RELEASE_ZIP}" kud@dl.wafuu.id:/var/www/dl.wafuu.id/"${KERNEL_DIR}"/;
-                 rsync -qP --relative "${RELEASE_ZIP}" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"${KERNEL_DIR}"/; }; then
-                info "${RELEASE_ZIP} uploaded successfully." \
+            info "Uploading $RELEASE_ZIP..."
+            if { rsync -qP -e 'ssh -p 1983' --relative "$RELEASE_ZIP" kud@dl.wafuu.id:/var/www/dl.wafuu.id/"$KERNEL_DIR"/;
+                 rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/; }; then
+                info "$RELEASE_ZIP uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
                 TELEGRAM_CHAT="-1001368407111 -1001181003922" \
                 tg_post "*New KudKernel build is available!*" \
-                        "*Name:* \`${RELEASE_ZIP}\`" \
-                        "*Build Date:* \`$(sed '4q;d' "${OUT}"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
-                        "*Downloads:* [Webserver](https://dl.wafuu.id/${KERNEL_DIR}/${RELEASE_ZIP}) - [CDN](https://dl-cdn.wafuu.id/${KERNEL_DIR}/${RELEASE_ZIP}) | [OSDN](https://osdn.net/dl/kudproject/${RELEASE_ZIP})"
+                        "*Name:* \`$RELEASE_ZIP\`" \
+                        "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
+                        "*Downloads:* [Webserver](https://dl.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) - [CDN](https://dl-cdn.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)"
             else
-                warn "Failed to upload ${RELEASE_ZIP}."
+                warn "Failed to upload $RELEASE_ZIP."
             fi
         )
     fi
 fi
 
-# Notify latest commit and end script
+# Script ending
 tg_post "*Latest commit:* \`$(git_pretty)\`"
 info "That's it. Job well done!"
-
-# Unset globstar
 shopt -u globstar
-
-# Alert for script ending
 echo -ne '\a'

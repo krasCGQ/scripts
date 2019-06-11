@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Android ROM signing wrapper
-# Copyright (C) 2017-2018 Albert I (krasCGQ)
+# Copyright (C) 2017-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0
 #
 # This snippet contains portions of code taken from AOSP documentation and has
@@ -21,24 +21,24 @@ rom_sign() {
     NO_BACKUPTOOL=( "nitrogen" )
 
     # Must be run at root of ROM source
-    [[ ! -d $(pwd)/build/tools ]] && \
-        { warn "This function must be run at root of ROM source!"; return 1; }
-
+    if [[ ! -d $(pwd)/build/tools ]]; then
+        warn "This function must be run at root of ROM source!"
+        return 1
     # If ${OUT} is empty, either we:
     # 1. haven't finished a full build; or
     # 2. exited terminal after completing a full build.
-    [[ -z ${OUT} ]] && \
-        { warn "Run this function after a complete full build!"; return 1; }
+    elif [[ -z $OUT ]]; then
+        warn "Run this function after a complete full build!"
+        return 1
+    # Make sure only one target files package exists
+    elif [[ $(find "$OUT"/obj/PACKAGING/target_files_intermediates -name '*target_files*.zip' | wc -l) -ne 1 ]]; then
+        warn "Less or more than one target files package detected!"
+        return 1
+    fi
 
-    # Make sure only one target files package exists prior to running the function
-    [[ $(find "${OUT}"/obj/PACKAGING/target_files_intermediates -name "*target_files*.zip" | wc -l) -ne 1 ]] && \
-        { warn "Less or more than one target files package detected!"; return 1; }
-
-    # Must have signing keys in .android-certs at root of home folder before proceeding
+    # Must have signing keys in .android-certs at $HOME before proceeding
     for SIGNKEYS in {media,platform,releasekey,shared}.{pk8,x509.pem}; do
-        [[ ! -f ${HOME}/.android-certs/${SIGNKEYS} ]] && \
-            { warn "Missing one or more signing keys in ${HOME}/.android-certs folder!";
-              break; return 1; }
+        [[ ! -f $HOME/.android-certs/$SIGNKEYS ]] && { warn "Missing one or more signing keys in $HOME/.android-certs folder!"; return 1; }
     done
 
     # Let's assume the ROM has backuptool support
@@ -46,7 +46,7 @@ rom_sign() {
 
     # Check what ROM we're going to sign by looking inside vendor folder
     for ROMS in "${NO_BACKUPTOOL[@]}"; do
-        if [[ -n $(find vendor -maxdepth 1 -name "${ROMS}") ]]; then
+        if [[ -n $(find vendor -maxdepth 1 -name "$ROMS") ]]; then
             # ROM lacks backuptool support
             unset BACKUP_FLAG
             break
@@ -55,19 +55,18 @@ rom_sign() {
 
     # Pure AOSP doesn't have backuptool support implemented
     # Let's just look for GLOBAL-PREUPLOAD.cfg in manifest repo
-    [[ -n ${BACKUP_FLAG} && -f .repo/manifests/GLOBAL-PREUPLOAD.cfg ]] && \
-        unset BACKUP_FLAG
+    [[ -n $BACKUP_FLAG && -f .repo/manifests/GLOBAL-PREUPLOAD.cfg ]] && unset BACKUP_FLAG
 
     (
         # Sign target files package
         ./build/tools/releasetools/sign_target_files_apks \
-            -o -d "${HOME}"/.android-certs \
-            "${OUT}"/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
+            -o -d "$HOME"/.android-certs \
+            "$OUT"/obj/PACKAGING/target_files_intermediates/*-target_files-*.zip \
             signed-target_files.zip
 
         # Convert signed target files package to signed OTA package
         ./build/tools/releasetools/ota_from_target_files \
-            --block ${BACKUP_FLAG} -k "${HOME}"/.android-certs/releasekey \
+            --block $BACKUP_FLAG -k "$HOME"/.android-certs/releasekey \
             signed-target_files.zip signed-ota_update.zip
     ) || return 1
 

@@ -1,33 +1,30 @@
 # shellcheck shell=bash
-# shellcheck source=/dev/null
 # Treewide environment setup
 # Copyright (C) 2017-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Export script directory at the beginning
 SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
-
 # Text styles
 BLD=$(tput bold)
 RST=$(tput sgr0)
-
 # Export variables to satisfy shellcheck requirements
 export SCRIPTDIR BLD RST
 
 # Prints a message with a dash
 info() {
-    echo "- ${1}"
-    while [[ ${#} -ge 2 ]]; do
-        echo "  ${2}"
+    echo "- $1"
+    while [[ $# -ge 2 ]]; do
+        echo "  $2"
         shift
     done
 }
 
 # Prints a message with an exclamation point
 warn() {
-    echo "! ${1}" >&2
-    while [[ ${#} -ge 2 ]]; do
-        echo "  ${2}" >&2
+    echo "! $1" >&2
+    while [[ $# -ge 2 ]]; do
+        echo "  $2" >&2
         shift
     done
 }
@@ -35,10 +32,10 @@ warn() {
 # Making sure user has sudo before executing command
 check_sudo() {
     info "Checking for sudo; please enter password if prompted."
-    if [[ $(sudo -v 2> /dev/null; echo ${?}) -eq 0 ]]; then
-        [[ ${#} != 0 ]] && sudo "${@}"
-        return ${?}
-    elif [[ ${?} -eq 1 ]]; then
+    if [[ $(sudo -v 2> /dev/null; echo $?) -eq 0 ]]; then
+        [[ $# != 0 ]] && sudo "$@"
+        return $?
+    elif [[ $? -eq 1 ]]; then
         warn "Current user isn't a sudo!"
         return 1
     fi
