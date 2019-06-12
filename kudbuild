@@ -5,16 +5,16 @@
 
 ## Import common environment script
 # shellcheck source=/dev/null
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
 
 ## Functions
 
 # 'git log --pretty' alias
 git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
-# telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
-tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &> /dev/null || return 0; }
 # Show build script duration
 show_duration() { echo "Duration: $(date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)')"; }
+# telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
+tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &> /dev/null || return 0; }
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
@@ -32,7 +32,7 @@ tg_error() {
 die() {
     [[ -z $STATUS && -n $STARTED ]] && STATUS=$?
     warn "$1"
-    [[ -n ${STARTED} ]] && tg_error || exit 1
+    [[ -n $STARTED ]] && tg_error || exit 1
 }
 
 # Whenever script fails, save exit status and run tg_error
@@ -80,11 +80,8 @@ parse_params() {
 
             -r |--release) shift
                 # Only integers are accepted here
-                if [[ -z ${1//[0-9]} ]]; then
-                    RELEASE=$1
-                else
-                    die "Invalid version specified!"
-                fi ;;
+                RELEASE=$1
+                [[ -n ${RELEASE//[0-9]} ]] && die "Invalid version specified!" ;;
 
             -s |--stock)
                 STOCK=true ;;
@@ -195,7 +192,7 @@ if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
 fi
 # Missing GCC and/or Clang
 for VARIABLE in $GCC_64BIT_PATH/${GCC_64BIT_COMPILER}gcc $GCC_32BIT_PATH/${GCC_32BIT_COMPILER}gcc ${CLANG_PATH:+$CLANG_PATH/clang}; do
-    find ${VARIABLE} &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
+    find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
 # Missing device's AnyKernel resource
 [[ ! -d $AK2 ]] && die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
