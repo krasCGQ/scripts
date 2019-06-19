@@ -196,6 +196,10 @@ for VARIABLE in $GCC_64BIT_PATH/${GCC_64BIT_COMPILER}gcc $GCC_32BIT_PATH/${GCC_3
 done
 # Missing device's AnyKernel resource
 [[ ! -d $AK2 ]] && die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
+# CAF's gcc-wrapper.py is shit, trust me
+if [[ ! -f scripts/gcc-wrapper.py ]] && ! grep -q gcc-wrapper.py Makefile; then
+    GCC_WRAPPER=false
+fi
 
 # Script beginning
 info "Starting build script..."
@@ -253,7 +257,7 @@ info "Building kernel..."
 PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$GCC_PATHs:$PATH \
 make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
-     -j"$THREADS" > /dev/null
+     -j"$THREADS" ${GCC_WRAPPER:+> /dev/null}
 
 # Build dtbo.img for grus
 if [[ $DEVICE = grus ]]; then
