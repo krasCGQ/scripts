@@ -278,7 +278,7 @@ if [[ -z $BUILD_ONLY ]]; then
     done
 
     # Export here to be picked later
-    ZIP=$NAME-$DEVICE-$(date +%s).zip
+    ZIP=$NAME-$DEVICE-$(date +%Y%m%d-%H%M).zip
     [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
