@@ -3,8 +3,6 @@
 # Copyright (C) 2017-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Export script directory at the beginning
-SCRIPTDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/..
 # Text styles
 BLD=$(tput bold)
 RST=$(tput sgr0)

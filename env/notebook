@@ -6,9 +6,22 @@
 # Don't setup if not in correct environment
 [[ $(hostname) = harutsuki || $(hostname) = strelka ]] || return 1
 
+# Set path to script directory depending on which shell we use
+if [[ -n $BASH ]]; then
+    # Bash
+    SCRIPTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/..
+elif [[ -n $ZSH_VERSION ]]; then
+    # Zsh
+    # shellcheck disable=SC2154
+    SCRIPTDIR=$(dirname ${(%):-%x})/..
+else
+    echo "! Unsupported shell. Exiting." >&2
+    return 1
+fi
+
 # Import common environment script
 # shellcheck source=/dev/null
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
+source "$SCRIPTDIR"/env/common
 
 # Aliases
 alias neofetch='neofetch --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --gtk_shorthand on --color_blocks off'
@@ -141,7 +154,7 @@ opus_convert() {
 }
 
 # Setup environment for AOSP building
-aosp_init() {(
+function aosp_init { (
     [[ $(whoami) != root ]] && return 1
 
     # Load zRAM module with 2 block devices

@@ -6,9 +6,22 @@
 # Don't setup if not in correct environment
 [[ $(hostname) = wafuu.id || $(hostname) = rimuru ]] || return 1
 
+# Set path to script directory depending on which shell we use
+if [[ -n $BASH ]]; then
+    # Bash
+    SCRIPTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/..
+elif [[ -n $ZSH_VERSION ]]; then
+    # Zsh
+    # shellcheck disable=SC2154
+    SCRIPTDIR=$(dirname ${(%):-%x})/..
+else
+    echo "! Unsupported shell. Exiting." >&2
+    return 1
+fi
+
 # Import common environment script
 # shellcheck source=/dev/null
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/common
+source "$SCRIPTDIR"/env/common
 
 # Aliases
 alias tmux='force_color_prompt=yes tmux'

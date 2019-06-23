@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import treewide environment script
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/global
+source "$SCRIPTDIR"/env/global
 # Import Telegram Chat ID fetching function if exists
 [[ -f $SCRIPTDIR/tg_chatid ]] && source "$SCRIPTDIR"/tg_chatid
 
