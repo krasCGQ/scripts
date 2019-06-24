@@ -173,4 +173,4 @@ _pia_ovpnconnect() {
     # Make resolv.conf read/write
     chattr -i /etc/resolv.conf
 }
-pia_ovpnconnect() { check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f _pia_ovpnconnect) && _pia_ovpnconnect ${*}"; }
+pia_ovpnconnect() { check_sudo su -c "export SCRIPTDIR=$SCRIPTDIR && . $SCRIPTDIR/env/global && $(declare -f _pia_ovpnconnect) && _pia_ovpnconnect ${*}"; }
