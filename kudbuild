@@ -120,20 +120,20 @@ THREADS=$(nproc --all)
 # GCC compiler
 if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
     # Aarch64 toolchain
-    GCC_64BIT_PATH=aarch64-linux-gnu/bin
-    GCC_64BIT_COMPILER=aarch64-linux-gnu-
+    TC_64BIT_PATH=aarch64-linux-gnu/bin
+    TC_64BIT_COMPILER=aarch64-linux-gnu-
 
     # Aarch32 toolchain, required for compat vDSO
-    GCC_32BIT_PATH=arm-linux-gnueabi/bin
-    GCC_32BIT_COMPILER=arm-linux-gnueabi-
+    TC_32BIT_PATH=arm-linux-gnueabi/bin
+    TC_32BIT_COMPILER=arm-linux-gnueabi-
 else
     # Aarch64 toolchain
-    GCC_64BIT_PATH=aarch64-linux-android-4.9/bin
-    GCC_64BIT_COMPILER=aarch64-linux-android-
+    TC_64BIT_PATH=aarch64-linux-android-4.9/bin
+    TC_64BIT_COMPILER=aarch64-linux-android-
 
     # Aarch32 toolchain, required for compat vDSO
-    GCC_32BIT_PATH=arm-linux-androideabi-4.9/bin
-    GCC_32BIT_COMPILER=arm-linux-androideabi-
+    TC_32BIT_PATH=arm-linux-androideabi-4.9/bin
+    TC_32BIT_COMPILER=arm-linux-androideabi-
 fi
 
 # Clang (if used) compiler
@@ -142,9 +142,9 @@ if [[ -n $CLANG ]]; then
 fi
 
 # Set PATHs here to be used later while building
-GCC_64BIT_PATH=$OPT_DIR/$GCC_64BIT_PATH
-GCC_32BIT_PATH=$OPT_DIR/$GCC_32BIT_PATH
-GCC_PATHs=$GCC_64BIT_PATH:$GCC_32BIT_PATH
+TC_64BIT_PATH=$OPT_DIR/$TC_64BIT_PATH
+TC_32BIT_PATH=$OPT_DIR/$TC_32BIT_PATH
+TC_PATHs=$TC_64BIT_PATH:$TC_32BIT_PATH
 [[ -n $CLANG ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
 
 # Kernel build variables
@@ -189,7 +189,7 @@ if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
     unset CLANG_VERSION
 fi
 # Missing GCC and/or Clang
-for VARIABLE in $GCC_64BIT_PATH/${GCC_64BIT_COMPILER}gcc $GCC_32BIT_PATH/${GCC_32BIT_COMPILER}gcc ${CLANG_PATH:+$CLANG_PATH/clang}; do
+for VARIABLE in $TC_64BIT_PATH/${TC_64BIT_COMPILER}gcc $TC_32BIT_PATH/${TC_32BIT_COMPILER}gcc ${CLANG_PATH:+$CLANG_PATH/clang}; do
     find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
 # Missing device's AnyKernel resource
@@ -221,8 +221,8 @@ if [[ -n $(command -v ccache) ]]; then
 fi
 
 # Append (or set) CROSS_COMPILE{,_ARM32}
-CROSS_COMPILE+=$GCC_64BIT_COMPILER
-CROSS_COMPILE_ARM32+=$GCC_32BIT_COMPILER
+CROSS_COMPILE+=$TC_64BIT_COMPILER
+CROSS_COMPILE_ARM32+=$TC_32BIT_COMPILER
 
 # Clang-only setup
 if [[ -n $CLANG ]]; then
@@ -252,7 +252,7 @@ make ARCH=$ARCH O="$OUT" clean &> /dev/null
 
 # Let's build the kernel!
 info "Building kernel..."
-PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$GCC_PATHs:$PATH \
+PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$TC_PATHs:$PATH \
 make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
      -j"$THREADS" ${GCC_WRAPPER:+> /dev/null}
