@@ -48,11 +48,6 @@ parse_params() {
     while [[ $# -ge 1 ]]; do
         case $1 in
             # REQUIRED
-            -c |--compiler) shift
-                # Only Clang or GCC is supported, case insensitive
-                COMPILER=${1,,}
-                [[ $COMPILER != clang && $COMPILER != gcc ]] && die "Invalid value specified!" ;;
-
             -d |--device) shift
                 # Only grus, mido and X00T are supported for now
                 if [[ ${1,,} = grus || ${1,,} = mido ]]; then
@@ -66,6 +61,9 @@ parse_params() {
             # OPTIONAL
             -b |--build-only)
                 BUILD_ONLY=true ;;
+
+            -c |--clang)
+                CLANG=true ;;
 
             -cv|--clang-version) shift
                 # Only latest versions of Clang 5-9 are supported
@@ -120,7 +118,7 @@ OPT_DIR=/opt/kud
 THREADS=$(nproc --all)
 
 # GCC compiler
-if [[ -z $STOCK ]] || [[ $COMPILER = clang && $DEVICE = mido ]]; then
+if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
     # Aarch64 toolchain
     GCC_64BIT_PATH=aarch64-linux-gnu/bin
     GCC_64BIT_COMPILER=aarch64-linux-gnu-
@@ -139,7 +137,7 @@ else
 fi
 
 # Clang (if used) compiler
-if [[ $COMPILER = clang ]]; then
+if [[ -n $CLANG ]]; then
     [[ -z $STOCK ]] && CLANG_PATH=clang/bin || CLANG_PATH=android-clang/clang-$CLANG_VERSION/bin
 fi
 
@@ -147,7 +145,7 @@ fi
 GCC_64BIT_PATH=$OPT_DIR/$GCC_64BIT_PATH
 GCC_32BIT_PATH=$OPT_DIR/$GCC_32BIT_PATH
 GCC_PATHs=$GCC_64BIT_PATH:$GCC_32BIT_PATH
-[[ $COMPILER = clang ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
+[[ -n $CLANG ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
 
 # Kernel build variables
 AK2=$ROOT_DIR/AnyKernel2/$DEVICE
@@ -178,8 +176,8 @@ done
 info "Running sanity checks..."
 sleep 1
 
-# Missing compiler and device choices
-[[ -z $COMPILER || -z $DEVICE ]] && die "Missing required option(s)!"
+# Missing and device choice
+[[ -z $DEVICE ]] && die "Missing device option!"
 # Requested to only build; upload option is practically doing nothing
 if [[ -n $UPLOAD && -n $BUILD_ONLY ]]; then
     warn "Requested to only build but upload was assigned, disabling."
@@ -214,7 +212,7 @@ shopt -s globstar
 
 # Always use ccache for faster compiling if exists in PATH
 if [[ -n $(command -v ccache) ]]; then
-    if [[ $COMPILER = clang ]]; then
+    if [[ -n $CLANG ]]; then
         CC+="ccache "
     else
         CROSS_COMPILE+="ccache "
@@ -227,7 +225,7 @@ CROSS_COMPILE+=$GCC_64BIT_COMPILER
 CROSS_COMPILE_ARM32+=$GCC_32BIT_COMPILER
 
 # Clang-only setup
-if [[ $COMPILER = clang ]]; then
+if [[ -n $CLANG ]]; then
     # Additionally also append (or set) CC
     CC+=clang
 
