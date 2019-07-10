@@ -12,19 +12,19 @@
 # 'git log --pretty' alias
 git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
 # Show build script duration
-show_duration() { echo "Duration: $(date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)')"; }
+show_duration() { date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)'; }
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
 tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &> /dev/null || return 0; }
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
-    [[ -n $STARTED ]] && tg_post "$MSG \`SIGINT\`" "$(show_duration)"
+    [[ -n $STARTED ]] && tg_post "$MSG interrupted in $(show_duration)."
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
 tg_error() {
-    tg_post "$MSG \`SIGERR\`" "$(show_duration)"
+    tg_post "$MSG failed in $(show_duration)."
     [[ -n $STATUS ]] && exit "$STATUS" || exit 1
 }
 
@@ -169,7 +169,8 @@ DTS_DIR=$OUT/arch/arm64/boot/dts/qcom
 [[ -n $RELEASE ]] && export KBUILD_BUILD_VERSION=$RELEASE
 
 # Default message for posting to Telegram
-MSG="*$NAME* #$DEVICE *build:*"
+MSG="*[BuildCI]* Kernel build job for #$DEVICE"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # Default kernel build username for CI builds
 [[ -z $RELEASE ]] && export KBUILD_BUILD_USER=BuildCI
@@ -213,7 +214,8 @@ fi
 
 # Script beginning
 info "Starting build script..."
-tg_post "$MSG \`BEGIN\`"
+tg_post "$MSG has been started on \`$(hostname)\`." \
+        "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*."
 # Explicitly declare build script startup
 STARTED=true
 START_TIME=$(date +%s)
@@ -316,7 +318,7 @@ if [[ -z $BUILD_ONLY ]]; then
 fi
 
 # Notify successful build completion
-tg_post "$MSG \`END\`" "$(show_duration)"
+tg_post "$MSG completed in $(show_duration)."
 unset STARTED
 
 # Upload kernel zip if requested, else the end
@@ -357,7 +359,6 @@ if [[ -n $UPLOAD ]]; then
 fi
 
 # Script ending
-tg_post "*Latest commit:* \`$(git_pretty)\`"
 info "That's it. Job well done!"
 shopt -u globstar
 echo -ne '\a'
