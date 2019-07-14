@@ -171,6 +171,7 @@ DTS_DIR=$OUT/arch/arm64/boot/dts/qcom
 # Default message for posting to Telegram
 MSG="*[BuildCI]* Kernel build job for #$DEVICE"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
+[[ $DEVICE != mido ]] && NAME=$BRANCH
 
 # Default kernel build username for CI builds
 [[ -z $RELEASE ]] && export KBUILD_BUILD_USER=BuildCI
@@ -326,11 +327,11 @@ if [[ -n $UPLOAD ]]; then
     if [[ -z $RELEASE ]]; then
         # To Telegram
         info "Uploading $ZIP to Telegram..."
-        tg_post "Uploading test build to CI channel..."
+        tg_post "*[BuildCI]* Uploading test build..."
         if ! "$TELEGRAM" -f "$AK2/$ZIP" -c "-1001494373196" \
-            "New #$DEVICE test build with HEAD at commit $(git_pretty)"; then
+            "New #$DEVICE test build with branch $BRANCH at commit $(git_pretty)."; then
             warn "Failed to upload $ZIP."
-            tg_post "Failed to upload the build."
+            tg_post "*[BuildCI]* Unable to upload the build."
         fi
     else
         # or to webserver for release zip
@@ -342,7 +343,8 @@ if [[ -n $UPLOAD ]]; then
             cd "$AK2" || die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
 
             info "Uploading $RELEASE_ZIP..."
-            if { rsync -qP -e 'ssh -p 1983' --relative "$RELEASE_ZIP" kud@dl.wafuu.id:/var/www/dl.wafuu.id/"$KERNEL_DIR"/;
+            if { rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/;
+                 rsync -qP -e 'ssh -p 1983' --relative "$RELEASE_ZIP" kud@dl.wafuu.id:/var/www/dl.wafuu.id/"$KERNEL_DIR"/;
                  rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/; }; then
                 info "$RELEASE_ZIP uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
@@ -350,7 +352,7 @@ if [[ -n $UPLOAD ]]; then
                 tg_post "*New KudKernel build is available!*" \
                         "*Name:* \`$RELEASE_ZIP\`" \
                         "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
-                        "*Downloads:* [Webserver](https://dl.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) - [CDN](https://dl-cdn.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)"
+                        "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [Mirror](https://dl.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) - [CDN](https://dl-cdn.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)"
             else
                 warn "Failed to upload $RELEASE_ZIP."
             fi
