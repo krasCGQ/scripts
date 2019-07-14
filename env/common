@@ -112,5 +112,5 @@ build-binutils() {
     [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
     [[ -d $INSTALL_DIR ]] && { rm -rf ${INSTALL_DIR}-old; mv -f $INSTALL_DIR{,-old}; }
 
-    "$SCRIPTDIR"/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t ${ARCH[@]} #-u
+    "$SCRIPTDIR"/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t ${ARCH[@]} -u
 }
