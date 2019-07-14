@@ -25,13 +25,13 @@ def main():
         # skip linux-next; we only want stable and mainline releases
         if 'linux-next' not in list.entries[i].title:
             details = list.entries[i].id.split(',')
+            # mainline must be treated differently
             if 'mainline' in list.entries[i].title:
-                release = details[2].split('-')
-                release = release[0].split('.')
+                version_file = join(path + '/mainline-version')
             else:
                 release = details[2].split('.')
-            version = release[0] + '.' + release[1]
-            version_file = join(path + '/' + version + '-version')
+                version = release[0] + '.' + release[1]
+                version_file = join(path + '/' + version + '-version')
 
             if exists(version_file):
                 file = open(version_file, 'rb')
