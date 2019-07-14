@@ -98,7 +98,7 @@ build-clang() {
     INSTALL_DIR=/opt/kud/clang
 
     [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
-    [[ -d $INSTALL_DIR ]] && mv -f $INSTALL_DIR{,-old}
+    [[ -d $INSTALL_DIR ]] && { rm -rf ${INSTALL_DIR}-old; mv -f $INSTALL_DIR{,-old}; }
 
     "$SCRIPTDIR"/clang/build-llvm.py -B "$CBL_DIR" -I $INSTALL_DIR -t $ARCH --thin-lto -u
 }
@@ -106,10 +106,11 @@ build-clang() {
 # ClangBuiltLinux's build-binutils.py wrapper
 build-binutils() {
     local ARCH INSTALL_DIR
-    ARCH=x86_64
+    ARCH=( aarch64 arm x86_64 )
     INSTALL_DIR=/opt/kud/binutils
 
     [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
+    [[ -d $INSTALL_DIR ]] && { rm -rf ${INSTALL_DIR}-old; mv -f $INSTALL_DIR{,-old}; }
 
-    "$SCRIPTDIR"/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t $ARCH -u
+    "$SCRIPTDIR"/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t ${ARCH[@]} #-u
 }
