@@ -8,10 +8,19 @@ POWER=/sys/class/power_supply
 
 # Check for battery status
 battery_status() {
+    local CAPACITY
+
     # Add space in between if more than a battery is present
     [[ -n $STATUS ]] && STATUS+=" "
     # Display current percentage if exist, otherwise report it down
-    [[ $(cat $POWER/"$1"/present) -eq 1 ]] && STATUS+="${1/BAT/}:$(cat $POWER/"$1"/capacity)%" || STATUS+="${1/BAT/}:DOWN"
+    if [[ $(cat $POWER/"$1"/present) -eq 1 ]]; then
+        STATUS+="${1/BAT/}:"
+        CAPACITY=$(cat $POWER/"$1"/capacity)
+        # Some battery report incorrect percentage after they run out of power
+        [[ $CAPACITY -le 5 && $(cat $POWER/"$1"/power_now) -eq 0 ]] && STATUS+="0%" || STATUS+="$CAPACITY%"
+    else
+        STATUS+="${1/BAT/}:DOWN"
+    fi
 }
 
 # Recursively find present batteries
