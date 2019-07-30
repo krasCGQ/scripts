@@ -282,15 +282,18 @@ if [[ $DEVICE = grus ]]; then
 fi
 
 if [[ -z $BUILD_ONLY ]]; then
-    # Clean and copy kernel image and modules (if exists) to AnyKernel folder
     info "Cleaning and copying required file(s) to AnyKernel folder..."
-    [[ ! -d $AK/modules/vendor/lib/modules ]] && mkdir -p "$AK"/modules/vendor/lib/modules
-    rm -f "$AK"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
+    # Clean everything except zip files
+    git -C "$AK" clean -qdfx -e '*.zip'
+    # Copy kernel image
     cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK"
-    for MODULE in "$OUT"/**/*.ko; do
-        # Don't fail with no modules in out folder
-        cp -f "$MODULE" "$AK"/modules/vendor/lib/modules 2> /dev/null || continue
-    done
+    # Copy kernel modules if target device has them
+    if grep -q '=m' "$OUT"/.config; then
+        mkdir -p "$AK"/modules/vendor/lib/modules
+        for MODULE in "$OUT"/**/*.ko; do
+            cp -f "$MODULE" "$AK"/modules/vendor/lib/modules
+        done
+    fi
 
     # Export here to be picked later
     ZIP=$NAME-$DEVICE-$(date +%Y%m%d-%H%M).zip
