@@ -265,6 +265,9 @@ make ARCH=$ARCH O="$OUT" clean &> /dev/null
 
 # TODO: Generate defconfig if it doesn't exist
 
+# Only execute modules build if it's explicitly needed
+grep -q '=m' "$OUT"/.config && HAS_MODULES=true
+
 # Let's build the kernel!
 info "Building kernel..."
 # Export new LD_LIBRARY_PATH before building; should be safe for all targets
@@ -272,7 +275,7 @@ export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$OPT_DIR/$TC_UNIFIED_BASE/lib}${LD_LIB
 PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$TC_PATHs:$PATH \
 make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
-     -j"$THREADS" ${GCC_WRAPPER:+> /dev/null}
+     -j"$THREADS" Image.gz-dtb ${HAS_MODULES:+modules} ${GCC_WRAPPER:+> /dev/null}
 
 # Build dtbo.img for grus
 if [[ $DEVICE = grus ]]; then
@@ -288,7 +291,7 @@ if [[ -z $BUILD_ONLY ]]; then
     # Copy kernel image
     cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK"
     # Copy kernel modules if target device has them
-    if grep -q '=m' "$OUT"/.config; then
+    if [[ -n $HAS_MODULES ]]; then
         mkdir -p "$AK"/modules/vendor/lib/modules
         for MODULE in "$OUT"/**/*.ko; do
             cp -f "$MODULE" "$AK"/modules/vendor/lib/modules
