@@ -164,7 +164,6 @@ AK=$ROOT_DIR/AnyKernel2/$DEVICE
 ARCH=arm64
 NAME=KudKernel
 OUT=$ROOT_DIR/kernels/build/$DEVICE
-[[ $DEVICE = grus ]] && OUT=$OUT-tmp
 DTS_DIR=$OUT/arch/arm64/boot/dts/qcom
 [[ -n $RELEASE ]] && export KBUILD_BUILD_VERSION=$RELEASE
 
@@ -260,13 +259,15 @@ fi
 info "Cleaning build directory..."
 # TODO: Completely clean build?
 make ARCH=$ARCH O="$OUT" clean &> /dev/null
-# grus: Make rule doesn't cover *.dtbo and manually created dtbo.img
-[[ $DEVICE = grus ]] && rm -rf "$OUT"/arch/arm64/boot/dts/qcom/{*.dtbo,dtbo.img}
+# Make rule doesn't cover DTBO files and manually created dtbo.img yet
+rm -f "$OUT"/arch/arm64/boot/dts/qcom/{*.dtbo,dtbo.img}
 
 # TODO: Generate defconfig if it doesn't exist
 
 # Only execute modules build if it's explicitly needed
 grep -q '=m' "$OUT"/.config && HAS_MODULES=true
+# Whether target needs DTBO
+grep -q 'BUILD_ARM64_DT_OVERLAY=y' "$OUT"/.config && NEEDS_DTBO=true
 
 # Let's build the kernel!
 info "Building kernel..."
@@ -277,8 +278,8 @@ make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
      -j"$THREADS" Image.gz-dtb ${HAS_MODULES:+modules} ${GCC_WRAPPER:+> /dev/null}
 
-# Build dtbo.img for grus
-if [[ $DEVICE = grus ]]; then
+# Build dtbo.img if needed
+if [[ -n $NEEDS_DTBO ]]; then
     info "Creating dtbo.img..."
     python2 "$SCRIPTDIR"/libufdt/utils/src/mkdtboimg.py \
         create "$DTS_DIR"/dtbo.img --page_size=4096 "$DTS_DIR"/*.dtbo
@@ -290,6 +291,8 @@ if [[ -z $BUILD_ONLY ]]; then
     git -C "$AK" clean -qdfx -e '*.zip'
     # Copy kernel image
     cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK"
+    # Copy dtbo.img for supported devices
+    [[ -n $NEEDS_DTBO ]] && cp -f "$DTS_DIR"/dtbo.img "$AK"
     # Copy kernel modules if target device has them
     if [[ -n $HAS_MODULES ]]; then
         mkdir -p "$AK"/modules/vendor/lib/modules
