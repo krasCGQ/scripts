@@ -160,7 +160,7 @@ fi
 [[ -n $CLANG ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
 
 # Kernel build variables
-AK2=$ROOT_DIR/AnyKernel2/$DEVICE
+AK=$ROOT_DIR/AnyKernel2/$DEVICE
 ARCH=arm64
 NAME=KudKernel
 OUT=$ROOT_DIR/kernels/build/$DEVICE
@@ -207,7 +207,7 @@ for VARIABLE in ${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${TC_64BIT_COMPILER}elfedit $
     find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
 # Missing device's AnyKernel resource
-[[ ! -d $AK2 ]] && die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
+[[ ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 # CAF's gcc-wrapper.py is shit, trust me
 if [[ ! -f scripts/gcc-wrapper.py ]] && ! grep -q gcc-wrapper.py Makefile; then
     GCC_WRAPPER=false
@@ -283,13 +283,13 @@ fi
 
 if [[ -z $BUILD_ONLY ]]; then
     # Clean and copy kernel image and modules (if exists) to AnyKernel folder
-    info "Cleaning and copying required file(s) to AnyKernel2 folder..."
-    [[ ! -d $AK2/modules/vendor/lib/modules ]] && mkdir -p "$AK2"/modules/vendor/lib/modules
-    rm -f "$AK2"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
-    cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK2"
+    info "Cleaning and copying required file(s) to AnyKernel folder..."
+    [[ ! -d $AK/modules/vendor/lib/modules ]] && mkdir -p "$AK"/modules/vendor/lib/modules
+    rm -f "$AK"/{Image.gz-dtb,modules/vendor/lib/modules/*.ko}
+    cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK"
     for MODULE in "$OUT"/**/*.ko; do
         # Don't fail with no modules in out folder
-        cp -f "$MODULE" "$AK2"/modules/vendor/lib/modules 2> /dev/null || continue
+        cp -f "$MODULE" "$AK"/modules/vendor/lib/modules 2> /dev/null || continue
     done
 
     # Export here to be picked later
@@ -300,7 +300,7 @@ if [[ -z $BUILD_ONLY ]]; then
     info "Creating $ZIP..."
     (
         # Unlikely to fail; but we have to define this way to satisfy shellcheck
-        cd "$AK2" || die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
+        cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 
         7za a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" \
             ./* -x'!'README.md -xr'!'*.zip
@@ -328,7 +328,7 @@ if [[ -n $UPLOAD ]]; then
         # To Telegram
         info "Uploading $ZIP to Telegram..."
         tg_post "*[BuildCI]* Uploading test build..."
-        if ! "$TELEGRAM" -f "$AK2/$ZIP" -c "-1001494373196" \
+        if ! "$TELEGRAM" -f "$AK/$ZIP" -c "-1001494373196" \
             "New #$DEVICE test build with branch $BRANCH at commit $(git_pretty)."; then
             warn "Failed to upload $ZIP."
             tg_post "*[BuildCI]* Unable to upload the build."
@@ -340,7 +340,7 @@ if [[ -n $UPLOAD ]]; then
             KERNEL_DIR=kernels/$DEVICE
 
             # Unlikely to fail; but we have to define this way to satisfy shellcheck
-            cd "$AK2" || die "$BLD$(basename "$AK2")$RST doesn't exist in defined path."
+            cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 
             info "Uploading $RELEASE_ZIP..."
             if { rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/;
