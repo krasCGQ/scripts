@@ -166,6 +166,8 @@ NAME=KudKernel
 OUT=$ROOT_DIR/kernels/build/$DEVICE
 DTS_DIR=$OUT/arch/arm64/boot/dts/qcom
 [[ -n $RELEASE ]] && export KBUILD_BUILD_VERSION=$RELEASE
+# Enable system-as-root flag for selected devices
+[[ $DEVICE = grus ]] && SYSTEM_AS_ROOT=true
 
 # Default message for posting to Telegram
 MSG="*[BuildCI]* Kernel build job for #$DEVICE"
@@ -255,6 +257,9 @@ if [[ -n $CLANG ]]; then
     fi
 fi
 
+# Set up main build targets
+[[ -n $SYSTEM_AS_ROOT ]] && TARGETS=( Image dtbs ) || TARGETS=( Image.gz-dtb )
+
 # Clean build directory
 info "Cleaning build directory..."
 # TODO: Completely clean build?
@@ -276,7 +281,7 @@ export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$OPT_DIR/$TC_UNIFIED_BASE/lib}${LD_LIB
 PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$TC_PATHs:$PATH \
 make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
-     -j"$THREADS" Image.gz-dtb ${HAS_MODULES:+modules} ${GCC_WRAPPER:+> /dev/null}
+     -j"$THREADS" "${TARGETS[@]}" ${HAS_MODULES:+modules} ${GCC_WRAPPER:+> /dev/null}
 
 # Build dtbo.img if needed
 if [[ -n $NEEDS_DTBO ]]; then
@@ -289,8 +294,17 @@ if [[ -z $BUILD_ONLY ]]; then
     info "Cleaning and copying required file(s) to AnyKernel folder..."
     # Clean everything except zip files
     git -C "$AK" clean -qdfx -e '*.zip'
-    # Copy kernel image
-    cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK"
+    # Kernel image task(s)
+    if [[ -n $SYSTEM_AS_ROOT ]]; then
+        mkdir "$AK"/files
+        # Copy uncompressed kernel image and DTBs
+        for FILES in "$OUT"/arch/arm64/boot/Image "$DTS_DIR"/*.dtb; do
+            cp -f "$FILES" "$AK"/files
+        done
+    else
+        # Copy compressed kernel with appended DTB image
+        cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK"
+    fi
     # Copy dtbo.img for supported devices
     [[ -n $NEEDS_DTBO ]] && cp -f "$DTS_DIR"/dtbo.img "$AK"
     # Copy kernel modules if target device has them
