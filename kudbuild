@@ -264,8 +264,8 @@ fi
 info "Cleaning build directory..."
 # TODO: Completely clean build?
 make ARCH=$ARCH O="$OUT" clean &> /dev/null
-# Make rule doesn't cover DTBO files and manually created dtbo.img yet
-rm -f "$OUT"/arch/arm64/boot/dts/qcom/{*.dtbo,dtbo.img}
+# Delete earlier dtbo.img created by this build script
+rm -f "$OUT"/arch/arm64/boot/dts/qcom/dtbo.img
 
 # TODO: Generate defconfig if it doesn't exist
 
