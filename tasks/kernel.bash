@@ -24,6 +24,8 @@ trap '{
 
 # For any errors, no matter what, post error notification and exit script
 tg_error() {
+    # make SIGINT no-op to avoid double-posting
+    trap ' ' INT
     tg_post "$MSG failed in $(show_duration)."
     [[ -n $STATUS ]] && exit "$STATUS" || exit 1
 }
