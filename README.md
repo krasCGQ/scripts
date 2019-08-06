@@ -1,12 +1,14 @@
-# krasCGQ's Personal Scripts
+# Kud's Personal Scripts
 
-This small repository hosts personal scripts used on my PCs and build server. They'll always be updated when needed. If you feel any of these scripts suit your needs, feel free to use, star this repository and revisit whenever the scripts get updated. Adjustments to your directories _may be_ needed.
+This repository hosts personal scripts I often use on my PCs and server(s). If you feel any of these scripts suit your needs, feel free to use, star this repository and revisit whenever the scripts get updated. Adjustments _might be_ required for some (if not most or all) scripts, however.
 
 In order to be able to use these scripts, please run these commands accordingly:
 
 ```
 # Some Bash scripts
-$ git submodule update --init # or clone this repository recursively
+$ git submodule update --init
+# or clone this repository recursively
+$ git clone --recursive git://github.com/krasCGQ/scripts
 
 # Python 3 scripts
 $ sudo pip3 install -r requirements.txt
@@ -14,25 +16,9 @@ $ sudo pip3 install -r requirements.txt
 
 Enjoy!
 
-## Standalone Shell Scripts List
-
-* `killswitch`: VPN kill switch enabler/disabler for UFW (requires `sudo` privileges as `ufw` is only visible to `root` user); only supports VPN connected through `tun0`
-* `kudbuild`: KudKernel build script; only supports mido (treble) and X00T
-
-## Bash Snippets List
-
-* `pia`: Setup and connect to Private Internet Access using OpenVPN CLI with MACE DNS and VPN kill switch enabled (thus depends on `killswitch`)
-* `rom_sign`: Android ROM signing wrapper; run `rom_sign` at root of your ROM source after sourcing.
-* `tg_sendinline`: Send Telegram posts with inline button URLs using Bot API
-
-## Python Snippets List
-
-* `bmt.py`: ELF (bare-metal) GCC toolchain build script
-* `dkms_rebuild.py`: Rebuild DKMS modules of currently running kernel with Clang via gcc and g++ wrappers
-
 ## License
 
-### All scripts in this repository (except submodules)
+### All scripts in this repository (excluding dependencies as submodules)
 
 ```
 Copyright (C) 2017-2019 Albert I (krasCGQ)
