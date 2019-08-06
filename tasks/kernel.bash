@@ -51,7 +51,7 @@ parse_params() {
             -d | --device) shift
                 # Supported devices:
                 case ${1,,} in
-                    grus | mido)
+                    grus | mido | sirius)
                         DEVICE=${1,,} ;;
                     x00t)
                         DEVICE=${1^^} ;;
