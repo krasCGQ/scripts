@@ -48,25 +48,26 @@ parse_params() {
     while [[ $# -ge 1 ]]; do
         case $1 in
             # REQUIRED
-            -d |--device) shift
-                # Only grus, mido and X00T are supported for now
-                if [[ ${1,,} = grus || ${1,,} = mido ]]; then
-                    DEVICE=${1,,}
-                elif [[ ${1^^} = X00T ]]; then
-                    DEVICE=${1^^}
-                else
-                    die "Invalid value specified!"
-                fi ;;
+            -d | --device) shift
+                # Supported devices:
+                case ${1,,} in
+                    grus | mido)
+                        DEVICE=${1,,} ;;
+                    x00t)
+                        DEVICE=${1^^} ;;
+                    *)
+                        die "Invalid device specified!" ;;
+                esac ;;
 
             # OPTIONAL
-            -b |--build-only)
+            -b | --build-only)
                 BUILD_ONLY=true ;;
 
-            -c |--clang)
+            -c | --clang)
                 CLANG=true ;;
 
-            -cv|--clang-version) shift
-                # Only latest versions of Clang 5-9 are supported
+            -cv | --clang-version) shift
+                # Supported latest AOSP Clang versions:
                 case $1 in
                     5) CLANG_VERSION=4053586 ;;
                     6) CLANG_VERSION=4691093 ;;
@@ -76,15 +77,15 @@ parse_params() {
                     *) die "Invalid version specified!" ;;
                 esac ;;
 
-            -r |--release) shift
-                # Only integers are accepted here
+            -r | --release) shift
+                # Only integers are accepted
                 RELEASE=$1
                 [[ -n ${RELEASE//[0-9]} ]] && die "Invalid version specified!" ;;
 
-            -s |--stock)
+            -s | --stock)
                 STOCK=true ;;
 
-            -u |--upload)
+            -u | --upload)
                 # Will be ignored if BUILD_ONLY=true
                 UPLOAD=true ;;
 
