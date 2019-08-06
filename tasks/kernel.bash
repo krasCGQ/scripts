@@ -101,15 +101,6 @@ parse_params() {
 
 parse_params "$@"
 
-# X00T: Check early and enforce use of AOSP Clang
-if [[ $DEVICE = X00T  && -z $STOCK ]]; then
-    warn "Will use AOSP Clang due to unknown regressions with latest Clang trunk."
-    # Clang 9 as default if '-cv' isn't assigned
-    # shellcheck disable=SC2046
-    parse_params -s $(test -z $CLANG_VERSION && echo "-cv" "9")
-    sleep 1
-fi
-
 ## Variables
 
 # Paths
