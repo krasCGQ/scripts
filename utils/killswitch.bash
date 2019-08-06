@@ -20,7 +20,7 @@ trap '' INT
 trap die ERR
 
 # Location of IP addresses list file
-IP_LIST=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.ip-address.saved
+IP_LIST=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.ip-address.saved
 
 if [[ $# -ge 1 && $# -le 3 ]]; then
     # Just to remove IP addresses list file if we're going to be enable

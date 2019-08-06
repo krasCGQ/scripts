@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # Collection of OpenVPN-related snippets for dealing with Private Internet Access
 # Copyright (C) 2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -137,7 +137,7 @@ _pia_ovpnconnect() {
     # If .ip-address.saved is exist, probably it wasn't disconnected properly
     if [[ -f $SCRIPTDIR/.ip-address.saved ]]; then
         warn "Redundant rules detected! Disabling VPN kill switch..."
-        "$SCRIPTDIR"/killswitch off "$SERVER" "$PORT/$PROTOCOL" > /dev/null
+        "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" > /dev/null
     fi
 
     # Use PIA DNS servers in resolv.conf
@@ -148,7 +148,7 @@ _pia_ovpnconnect() {
 
     # Enable VPN kill switch
     info "Enabling VPN kill switch..."
-    "$SCRIPTDIR"/killswitch on "$SERVER" "$PORT/$PROTOCOL" > /dev/null
+    "$SCRIPTDIR"/utils/killswitch.bash on "$SERVER" "$PORT/$PROTOCOL" > /dev/null
 
     # Restart name server cache daemon
     # TODO: For other distros?
@@ -168,7 +168,7 @@ _pia_ovpnconnect() {
 
     # Disable VPN kill switch
     info "Disabling VPN kill switch..."
-    "$SCRIPTDIR"/killswitch off "$SERVER" "$PORT/$PROTOCOL" > /dev/null
+    "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" > /dev/null
 
     # Make resolv.conf read/write
     chattr -i /etc/resolv.conf

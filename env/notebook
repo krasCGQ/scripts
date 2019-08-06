@@ -31,7 +31,7 @@ alias update='sudo su -c "pacman -Sy && powerpill -Su --noconfirm"'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
 # Export new PATH containing local binaries, ccache-backed compiler symlinks, and perl modules
-[[ -z $TMUX ]] && export PATH=$HOME/.files/bin:$SCRIPTDIR/bin:/usr/lib/ccache/bin:$PATH
+[[ -z $TMUX ]] && export PATH=$HOME/.files/bin:/usr/lib/ccache/bin:$PATH
 
 # (Re)Pack FLAC files with maximum compression and ReplayGain applied
 flac_pack() {

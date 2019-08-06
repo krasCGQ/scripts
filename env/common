@@ -100,7 +100,7 @@ build-clang() {
     [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
     [[ -d $INSTALL_DIR ]] && { rm -rf ${INSTALL_DIR}-old; mv -f $INSTALL_DIR{,-old}; }
 
-    "$SCRIPTDIR"/clang/build-llvm.py -B "$CBL_DIR" -I $INSTALL_DIR -t $ARCH --lto thin -m native -u --use-good-revision
+    "$SCRIPTDIR"/modules/clang/build-llvm.py -B "$CBL_DIR" -I $INSTALL_DIR -t $ARCH --lto thin -m native -u --use-good-revision
 }
 
 # ClangBuiltLinux's build-binutils.py wrapper
@@ -112,7 +112,7 @@ build-binutils() {
     [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
     [[ -d $INSTALL_DIR ]] && { rm -rf ${INSTALL_DIR}-old; mv -f $INSTALL_DIR{,-old}; }
 
-    "$SCRIPTDIR"/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t ${ARCH[@]} -u
+    "$SCRIPTDIR"/modules/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t ${ARCH[@]} -u
 }
 
 # Run all CBL wrappers in one command

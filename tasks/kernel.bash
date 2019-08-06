@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# KudProject kernel build script
+# KudProject kernel build tasks
 # Copyright (C) 2018-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 ## Import common environment script
 # shellcheck source=/dev/null
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/env/common
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/../env/common
 
 ## Functions
 
@@ -110,7 +110,7 @@ fi
 ## Variables
 
 # Paths
-TELEGRAM=$SCRIPTDIR/telegram/telegram
+TELEGRAM=$SCRIPTDIR/modules/telegram/telegram
 ROOT_DIR=$HOME/KudProject
 OPT_DIR=/opt/kud
 
@@ -286,7 +286,7 @@ make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
 # Build dtbo.img if needed
 if [[ -n $NEEDS_DTBO ]]; then
     info "Creating dtbo.img..."
-    python2 "$SCRIPTDIR"/libufdt/utils/src/mkdtboimg.py \
+    python2 "$SCRIPTDIR"/modules/libufdt/utils/src/mkdtboimg.py \
         create "$DTS_DIR"/dtbo.img --page_size=4096 "$DTS_DIR"/*.dtbo
 fi
 

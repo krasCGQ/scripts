@@ -1,10 +1,10 @@
 [submodule "telegram"]
-	path = telegram
+	path = modules/telegram
 	url = git://github.com/fabianonline/telegram.sh
 [submodule "clang"]
-	path = clang
+	path = modules/clang
 	url = git://github.com/nathanchance/tc-build
 	branch = personal
 [submodule "libufdt"]
-	path = libufdt
+	path = modules/libufdt
 	url = https://android.googlesource.com/platform/system/libufdt
