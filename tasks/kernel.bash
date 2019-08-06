@@ -207,12 +207,12 @@ fi
 for VARIABLE in ${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${TC_64BIT_COMPILER}elfedit ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${TC_32BIT_COMPILER}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
     find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
-# Missing device's AnyKernel resource
-[[ ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 # CAF's gcc-wrapper.py is shit, trust me
 if [[ ! -f scripts/gcc-wrapper.py ]] && ! grep -q gcc-wrapper.py Makefile; then
     GCC_WRAPPER=false
 fi
+# Missing device's AnyKernel resource
+[[ -z $BUILD_ONLY && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 
 # Script beginning
 info "Starting build script..."
