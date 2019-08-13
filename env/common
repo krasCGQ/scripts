@@ -13,6 +13,8 @@ source "$SCRIPTDIR"/env/global
 alias nano='nano -au'
 alias wget='wget -c -t 0 --retry-connrefused'
 
+# Export HOME as USER_DIR for use with sudo commands when required
+USER_DIR=$HOME
 # Required for GPG signing
 GPG_TTY=$(tty)
 # GNU nano for text editor
@@ -25,7 +27,7 @@ KBUILD_BUILD_HOST=KudProject
 # ClangBuiltLinux's tc-build build directory
 CBL_DIR=$HOME/build/clang
 # Export some variables to satisfy shellcheck requirements
-export GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
+export USER_DIR GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
 # Import Telegram bot token and chat ID (KudProject Community)
 if [[ -f $SCRIPTDIR/tg_token && -f $SCRIPTDIR/tg_chatid ]]; then

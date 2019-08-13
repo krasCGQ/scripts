@@ -181,5 +181,22 @@ function aosp_init { (
 ) || return 1; }
 alias aosp_init='check_sudo su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
 
+# Quick way to install linux-vk packages
+_vk_install() {
+    [[ $(whoami) != root ]] && return 1
+
+    local COMMON_DIR PKG_DIR VK_DIR
+
+    COMMON_DIR=$USER_DIR/KudProject/aur
+    PKG_DIR=$COMMON_DIR/.packages
+    VK_DIR=$COMMON_DIR/linux-vk
+
+    mount -B {"$SCRIPTDIR"/binds,/usr/bin}/gcc
+    pacman -U "$PKG_DIR"/linux-vk*"$1"-"$(uname -m)".pkg.tar*
+    "$VK_DIR"/sign_modules.sh
+    umount /usr/bin/gcc 2> /dev/null
+}
+vk_install() { check_sudo --preserve-env=SCRIPTDIR,USER_DIR su -c "$(declare -f _vk_install) && _vk_install $1"; }
+
 # Last, but my most convenient part; only apply with Bash
 [[ -n $BASH ]] && export PS1='\[\e[1;36m\]\W\[\e[1;34m\]$(parse_git_branch)\[\e[0m\] 〉'
