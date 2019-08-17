@@ -157,29 +157,26 @@ opus_convert() {
 function aosp_init { (
     [[ $(whoami) != root ]] && return 1
 
-    # Load zRAM module with 2 block devices
-    modprobe zram num_devices=2
+    local PROJECT_DIR SRC_KERNEL_DIR AOSP_DIR DEST_KERNEL_DIR
+    PROJECT_DIR=$USER_DIR/KudProject
+    SRC_KERNEL_DIR=$PROJECT_DIR/kernels
+    AOSP_DIR=/mnt/android
+    DEST_KERNEL_DIR=$AOSP_DIR/xenonhd-p/kernel
 
     # zRAM setup
-    for block in 0 1; do
-        echo lz4hc > /sys/block/zram${block}/comp_algorithm
-        echo 8G > /sys/block/zram${block}/disksize
-    done
-
-    # zRAM swap
+    modprobe zram
+    echo lz4hc > /sys/devices/virtual/block/zram0/comp_algorithm
+    echo 8G > /sys/devices/virtual/block/zram0/disksize
     mkswap /dev/zram0
     swapon --priority 100 /dev/zram0
 
-    # zRAM /tmp
-    mkfs.ext4 /dev/zram1
-    mount -o nosuid,nodev,noatime,discard /dev/zram1 /tmp
-    chmod 777 /tmp
-
-    # Mount AOSP source sparse image
-    mount -o nosuid,nodev,compress=zstd \
-        /home/krascgq/KudProject/android.img /mnt/android
+    # AOSP sparse image setup
+    mount -o nosuid,nodev,compress=zstd "$PROJECT_DIR"/android.img $AOSP_DIR
+    mount -B "$SRC_KERNEL_DIR"/X00T $DEST_KERNEL_DIR/asus/sdm660
+    mount -B "$SRC_KERNEL_DIR"/grus $DEST_KERNEL_DIR/xiaomi/sdm710
+    mount -B "$SRC_KERNEL_DIR"/mido $DEST_KERNEL_DIR/xiaomi/msm8953-3.18
 ) || return 1; }
-alias aosp_init='check_sudo su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
+alias aosp_init='check_sudo --preserve-env=USER_DIR su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
 
 # Quick way to install linux-vk packages
 _vk_install() {
