@@ -178,6 +178,25 @@ function aosp_init { (
 ) || return 1; }
 alias aosp_init='check_sudo --preserve-env=USER_DIR su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
 
+# De-init AOSP environment set before
+aosp_deinit() {(
+    [[ $(whoami) != root ]] && return 1
+
+    if ! umount -R /mnt/android; then
+        (
+            cd /mnt/android/xenonhd-p/kernel || ROOT_DIR=/mnt/android/xenonhd-p/kernel/
+            umount ${ROOT_DIR}asus/sdm660
+            umount ${ROOT_DIR}xiaomi/msm8953-3.18
+            umount ${ROOT_DIR}xiaomi/sdm710
+        )
+        umount /mnt/android || umount -l /mnt/android
+    fi
+
+    swapoff /dev/zram0
+    rmmod /dev/zram0
+) || return 0; } # suppress non-zero exit status
+alias aosp_deinit='check_sudo su -c "$(declare -f aosp_deinit) && aosp_deinit 2> /dev/null"'
+
 # Quick way to install linux-vk packages
 _vk_install() {
     [[ $(whoami) != root ]] && return 1
