@@ -266,6 +266,12 @@ rm -f "$OUT"/arch/arm64/boot/dts/qcom/dtbo.img
 
 # TODO: Generate defconfig if it doesn't exist
 
+# Regenerate config for source changes when required
+if [[ -f $OUT/.config ]]; then
+    info "Regenerating config for source changes..."
+    make -s ARCH=$ARCH O="$OUT" oldconfig
+fi
+
 # Only execute modules build if it's explicitly needed
 grep -q '=m' "$OUT"/.config && HAS_MODULES=true
 # Whether target needs DTBO
