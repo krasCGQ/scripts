@@ -103,8 +103,11 @@ parse_params "$@"
 
 ## Variables
 
-# Paths
+# Telegram-specific environment setup
 TELEGRAM=$SCRIPTDIR/modules/telegram/telegram
+tg_getid kp-on
+
+# Paths
 ROOT_DIR=$HOME/KudProject
 OPT_DIR=/opt/kud
 

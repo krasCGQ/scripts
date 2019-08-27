@@ -6,8 +6,6 @@
 
 # Import treewide environment script
 source "$SCRIPTDIR"/env/global
-# Import Telegram Chat ID fetching function if exists
-[[ -f $SCRIPTDIR/tg_chatid ]] && source "$SCRIPTDIR"/tg_chatid
 
 # Aliases
 alias nano='nano -au'
@@ -29,12 +27,8 @@ CBL_DIR=$HOME/build/clang
 # Export some variables to satisfy shellcheck requirements
 export USER_DIR GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
-# Import Telegram bot token and chat ID (KudProject Community)
-if [[ -f $SCRIPTDIR/tg_token && -f $SCRIPTDIR/tg_chatid ]]; then
-    TELEGRAM_TOKEN=$(cat "$SCRIPTDIR"/tg_token)
-    TELEGRAM_CHAT=$(get_chatid kud_community)
-    export TELEGRAM_TOKEN TELEGRAM_CHAT
-fi
+# Source Telegram-specific script if exists
+[[ -f $SCRIPTDIR/env/telegram ]] && source "$SCRIPTDIR"/env/telegram
 
 # Wrapper to automatically merge latest Linux stable revision to working branch
 # Usage: korg_merge <revision-to-merge>
