@@ -260,7 +260,7 @@ fi
 # Clean build directory
 info "Cleaning build directory..."
 # TODO: Completely clean build?
-make ARCH=$ARCH O="$OUT" clean &> /dev/null
+make -s ARCH=$ARCH O="$OUT" clean
 # Delete earlier dtbo.img created by this build script
 rm -f "$OUT"/arch/arm64/boot/dts/qcom/dtbo.img
 
@@ -282,9 +282,10 @@ info "Building kernel..."
 # Export new LD_LIBRARY_PATH before building; should be safe for all targets
 export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$OPT_DIR/$TC_UNIFIED_BASE/lib}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$TC_PATHs:$PATH \
-make ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
+make -j"$THREADS" ${GCC_WRAPPER:+-s} \
+     ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
-     -j"$THREADS" "${TARGETS[@]}" ${HAS_MODULES:+modules} ${GCC_WRAPPER:+> /dev/null}
+     "${TARGETS[@]}" ${HAS_MODULES:+modules}
 
 # Build dtbo.img if needed
 if [[ -n $NEEDS_DTBO ]]; then
