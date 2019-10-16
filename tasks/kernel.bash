@@ -75,7 +75,7 @@ parse_params() {
                     6) CLANG_VERSION=4691093 ;;
                     7) CLANG_VERSION=r328903 ;;
                     8) CLANG_VERSION=r349610b ;;
-                    9) CLANG_VERSION=r353983e ;;
+                    9) CLANG_VERSION=r365631 ;;
                     *) die "Invalid version specified!" ;;
                 esac ;;
 
