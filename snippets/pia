@@ -59,7 +59,7 @@ pia_ovpnsetup() {
     if [[ -n $AEAD ]]; then
         EXTRA_ARGS+=-aead
         # This is hosted on my VPS since PIA doesn't provide it by default
-        curl -sO https://dl.wafuu.id/.files/openvpn$EXTRA_ARGS.zip
+        curl -sO https://dl.kudnet.id/.files/openvpn$EXTRA_ARGS.zip
     else
         curl -sO https://www.privateinternetaccess.com/openvpn/openvpn$EXTRA_ARGS.zip
     fi
