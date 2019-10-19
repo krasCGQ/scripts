@@ -163,11 +163,7 @@ _pia_ovpnconnect() {
 
     # Connect with supplied country name in the background
     info "Establishing connection to $1..."
-    while :; do
-        trap 'break' INT TERM
-        openvpn --config "$CONFIG" --auth-nocache --keepalive 60 720 > /dev/null
-        warn "Reconnecting to $1..."
-    done
+    openvpn --config "$CONFIG" --auth-nocache --keepalive 60 720 || return $?
 
     # Upon disconnection, warn it
     warn "Connection has been terminated."
