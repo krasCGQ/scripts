@@ -129,6 +129,12 @@ _pia_ovpnconnect() {
 
     # OpenVPN config file
     CONFIG=/etc/openvpn/client/"$1".ovpn
+    # Exit function immediately if provided country doesn't exist
+    if [[ ! -f "$CONFIG" ]]; then
+        warn "Invalid country provided: $1"
+        return 1
+    fi
+
     # Passed to killswitch's 2nd argument to bypass rules
     SERVER=$(grep 'remote ' "$CONFIG" | cut -d ' ' -f 2)
     PORT=$(grep 'remote ' "$CONFIG" | cut -d ' ' -f 3)
