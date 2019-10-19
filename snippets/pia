@@ -127,11 +127,13 @@ _pia_ovpnconnect() {
         return 1
     fi
 
+    # Replace underscore with space
+    COUNTRY="${1/_/ }"
     # OpenVPN config file
-    CONFIG=/etc/openvpn/client/"$1".ovpn
+    CONFIG=/etc/openvpn/client/"$COUNTRY".ovpn
     # Exit function immediately if provided country doesn't exist
     if [[ ! -f "$CONFIG" ]]; then
-        warn "Invalid country provided: $1"
+        warn "Invalid country provided: $COUNTRY"
         return 1
     fi
 
@@ -162,7 +164,7 @@ _pia_ovpnconnect() {
     nscd
 
     # Connect with supplied country name in the background
-    info "Establishing connection to $1..."
+    info "Establishing connection to $COUNTRY..."
     openvpn --config "$CONFIG" --auth-nocache --keepalive 60 720 || return $?
 
     # Upon disconnection, warn it
