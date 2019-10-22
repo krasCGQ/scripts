@@ -163,9 +163,19 @@ _pia_ovpnconnect() {
     nscd -K
     nscd
 
+    # Let's put some common senses before starting VPN, as OpenVPN always
+    # returns 0 exit status regardless of any error during connection
+    # 1. Immediately quit upon encountering error, don't proceed further
+    trap 'return 1' ERR
+    # 2. Stop, then proceed with disabling VPN kill switch
+    trap 'break' INT
+
     # Connect with supplied country name in the background
     info "Establishing connection to $COUNTRY..."
-    openvpn --config "$CONFIG" --auth-nocache --keepalive 60 720 || return $?
+    while true; do
+        openvpn --config "$CONFIG" --auth-nocache --keepalive 60 720 --remap-usr1 SIGTERM
+        warn "Reconnecting to $COUNTRY..."
+    done
 
     # Upon disconnection, warn it
     warn "Connection has been terminated."
