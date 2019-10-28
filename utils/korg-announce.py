@@ -42,11 +42,12 @@ def main():
 
             hash_b = sha384(str.encode(list.entries[i].title)).hexdigest()
 
-            file = open(version_file, 'w+')
-            file.write(list.entries[i].title)
-            file.close()
-
             if hash_a != hash_b:
+                # write new version
+                file = open(version_file, 'w+')
+                file.write(list.entries[i].title)
+                file.close()
+
                 if 'mainline' in list.entries[i].title:
                     msg = '*New Linux mainline release available!*\n'
                 else:
