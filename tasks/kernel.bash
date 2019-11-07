@@ -243,7 +243,7 @@ fi
 # Clean build directory
 info "Cleaning build directory..."
 # TODO: Completely clean build?
-make -s ARCH=$ARCH O="$OUT" clean
+make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
 # Delete earlier dtbo.img created by this build script
 rm -f "$OUT"/arch/arm64/boot/dts/qcom/dtbo.img
 
