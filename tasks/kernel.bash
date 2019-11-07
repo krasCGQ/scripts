@@ -247,12 +247,17 @@ make -s ARCH=$ARCH O="$OUT" clean
 # Delete earlier dtbo.img created by this build script
 rm -f "$OUT"/arch/arm64/boot/dts/qcom/dtbo.img
 
-# TODO: Generate defconfig if it doesn't exist
-
 # Regenerate config for source changes when required
 if [[ -f $OUT/.config ]]; then
     info "Regenerating config for source changes..."
     make -s ARCH=$ARCH O="$OUT" oldconfig
+# However, if config file doesn't exist, generate a fresh config
+else
+    info "Generating a new config..."
+    read -rp "  Input a defconfig name (without '_defconfig'): " DEFCONFIG
+    # If defconfig name is empty, assume device name as defconfig name instead
+    [[ -z $DEFCONFIG ]] && DEFCONFIG=$DEVICE
+    make -j"$THREADS" -s ARCH=$ARCH O="$OUT" "${DEFCONFIG}"_defconfig
 fi
 
 # Only execute modules build if it's explicitly needed
