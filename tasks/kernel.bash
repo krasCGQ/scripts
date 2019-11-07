@@ -101,6 +101,11 @@ parse_params() {
 
 parse_params "$@"
 
+# Unset these variables if they're set
+for VARIABLE in CROSS_COMPILE{,_ARM32} CC; do
+    [[ -n $VARIABLE ]] && unset $VARIABLE
+done
+
 ## Variables
 
 # Telegram-specific environment setup
@@ -128,16 +133,16 @@ if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
     fi
 
     # Compiler prefixes
-    TC_64BIT_COMPILER=aarch64-linux-gnu-
-    TC_32BIT_COMPILER=arm-linux-gnueabi-
+    CROSS_COMPILE=aarch64-linux-gnu-
+    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 else
     # Aarch64 toolchain
     TC_64BIT_PATH=aarch64-linux-android-4.9/bin
-    TC_64BIT_COMPILER=aarch64-linux-android-
+    CROSS_COMPILE=aarch64-linux-android-
 
     # Aarch32 toolchain, required for compat vDSO
     TC_32BIT_PATH=arm-linux-androideabi-4.9/bin
-    TC_32BIT_COMPILER=arm-linux-androideabi-
+    CROSS_COMPILE_ARM32=arm-linux-androideabi-
 fi
 
 # Clang (if used) compiler
@@ -179,11 +184,6 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # Run this inside kernel source
 [[ ! -f Makefile || ! -d kernel ]] && die "Please run this script inside kernel source folder!"
 
-# Unset these variables if they're set
-for VARIABLE in CROSS_COMPILE{,_ARM32} CC; do
-    [[ -n $VARIABLE ]] && unset $VARIABLE
-done
-
 # Sanity checks
 info "Running sanity checks..."
 sleep 1
@@ -201,7 +201,7 @@ if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
     unset CLANG_VERSION
 fi
 # Missing GCC and/or Clang
-for VARIABLE in ${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${TC_64BIT_COMPILER}elfedit ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${TC_32BIT_COMPILER}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
+for VARIABLE in ${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE}elfedit ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE_ARM32}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
     find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
 # CAF's gcc-wrapper.py is shit, trust me
@@ -223,27 +223,10 @@ sleep 1
 # Make '**' recursive
 shopt -s globstar
 
-# Always use ccache for faster compiling if exists in PATH
-if [[ -n $(command -v ccache) ]]; then
-    if [[ -n $CLANG ]]; then
-        CC+="ccache "
-    else
-        CROSS_COMPILE+="ccache "
-        CROSS_COMPILE_ARM32+="ccache "
-    fi
-fi
-
-# Append (or set) CROSS_COMPILE{,_ARM32}
-CROSS_COMPILE+=$TC_64BIT_COMPILER
-CROSS_COMPILE_ARM32+=$TC_32BIT_COMPILER
-
 # Clang-only setup
 if [[ -n $CLANG ]]; then
-    # Additionally also append (or set) CC
-    CC+=clang
-
     # Define additional parameters that'll be passed to make
-    CLANG_EXTRAS=( "CC=$CC"
+    CLANG_EXTRAS=( "CC=clang"
                    "CLANG_TRIPLE=aarch64-linux-gnu"
                    "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" )
 
