@@ -99,6 +99,8 @@ parse_params() {
     done
 }
 
+# Assume target device is 64-bit
+IS_64BIT=true
 parse_params "$@"
 
 # Unset these variables if they're set
@@ -128,21 +130,30 @@ if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
     else
         # Aarch64 toolchain
         TC_64BIT_PATH=aarch64-linux-gnu/bin
-        # Aarch32 toolchain, required for compat vDSO
+        # Aarch32 toolchain, required for compat vDSO on ARM64 devices
         TC_32BIT_PATH=arm-linux-gnueabi/bin
     fi
 
     # Compiler prefixes
-    CROSS_COMPILE=aarch64-linux-gnu-
-    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+    if [[ -n $IS_64BIT ]]; then
+        CROSS_COMPILE=aarch64-linux-gnu-
+        CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+    else
+        CROSS_COMPILE=arm-linux-gnueabi-
+    fi
 else
     # Aarch64 toolchain
     TC_64BIT_PATH=aarch64-linux-android-4.9/bin
-    CROSS_COMPILE=aarch64-linux-android-
-
-    # Aarch32 toolchain, required for compat vDSO
+    # Aarch32 toolchain, required for compat vDSO on ARM64 devices
     TC_32BIT_PATH=arm-linux-androideabi-4.9/bin
-    CROSS_COMPILE_ARM32=arm-linux-androideabi-
+
+    # Compiler prefixes
+    if [[ -n $IS_64BIT ]]; then
+        CROSS_COMPILE=aarch64-linux-android-
+        CROSS_COMPILE_ARM32=arm-linux-androideabi-
+    else
+        CROSS_COMPILE=arm-linux-androideabi-
+    fi
 fi
 
 # Clang (if used) compiler
@@ -157,16 +168,22 @@ if [[ -n $CLANG && -z $STOCK ]]; then
 else
     TC_64BIT_PATH=$OPT_DIR/$TC_64BIT_PATH
     TC_32BIT_PATH=$OPT_DIR/$TC_32BIT_PATH
-    TC_PATHs=$TC_64BIT_PATH:$TC_32BIT_PATH
+    TC_PATHs=${IS_64BIT:+$TC_64BIT_PATH:}$TC_32BIT_PATH
 fi
 [[ -n $CLANG ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
 
 # Kernel build variables
 AK=$ROOT_DIR/AnyKernel2/$DEVICE
-ARCH=arm64
 NAME=KudKernel
+if [[ -n $IS_64BIT ]]; then
+    ARCH=arm64
+    KERNEL_NAME=Image.gz-dtb
+else
+    ARCH=arm
+    KERNEL_NAME=zImage-dtb
+fi
 OUT=$ROOT_DIR/kernels/build/$DEVICE
-DTS_DIR=$OUT/arch/arm64/boot/dts/qcom
+DTS_DIR=$OUT/arch/$ARCH/boot/dts/qcom
 [[ -n $RELEASE ]] && export KBUILD_BUILD_VERSION=$RELEASE
 # Enable system-as-root flag for selected devices
 [[ $DEVICE = grus ]] && SYSTEM_AS_ROOT=true
@@ -201,7 +218,7 @@ if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
     unset CLANG_VERSION
 fi
 # Missing GCC and/or Clang
-for VARIABLE in ${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE}elfedit ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE_ARM32}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
+for VARIABLE in ${IS_64BIT:+${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE}elfedit} ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE_ARM32:-$CROSS_COMPILE}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
     find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
 # CAF's gcc-wrapper.py is shit, trust me
@@ -226,9 +243,8 @@ shopt -s globstar
 # Clang-only setup
 if [[ -n $CLANG ]]; then
     # Define additional parameters that'll be passed to make
-    CLANG_EXTRAS=( "CC=clang"
-                   "CLANG_TRIPLE=aarch64-linux-gnu"
-                   "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" )
+    CLANG_EXTRAS=( "CC=clang" )
+    [[ -n $IS_64BIT ]] && CLANG_EXTRAS+=( "CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" ) || CLANG_EXTRAS+=( "CLANG_TRIPLE=arm-linux-gnueabi" )
 
     # Export custom compiler string for AOSP variant
     if [[ -n $STOCK ]]; then
@@ -238,14 +254,14 @@ if [[ -n $CLANG ]]; then
 fi
 
 # Set up main build targets
-[[ -n $SYSTEM_AS_ROOT ]] && TARGETS=( Image dtbs ) || TARGETS=( Image.gz-dtb )
+[[ -n $SYSTEM_AS_ROOT ]] && TARGETS=( Image dtbs ) || TARGETS=( "$KERNEL_NAME" )
 
 # Clean build directory
 info "Cleaning build directory..."
 # TODO: Completely clean build?
 make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
 # Delete earlier dtbo.img created by this build script
-rm -f "$OUT"/arch/arm64/boot/dts/qcom/dtbo.img
+rm -f "$DTS_DIR"/dtbo.img
 
 # Regenerate config for source changes when required
 if [[ -f $OUT/.config ]]; then
@@ -290,12 +306,12 @@ if [[ -z $BUILD_ONLY ]]; then
     if [[ -n $SYSTEM_AS_ROOT ]]; then
         mkdir "$AK"/files
         # Copy uncompressed kernel image and DTBs
-        for FILES in "$OUT"/arch/arm64/boot/Image "$DTS_DIR"/*.dtb; do
+        for FILES in "$OUT"/arch/$ARCH/boot/Image "$DTS_DIR"/*.dtb; do
             cp -f "$FILES" "$AK"/files
         done
     else
         # Copy compressed kernel with appended DTB image
-        cp -f "$OUT"/arch/arm64/boot/Image.gz-dtb "$AK"
+        cp -f "$OUT"/arch/$ARCH/boot/$KERNEL_NAME "$AK"
     fi
     # Copy dtbo.img for supported devices
     [[ -n $NEEDS_DTBO ]] && cp -f "$DTS_DIR"/dtbo.img "$AK"
