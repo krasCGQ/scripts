@@ -403,5 +403,4 @@ fi
 
 # Script ending
 info "That's it. Job well done!"
-shopt -u globstar
 echo -ne '\a'
