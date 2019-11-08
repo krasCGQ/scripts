@@ -224,12 +224,14 @@ fi
 for VARIABLE in ${IS_64BIT:+${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE}elfedit} ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE_ARM32:-$CROSS_COMPILE}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
     find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
-# CAF's gcc-wrapper.py is shit, trust me
-if [[ ! -f scripts/gcc-wrapper.py ]] && ! grep -q gcc-wrapper.py Makefile; then
-    GCC_WRAPPER=false
-fi
 # Missing device's AnyKernel resource
 [[ -z $BUILD_ONLY && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
+# CAF's gcc-wrapper.py is written in Python 2, but MSM kernels <= 3.10 doesn't
+# call python2 directly without a patch from newer kernels; we have to utilize
+# virtualenv2 neverthless.
+if [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
+    . $OPT_DIR/venv2/bin/activate
+fi
 
 # Script beginning
 info "Starting build script..."
@@ -295,8 +297,7 @@ info "Building kernel..."
 # Export new LD_LIBRARY_PATH before building; should be safe for all targets
 export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$OPT_DIR/$TC_UNIFIED_BASE/lib}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$TC_PATHs:$PATH \
-make -j"$THREADS" ${GCC_WRAPPER:+-s} \
-     ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
+make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
      "${TARGETS[@]}" ${HAS_MODULES:+modules}
 
