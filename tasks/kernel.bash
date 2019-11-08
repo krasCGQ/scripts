@@ -321,8 +321,8 @@ if [[ -z $BUILD_ONLY ]]; then
             ./* -x'!'README.md -xr'!'*.zip
 
         if [[ -n $RELEASE ]]; then
-            # Remove existing release zip if available
-            [[ -f $RELEASE_ZIP ]] && rm -f "$RELEASE_ZIP"
+            # Remove existing release zip
+            rm -f "$RELEASE_ZIP"
 
             # Sign zip for release
             zipsigner -s "$HOME"/.android-certs/releasekey "$ZIP" "$RELEASE_ZIP"
