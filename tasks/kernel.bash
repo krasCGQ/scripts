@@ -55,6 +55,9 @@ parse_params() {
                 case ${1,,} in
                     grus | mido | sirius)
                         DEVICE=${1,,} ;;
+                    scale)
+                        DEVICE=${1,,}
+                        unset IS_64BIT ;;
                     x00t)
                         DEVICE=${1^^} ;;
                     *)
