@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
+# shellcheck source=/dev/null
 # KudProject kernel build tasks
 # Copyright (C) 2018-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 ## Import common environment script
-# shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/../env/common
 
 ## Functions
@@ -106,6 +106,9 @@ parse_params() {
 IS_64BIT=true
 parse_params "$@"
 
+# Make '**' recursive
+shopt -s globstar
+
 # Unset these variables if they're set
 for VARIABLE in CROSS_COMPILE{,_ARM32} CC; do
     [[ -n $VARIABLE ]] && unset $VARIABLE
@@ -115,12 +118,15 @@ done
 
 # Telegram-specific environment setup
 TELEGRAM=$SCRIPTDIR/modules/telegram/telegram
+# Default message for posting to Telegram
+MSG="*[BuildCI]* Kernel build job for #$DEVICE"
 tg_getid kp-on
 
 # Paths
 ROOT_DIR=$HOME/KudProject
 OPT_DIR=/opt/kud
-
+# Kernel path on server and OSDN File Storage
+KERNEL_DIR=kernels/$DEVICE
 # Number of threads used
 THREADS=$(nproc --all)
 
@@ -136,7 +142,6 @@ if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
         # Aarch32 toolchain, required for compat vDSO on ARM64 devices
         TC_32BIT_PATH=arm-linux-gnueabi/bin
     fi
-
     # Compiler prefixes
     if [[ -n $IS_64BIT ]]; then
         CROSS_COMPILE=aarch64-linux-gnu-
@@ -149,7 +154,6 @@ else
     TC_64BIT_PATH=aarch64-linux-android-4.9/bin
     # Aarch32 toolchain, required for compat vDSO on ARM64 devices
     TC_32BIT_PATH=arm-linux-androideabi-4.9/bin
-
     # Compiler prefixes
     if [[ -n $IS_64BIT ]]; then
         CROSS_COMPILE=aarch64-linux-android-
@@ -158,13 +162,12 @@ else
         CROSS_COMPILE=arm-linux-androideabi-
     fi
 fi
-
-# Clang (if used) compiler
+# Clang compiler (if used)
 if [[ -n $CLANG ]]; then
     [[ -z $STOCK ]] && CLANG_PATH=clang/bin || CLANG_PATH=android-clang/clang-$CLANG_VERSION/bin
 fi
 
-# Set PATHs here to be used later while building
+# Set compiler PATHs here to be used later while building
 if [[ -n $CLANG && -z $STOCK ]]; then
     TC_UNIFIED_PATH=$OPT_DIR/$TC_UNIFIED_PATH
     TC_PATHs=$TC_UNIFIED_PATH
@@ -177,7 +180,9 @@ fi
 
 # Kernel build variables
 AK=$ROOT_DIR/AnyKernel2/$DEVICE
-NAME=KudKernel
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+# KudKernel is only available for mido; use current branch name for other devices
+[[ $DEVICE = mido ]] && NAME=KudKernel || NAME=$BRANCH
 if [[ -n $IS_64BIT ]]; then
     ARCH=arm64
     KERNEL_NAME=Image.gz-dtb
@@ -187,17 +192,15 @@ else
 fi
 OUT=$ROOT_DIR/kernels/build/$DEVICE
 DTS_DIR=$OUT/arch/$ARCH/boot/dts/qcom
-[[ -n $RELEASE ]] && export KBUILD_BUILD_VERSION=$RELEASE
+if [[ -n $RELEASE ]]; then
+    # Release builds: Set build version
+    export KBUILD_BUILD_VERSION=$RELEASE
+else
+    # CI builds: Set build username
+    export KBUILD_BUILD_USER=BuildCI
+fi
 # Enable system-as-root flag for selected devices
 [[ $DEVICE = grus ]] && SYSTEM_AS_ROOT=true
-
-# Default message for posting to Telegram
-MSG="*[BuildCI]* Kernel build job for #$DEVICE"
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-[[ $DEVICE != mido ]] && NAME=$BRANCH
-
-# Default kernel build username for CI builds
-[[ -z $RELEASE ]] && export KBUILD_BUILD_USER=BuildCI
 
 ## Commands
 
@@ -242,22 +245,17 @@ STARTED=true
 START_TIME=$(date +%s)
 sleep 1
 
-# Make '**' recursive
-shopt -s globstar
-
 # Clang-only setup
 if [[ -n $CLANG ]]; then
     # Define additional parameters that'll be passed to make
     CLANG_EXTRAS=( "CC=clang" )
     [[ -n $IS_64BIT ]] && CLANG_EXTRAS+=( "CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" ) || CLANG_EXTRAS+=( "CLANG_TRIPLE=arm-linux-gnueabi" )
-
     # Export custom compiler string for AOSP variant
     if [[ -n $STOCK ]]; then
         KBUILD_COMPILER_STRING=$($CLANG_PATH/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
         export KBUILD_COMPILER_STRING
     fi
 fi
-
 # Set up main build targets
 [[ -n $SYSTEM_AS_ROOT ]] && TARGETS=( Image dtbs ) || TARGETS=( "$KERNEL_NAME" )
 
@@ -296,7 +294,7 @@ grep -q 'BUILD_ARM64_DT_OVERLAY=y' "$OUT"/.config && NEEDS_DTBO=true
 info "Building kernel..."
 # Export new LD_LIBRARY_PATH before building; should be safe for all targets
 export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$OPT_DIR/$TC_UNIFIED_BASE/lib}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-PATH=$(test -n $CLANG_PATH && echo "$CLANG_PATH:")$TC_PATHs:$PATH \
+PATH=${CLANG_PATH:+$CLANG_PATH:}$TC_PATHs:$PATH \
 make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
      "${TARGETS[@]}" ${HAS_MODULES:+modules}
@@ -333,7 +331,7 @@ if [[ -z $BUILD_ONLY ]]; then
         done
     fi
 
-    # Export here to be picked later
+    # Export zip name here to be picked later
     ZIP=$NAME-$DEVICE-$(date +%Y%m%d-%H%M).zip
     [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
 
@@ -343,23 +341,21 @@ if [[ -z $BUILD_ONLY ]]; then
         # Unlikely to fail; but we have to define this way to satisfy shellcheck
         cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 
-        7za a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" \
-            ./* -x'!'README.md -xr'!'*.zip
+        # Create with p7zip, excluding README and any other zip
+        7za a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" ./* -x'!'README.md -xr'!'*.zip
 
         if [[ -n $RELEASE ]]; then
             # Remove existing release zip
             rm -f "$RELEASE_ZIP"
-
             # Sign zip for release
             zipsigner -s "$HOME"/.android-certs/releasekey "$ZIP" "$RELEASE_ZIP"
-
             # Delete 'unsigned' zip
             rm -f "$ZIP"
         fi
     )
 fi
 
-# Notify successful build completion
+# Notify successful build
 tg_post "$MSG completed in $(show_duration)."
 unset STARTED
 
@@ -377,9 +373,6 @@ if [[ -n $UPLOAD ]]; then
     else
         # or to webserver for release zip
         (
-            # Kernel path
-            KERNEL_DIR=kernels/$DEVICE
-
             # Unlikely to fail; but we have to define this way to satisfy shellcheck
             cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 
