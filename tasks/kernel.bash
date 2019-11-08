@@ -260,11 +260,13 @@ fi
 [[ -n $SYSTEM_AS_ROOT ]] && TARGETS=( Image dtbs ) || TARGETS=( "$KERNEL_NAME" )
 
 # Clean build directory
-info "Cleaning build directory..."
-# TODO: Completely clean build?
-make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
-# Delete earlier dtbo.img created by this build script
-rm -f "$DTS_DIR"/dtbo.img
+if [[ -d $OUT/$DEVICE ]]; then
+    info "Cleaning build directory..."
+    # TODO: Completely clean build?
+    make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
+    # Delete earlier dtbo.img created by this build script
+    rm -f "$DTS_DIR"/dtbo.img
+fi
 
 # Regenerate config for source changes when required
 if [[ -f $OUT/.config ]]; then
