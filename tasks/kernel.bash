@@ -268,6 +268,10 @@ if [[ -d $OUT/$DEVICE ]]; then
     rm -f "$DTS_DIR"/dtbo.img
 fi
 
+# Linux kernel < 3.15 doesn't automatically create out folder without an upstream
+# patch. We have to do this manually otherwise such kernel will cause an error.
+[[ ! -d $OUT/$DEVICE ]] && mkdir -p "$OUT"/"$DEVICE"
+
 # Regenerate config for source changes when required
 if [[ -f $OUT/.config ]]; then
     info "Regenerating config for source changes..."
