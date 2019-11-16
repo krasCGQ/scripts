@@ -17,15 +17,13 @@ USER_DIR=$HOME
 GPG_TTY=$(tty)
 # GNU nano for text editor
 EDITOR=nano
-# Use ccache for faster compiling
-USE_CCACHE=true
 # My kernel identity in nutshell
 KBUILD_BUILD_USER=krasCGQ
 KBUILD_BUILD_HOST=KudProject
 # ClangBuiltLinux's tc-build build directory
 CBL_DIR=$HOME/build/clang
 # Export some variables to satisfy shellcheck requirements
-export USER_DIR GPG_TTY EDITOR USE_CCACHE KBUILD_BUILD_USER KBUILD_BUILD_HOST
+export USER_DIR GPG_TTY EDITOR KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
 # Source Telegram-specific script if exists
 [[ -f $SCRIPTDIR/env/telegram ]] && source "$SCRIPTDIR"/env/telegram
