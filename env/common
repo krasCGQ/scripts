@@ -85,18 +85,6 @@ zipsigner() {
     java -jar "$ZIPSIGNER" "$SIGNATURE"{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "$UNSIGNED" "$SIGNED"
 }
 
-# ClangBuiltLinux's build-llvm.py wrapper
-build-clang() {
-    local ARCH INSTALL_DIR
-    ARCH="AArch64;ARM;X86"
-    INSTALL_DIR=/opt/kud/clang
-
-    [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
-    [[ -d $INSTALL_DIR ]] && { rm -rf ${INSTALL_DIR}-old; mv -f $INSTALL_DIR{,-old}; }
-
-    "$SCRIPTDIR"/modules/clang/build-llvm.py -B "$CBL_DIR" -I $INSTALL_DIR -t $ARCH --lto thin -m native -u --use-good-revision
-}
-
 # ClangBuiltLinux's build-binutils.py wrapper
 build-binutils() {
     local ARCH INSTALL_DIR
@@ -109,5 +97,35 @@ build-binutils() {
     "$SCRIPTDIR"/modules/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t ${ARCH[@]} -u
 }
 
-# Run all CBL wrappers in one command
-alias build-all='build-clang && build-binutils'
+# Get latest Proton clang from GitHub releases
+get_proton-clang() {
+    local INSTALL_DIR NAME URL VERSION
+    INSTALL_DIR=/opt/kud/proton-clang
+
+    info "Obtaining latest version info..."
+    URL=$(curl -s https://api.github.com/repos/kdrag0n/proton-clang-build/releases/latest | grep -w browser_download_url | cut -d ':' -f 2,3 | sed -e 's/[[:space:]]//' -e 's/"//g')
+    NAME=$(basename "$URL")
+
+    info "Downloading $NAME..."
+    # can't download with all threads; will fail near completion.
+    if ! aria2c -d /tmp "$URL"; then
+        warn "Failed to download $NAME."
+        rm /tmp/"$NAME"
+        return 1
+    fi
+
+    if [[ -d $INSTALL_DIR ]]; then
+        info "Backing up old Clang build..."
+        [[ -d $INSTALL_DIR-old ]] && rm -r $INSTALL_DIR-old
+        mv -f $INSTALL_DIR{,-old}
+    fi
+
+    info "Extracting $NAME..."
+    tar -C /opt/kud -xf /tmp/"$NAME"
+    mv /opt/kud/"${NAME/.tar.zst}" $INSTALL_DIR
+    rm /tmp/"$NAME"
+
+    # {29} = last 28 letters of SHA-1 + trailing right parentheses
+    VERSION=$($INSTALL_DIR/bin/clang --version | head -1 | cut -d ' ' -f 1,2,4,6 | sed -e 's/.\{29\}$//')
+    info "Successfully installed $VERSION."
+}

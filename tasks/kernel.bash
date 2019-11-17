@@ -164,7 +164,7 @@ else
 fi
 # Clang compiler (if used)
 if [[ -n $CLANG ]]; then
-    [[ -z $STOCK ]] && CLANG_PATH=clang/bin || CLANG_PATH=android-clang/clang-$CLANG_VERSION/bin
+    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin || CLANG_PATH=android-clang/clang-$CLANG_VERSION/bin
 fi
 
 # Set compiler PATHs here to be used later while building
