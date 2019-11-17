@@ -212,23 +212,28 @@ fi
 info "Running sanity checks..."
 sleep 1
 
-# Missing and device choice
-[[ -z $DEVICE ]] && die "Missing device option!"
+# Missing device choice
+[[ -z $DEVICE ]] && die "Please specify target device."
 # Requested to only build; upload option is practically doing nothing
 if [[ -n $UPLOAD && -n $BUILD_ONLY ]]; then
     warn "Requested to only build but upload was assigned, disabling."
     unset UPLOAD
 fi
-# We're not going to assume Clang version for non-AOSP one
-if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
-    warn "Assigning Clang version is only meant for AOSP Clang, disabling."
-    unset CLANG_VERSION
+# Clang-specific checks
+if [[ -n $CLANG ]]; then
+    # Requested to use AOSP Clang, but desired version isn't specified
+    [[ -z $CLANG_VERSION && -n $STOCK ]] && die "Please specify AOSP Clang version to use."
+    # We're not going to assume Clang version for non-AOSP one
+    if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
+        warn "Assigning Clang version is only meant for AOSP Clang, disabling."
+        unset CLANG_VERSION
+    fi
 fi
 # Missing GCC and/or Clang
 for VARIABLE in ${IS_64BIT:+${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE}elfedit} ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE_ARM32:-$CROSS_COMPILE}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
     find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
 done
-# Missing device's AnyKernel resource
+# Build-only isn't requested, but missing device's AnyKernel resource
 [[ -z $BUILD_ONLY && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 # CAF's gcc-wrapper.py is written in Python 2, but MSM kernels <= 3.10 doesn't
 # call python2 directly without a patch from newer kernels; we have to utilize
