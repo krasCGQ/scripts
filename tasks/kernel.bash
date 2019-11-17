@@ -82,6 +82,10 @@ parse_params() {
                     *) die "Invalid version specified!" ;;
                 esac ;;
 
+            --debug)
+                # Assume section mismatch(es) debugging as a target
+                TARGETS=( "CONFIG_DEBUG_SECTION_MISMATCH=y" ) ;;
+
             -r | --release) shift
                 # Only integers are accepted
                 RELEASE=$1
@@ -104,15 +108,12 @@ parse_params() {
 
 # Assume target device is 64-bit
 IS_64BIT=true
+# Unset build targets just in case
+unset TARGETS
 parse_params "$@"
 
 # Make '**' recursive
 shopt -s globstar
-
-# Unset these variables if they're set
-for VARIABLE in CROSS_COMPILE{,_ARM32} CC; do
-    [[ -n $VARIABLE ]] && unset $VARIABLE
-done
 
 ## Variables
 
@@ -257,7 +258,7 @@ if [[ -n $CLANG ]]; then
     fi
 fi
 # Set up main build targets
-[[ -n $SYSTEM_AS_ROOT ]] && TARGETS=( Image dtbs ) || TARGETS=( "$KERNEL_NAME" )
+[[ -n $SYSTEM_AS_ROOT ]] && TARGETS+=( Image dtbs ) || TARGETS+=( "$KERNEL_NAME" )
 
 # Clean build directory
 if [[ -d $OUT/$DEVICE ]]; then
