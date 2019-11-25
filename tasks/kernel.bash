@@ -153,9 +153,9 @@ if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
     fi
 else
     # Aarch64 toolchain
-    TC_64BIT_PATH=aarch64-linux-android-4.9/bin
+    TC_64BIT_PATH=android/aarch64-linux-android-4.9/bin
     # Aarch32 toolchain, required for compat vDSO on ARM64 devices
-    TC_32BIT_PATH=arm-linux-androideabi-4.9/bin
+    TC_32BIT_PATH=android/arm-linux-androideabi-4.9/bin
     # Compiler prefixes
     if [[ -n $IS_64BIT ]]; then
         CROSS_COMPILE=aarch64-linux-android-
@@ -166,7 +166,7 @@ else
 fi
 # Clang compiler (if used)
 if [[ -n $CLANG ]]; then
-    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin || CLANG_PATH=android-clang/clang-$CLANG_VERSION/bin
+    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin || CLANG_PATH=android/clang-$CLANG_VERSION/bin
 fi
 
 # Set compiler PATHs here to be used later while building
@@ -181,7 +181,7 @@ fi
 [[ -n $CLANG ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
 
 # Kernel build variables
-AK=$ROOT_DIR/AnyKernel2/$DEVICE
+AK=$ROOT_DIR/AnyKernel/$DEVICE
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # KudKernel is only available for mido; use current branch name for other devices
 [[ $DEVICE = mido ]] && NAME=KudKernel || NAME=$BRANCH
@@ -192,7 +192,7 @@ else
     ARCH=arm
     KERNEL_NAME=zImage-dtb
 fi
-OUT=$ROOT_DIR/kernels/build/$DEVICE
+OUT=$ROOT_DIR/build/kernels/$DEVICE
 DTS_DIR=$OUT/arch/$ARCH/boot/dts/qcom
 if [[ -n $RELEASE ]]; then
     # Release builds: Set build version
