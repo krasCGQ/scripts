@@ -192,7 +192,7 @@ else
     ARCH=arm
     KERNEL_NAME=zImage-dtb
 fi
-OUT=$ROOT_DIR/build/kernels/$DEVICE
+OUT=/tmp/kernel-build/$DEVICE
 DTS_DIR=$OUT/arch/$ARCH/boot/dts/qcom
 if [[ -n $RELEASE ]]; then
     # Release builds: Set build version
