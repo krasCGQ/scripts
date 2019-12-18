@@ -99,13 +99,22 @@ build-binutils() {
 
 # Get latest Proton clang from GitHub releases
 get_proton-clang() {
-    local INSTALL_DIR NAME URL VERSION
+    local INSTALL_DIR LATEST NAME URL VERSION
     INSTALL_DIR=/opt/kud/proton-clang
 
     info "Obtaining latest version info..."
-    URL=$(curl -s https://api.github.com/repos/kdrag0n/proton-clang-build/releases/latest | grep -w browser_download_url | cut -d ':' -f 2,3 | sed -e 's/[[:space:]]//' -e 's/"//g')
-    NAME=$(basename "$URL")
+    curl -so /tmp/latest.json https://api.github.com/repos/kdrag0n/proton-clang-build/releases/latest
 
+    LATEST=$(grep -w tag_name /tmp/latest.json | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
+    if [[ $(cat $INSTALL_DIR/ClangVersion.txt 2> /dev/null) -eq $LATEST ]]; then
+        # we're up to date, skip.
+        info "Clang build $LATEST is up to date."
+        rm /tmp/latest.json
+        return
+    fi
+
+    URL=$(grep -w browser_download_url /tmp/latest.json | cut -d ':' -f 2,3 | sed -e 's/[[:space:]]//' -e 's/"//g')
+    NAME=$(basename "$URL")
     info "Downloading $NAME..."
     # can't download with all threads; will fail near completion.
     if ! aria2c -d /tmp "$URL"; then
@@ -123,6 +132,8 @@ get_proton-clang() {
     info "Extracting $NAME..."
     tar -C /opt/kud -xf /tmp/"$NAME"
     mv /opt/kud/"${NAME/.tar.zst}" $INSTALL_DIR
+    # write build version
+    echo "$LATEST" > $INSTALL_DIR/ClangVersion.txt
     rm /tmp/"$NAME"
 
     # {29} = last 28 letters of SHA-1 + trailing right parentheses
