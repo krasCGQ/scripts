@@ -202,13 +202,12 @@ alias aosp_deinit='check_sudo su -c "$(declare -f aosp_deinit) && aosp_deinit 2>
 _vk_install() {
     [[ $(whoami) != root ]] && return 1
 
-    local COMMON_DIR PKG_DIR VK_DIR
+    local PKG_DIR VK_DIR
 
-    COMMON_DIR=$USER_DIR/KudProject/aur
-    PKG_DIR=$COMMON_DIR/.packages
-    VK_DIR=$COMMON_DIR/linux-vk
+    PKG_DIR=/mnt/ssd/aur
+    VK_DIR=$HOME/KudProject/aur-src
 
-    pacman -U "$PKG_DIR"/linux-vk*"$1"-"$(uname -m)".pkg.tar*
+    pacman -U $PKG_DIR/linux-vk*"$1"-"$(uname -m)".pkg.tar*
     "$VK_DIR"/sign_modules.sh
 }
 vk_install() { check_sudo --preserve-env=SCRIPTDIR,USER_DIR su -c "$(declare -f _vk_install) && _vk_install $1"; }
