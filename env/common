@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 # shellcheck source=/dev/null
 # Common environment setup
-# Copyright (C) 2017-2019 Albert I (krasCGQ)
+# Copyright (C) 2017-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import treewide environment script
@@ -83,18 +83,6 @@ zipsigner() {
     info "Signing $(basename "$UNSIGNED") as $(basename "$SIGNED")..."
     # TODO: Something better than this?
     java -jar "$ZIPSIGNER" "$SIGNATURE"{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "$UNSIGNED" "$SIGNED"
-}
-
-# ClangBuiltLinux's build-binutils.py wrapper
-build-binutils() {
-    local ARCH INSTALL_DIR
-    ARCH=( aarch64 arm x86_64 )
-    INSTALL_DIR=/opt/kud/binutils
-
-    [[ ! -f $SCRIPTDIR/clang/.git ]] && { warn "Please init the submodule before continuing."; return 1; }
-    [[ -d $INSTALL_DIR ]] && { rm -rf ${INSTALL_DIR}-old; mv -f $INSTALL_DIR{,-old}; }
-
-    "$SCRIPTDIR"/modules/clang/build-binutils.py -B "$CBL_DIR" -I $INSTALL_DIR -t ${ARCH[@]} -u
 }
 
 # Get latest Proton clang from GitHub releases
