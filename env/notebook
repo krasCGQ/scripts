@@ -51,6 +51,8 @@ opus_convert() {
 
     # Return non-zero status if nothing to do
     [[ -z $SUPPORTED ]] && { warn "There's nothing to do."; return 1; }
+
+    return 0
 }
 
 # Setup environment for AOSP building
