@@ -42,12 +42,10 @@ opus_convert() {
     for SONG in ./*; do
         case "$SONG" in
             *.aiff|*.flac|*.wav)
-                # Declare that we have something to do!
-                SUPPORTED=true
-
                 # Not supporting wildcards for converting
                 opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 \
-                    "$SONG" "$(basename "$SONG" | sed 's/\(.*\)\..*/\1/').ogg" || return 1 ;;
+                        "$SONG" "$(basename "$SONG" | sed 's/\(.*\)\..*/\1/').ogg" || return 1
+                SUPPORTED=true ;;
         esac
     done
 
@@ -104,7 +102,6 @@ _vk_install() {
     [[ $(whoami) != root ]] && return 1
 
     local PKG_DIR VK_DIR
-
     PKG_DIR=/mnt/ssd/aur
     VK_DIR=$HOME/KudProject/aur-src
 
