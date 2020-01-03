@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # Environment setup for my notebook
-# Copyright (C) 2017-2019 Albert I (krasCGQ)
+# Copyright (C) 2017-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
@@ -208,10 +208,8 @@ _vk_install() {
     PKG_DIR=$COMMON_DIR/.packages
     VK_DIR=$COMMON_DIR/linux-vk
 
-    mount -B {"$SCRIPTDIR"/binds,/usr/bin}/gcc
     pacman -U "$PKG_DIR"/linux-vk*"$1"-"$(uname -m)".pkg.tar*
     "$VK_DIR"/sign_modules.sh
-    umount /usr/bin/gcc 2> /dev/null
 }
 vk_install() { check_sudo --preserve-env=SCRIPTDIR,USER_DIR su -c "$(declare -f _vk_install) && _vk_install $1"; }
 
