@@ -132,12 +132,15 @@ KERNEL_DIR=kernels/$DEVICE
 # Number of threads used
 THREADS=$(nproc --all)
 
+# Clang compiler (if used)
+if [[ -n $CLANG ]]; then
+    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin || CLANG_PATH=android/clang-$CLANG_VERSION/bin
+fi
 # GCC compiler
 if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
     if [[ -n $CLANG ]]; then
         # Unified Binutils path
-        TC_UNIFIED_BASE=binutils
-        TC_UNIFIED_PATH=$TC_UNIFIED_BASE/bin
+        [[ -d $OPT_DIR/binutils ]] && TC_UNIFIED_PATH=binutils/bin || TC_UNIFIED_PATH=$CLANG_PATH
     else
         # Aarch64 toolchain
         TC_64BIT_PATH=aarch64-linux-gnu/bin
@@ -163,10 +166,6 @@ else
     else
         CROSS_COMPILE=arm-linux-androideabi-
     fi
-fi
-# Clang compiler (if used)
-if [[ -n $CLANG ]]; then
-    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin || CLANG_PATH=android/clang-$CLANG_VERSION/bin
 fi
 
 # Set compiler PATHs here to be used later while building
@@ -300,7 +299,7 @@ grep -q 'BUILD_ARM64_DT_OVERLAY=y' "$OUT"/.config && NEEDS_DTBO=true
 # Let's build the kernel!
 info "Building kernel..."
 # Export new LD_LIBRARY_PATH before building; should be safe for all targets
-export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$OPT_DIR/$TC_UNIFIED_BASE/lib}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$(dirname $TC_UNIFIED_PATH)/lib}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 PATH=${CLANG_PATH:+$CLANG_PATH:}$TC_PATHs:$PATH \
 make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
