@@ -60,23 +60,17 @@ function aosp_init { (
     [[ $(whoami) != root ]] && return 1
 
     local PROJECT_DIR SRC_KERNEL_DIR AOSP_DIR DEST_KERNEL_DIR
-    PROJECT_DIR=$USER_DIR/KudProject
+    PROJECT_DIR=/mnt/ssd
     SRC_KERNEL_DIR=$PROJECT_DIR/kernels
-    AOSP_DIR=/mnt/android
-    DEST_KERNEL_DIR=$AOSP_DIR/xenonhd-p/kernel
+    AOSP_DIR=$PROJECT_DIR/android
+    DEST_KERNEL_DIR=$AOSP_DIR/lineage-16.0/kernel
 
-    # zRAM setup
-    modprobe zram
-    echo lz4hc > /sys/devices/virtual/block/zram0/comp_algorithm
-    echo 8G > /sys/devices/virtual/block/zram0/disksize
-    mkswap /dev/zram0
-    swapon --priority 100 /dev/zram0
+    # Turn off swap
+    swapoff /dev/sda1
 
-    # AOSP sparse image setup
-    mount -o nosuid,nodev,compress=zstd "$PROJECT_DIR"/android.img $AOSP_DIR
-    mount -B "$SRC_KERNEL_DIR"/X00T $DEST_KERNEL_DIR/asus/sdm660
-    mount -B "$SRC_KERNEL_DIR"/grus $DEST_KERNEL_DIR/xiaomi/sdm710
-    mount -B "$SRC_KERNEL_DIR"/mido $DEST_KERNEL_DIR/xiaomi/msm8953-3.18
+    # Mount kernel sources to proper directory
+    mount -B $SRC_KERNEL_DIR/grus $DEST_KERNEL_DIR/xiaomi/sdm710
+    mount -B $SRC_KERNEL_DIR/mido $DEST_KERNEL_DIR/xiaomi/msm8953-3.18
 ) || return 1; }
 alias aosp_init='check_sudo --preserve-env=USER_DIR su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
 
@@ -84,18 +78,14 @@ alias aosp_init='check_sudo --preserve-env=USER_DIR su -c "$(declare -f aosp_ini
 aosp_deinit() {(
     [[ $(whoami) != root ]] && return 1
 
-    if ! umount -R /mnt/android; then
-        (
-            cd /mnt/android/xenonhd-p/kernel || ROOT_DIR=/mnt/android/xenonhd-p/kernel/
-            umount ${ROOT_DIR}asus/sdm660
-            umount ${ROOT_DIR}xiaomi/msm8953-3.18
-            umount ${ROOT_DIR}xiaomi/sdm710
-        )
-        umount /mnt/android || umount -l /mnt/android
-    fi
+    cd /mnt/ssd/android/lineage-16.0/kernel
 
-    swapoff /dev/zram0
-    rmmod /dev/zram0
+    # Umount kernel source binds
+    umount xiaomi/msm8953-3.18
+    umount xiaomi/sdm710
+
+    # Turn on swap
+    swapon --priority -2 /dev/sda1
 ) || return 0; } # suppress non-zero exit status
 alias aosp_deinit='check_sudo su -c "$(declare -f aosp_deinit) && aosp_deinit 2> /dev/null"'
 
