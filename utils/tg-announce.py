@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2019 Albert I (krasCGQ)
+# Copyright (C) 2019-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from contextlib import suppress
@@ -13,7 +13,12 @@ def notify(msg):
     token = environ['TELEGRAM_TOKEN']
     chat_id = environ['TELEGRAM_CHAT']
     tg_url = 'https://api.telegram.org/bot' + token + '/SendMessage'
-    query = { 'chat_id': chat_id, 'text': msg, 'parse_mode': 'Markdown' }
+    query = {
+        'chat_id': chat_id,
+        'text': msg,
+        'parse_mode': 'Markdown',
+        'disable_web_page_preview': 'true'
+    }
 
     return post(tg_url, data=query)
 
