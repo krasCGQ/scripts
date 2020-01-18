@@ -10,6 +10,24 @@ from argparse import ArgumentParser
 from feedparser import parse
 from requests import post
 
+# get content hash from a file using sha384
+def get_hash(file):
+    if exists(file):
+        file = open(file, 'rb')
+        hash = sha384(file.read()).hexdigest()
+        file.close()
+    else:
+        # assume empty
+        hash = ''
+
+    return hash
+
+# write content to a file
+def write_to(file, content):
+    file = open(file, 'w+')
+    file.write(content)
+    file.close()
+
 # telegram sendMessage wrapper
 def notify(msg):
     token = environ['TELEGRAM_TOKEN']
@@ -46,15 +64,8 @@ def linux_announce():
                 # version naming: x.y-version
                 version_file = join(path + '/' + version + '-version')
 
-            if exists(version_file):
-                # use sha384 to get content checksum
-                file = open(version_file, 'rb')
-                hash_a = sha384(file.read()).hexdigest()
-                file.close()
-            else:
-                # assume empty
-                hash_a = ''
-
+            # get content hash if any
+            hash_a = get_hash(version_file)
             # sha384 of the new version
             hash_b = sha384(str.encode(list.entries[i].title)).hexdigest()
 
@@ -72,11 +83,8 @@ def linux_announce():
                     msg += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[0] + '.x/ChangeLog-' + details[2] + ')'
 
                 notify(msg)
-
                 # write new version
-                file = open(version_file, 'w+')
-                file.write(list.entries[i].title)
-                file.close()
+                write_to(version_file, list.entries[i].title)
 
 # main functions
 if __name__ == '__main__':
