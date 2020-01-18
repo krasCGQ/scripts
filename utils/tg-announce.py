@@ -2,13 +2,15 @@
 # Copyright (C) 2019-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from contextlib import suppress
-from feedparser import parse
 from hashlib import sha384
-from os import environ, mkdir, remove
+from os import environ, makedirs, remove
 from os.path import exists, join, isdir
+
+from argparse import ArgumentParser
+from feedparser import parse
 from requests import post
 
+# telegram sendMessage wrapper
 def notify(msg):
     token = environ['TELEGRAM_TOKEN']
     chat_id = environ['TELEGRAM_CHAT']
@@ -22,31 +24,41 @@ def notify(msg):
 
     return post(tg_url, data=query)
 
-def main():
+# linux kernel announcement
+def linux_announce():
+    # url of release rss
     korg_url = 'https://www.kernel.org/feeds/kdist.xml'
     list = parse(korg_url)
 
+    # from first to last
     for i in range (0, len(list.entries)):
         # skip linux-next; we only want stable and mainline releases
         if 'linux-next' not in list.entries[i].title:
+            # release details is under id
             details = list.entries[i].id.split(',')
-            # mainline must be treated differently
+
             if 'mainline' in list.entries[i].title:
+                # mainline must be treated differently
                 version_file = join(path + '/mainline-version')
             else:
                 release = details[2].split('.')
                 version = release[0] + '.' + release[1]
+                # version naming: x.y-version
                 version_file = join(path + '/' + version + '-version')
 
             if exists(version_file):
+                # use sha384 to get content checksum
                 file = open(version_file, 'rb')
                 hash_a = sha384(file.read()).hexdigest()
                 file.close()
             else:
+                # assume empty
                 hash_a = ''
 
+            # sha384 of the new version
             hash_b = sha384(str.encode(list.entries[i].title)).hexdigest()
 
+            # both hashes are different, announce it
             if hash_a != hash_b:
                 if 'mainline' in list.entries[i].title:
                     msg = '*New Linux mainline release available!*\n'
@@ -66,14 +78,23 @@ def main():
                 file.write(list.entries[i].title)
                 file.close()
 
+# main functions
 if __name__ == '__main__':
-    path = environ['HOME'] + '/.korg-announce'
+    parser = ArgumentParser(description='All-in-one Telegram announcement script using Telegram Bot API.')
+    parser.add_argument('-t', '--type', help='select announcement type desired',
+                        type=str, choices=['linux'])
 
-    with suppress(FileExistsError):
-        if not isdir(path):
-            with suppress(FileNotFoundError):
-                remove(path)
+    args = parser.parse_args()
 
-        mkdir(path)
+    path = environ['HOME'] + '/.tg-announce/'
+    # attempt removal of file of same name
+    if exists(path) and not isdir(path):
+        remove(path)
 
-    main()
+    path = path + args.type
+    # create cache directory if not exists
+    if not exists(path):
+        makedirs(path)
+
+    if args.type == 'linux':
+        linux_announce()
