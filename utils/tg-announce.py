@@ -48,11 +48,6 @@ def main():
             hash_b = sha384(str.encode(list.entries[i].title)).hexdigest()
 
             if hash_a != hash_b:
-                # write new version
-                file = open(version_file, 'w+')
-                file.write(list.entries[i].title)
-                file.close()
-
                 if 'mainline' in list.entries[i].title:
                     msg = '*New Linux mainline release available!*\n'
                 else:
@@ -65,6 +60,11 @@ def main():
                     msg += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[0] + '.x/ChangeLog-' + details[2] + ')'
 
                 notify(msg)
+
+                # write new version
+                file = open(version_file, 'w+')
+                file.write(list.entries[i].title)
+                file.close()
 
 if __name__ == '__main__':
     path = environ['HOME'] + '/.korg-announce'
