@@ -86,11 +86,49 @@ def linux_announce():
                 # write new version
                 write_to(version_file, list.entries[i].title)
 
+# OSDN File Storage announcement
+def osdn_announce():
+    # project name
+    project_name = 'kudproject'
+    # url of the project
+    base_url = 'https://osdn.net/projects/' + project_name
+    osdn_url = base_url + '/storage/!rss'
+    list = parse(osdn_url)
+
+    # start from the oldest
+    for i in range(len(list.entries) - 1, -1, -1):
+        # get the file name instead of full path
+        name = list.entries[i].title.split('/')[-1]
+        date = list.entries[i].published
+        # use shortlink provided by OSDN
+        url = 'https://osdn.net/dl/' + project_name + '/' + name
+        # cache file: use file name
+        cache_file = join(path + '/' + name)
+
+        # get content hash if any
+        hash_a = get_hash(cache_file)
+        # sha384 of the new version
+        hash_b = sha384(str.encode(list.entries[i].title)).hexdigest()
+
+        # both hashes are different, announce it
+        if hash_a != hash_b:
+            # i hab nu idea pls halp // pun intended
+            msg = '*New file detected on *[KudProject](' + base_url + ')*\'s OSDN!*\n'
+            msg += '\n'
+            msg += '`' + name + '`\n'
+            msg += 'Upload date: ' + date + '\n'
+            msg += '\n'
+            msg += '[Download](' + url + ')'
+
+            notify(msg)
+            # write new version
+            write_to(cache_file, list.entries[i].title)
+
 # main functions
 if __name__ == '__main__':
     parser = ArgumentParser(description='All-in-one Telegram announcement script using Telegram Bot API.')
     parser.add_argument('-t', '--type', help='select announcement type desired',
-                        type=str, choices=['linux'])
+                        type=str, choices=['linux', 'osdn'])
 
     args = parser.parse_args()
 
@@ -106,3 +144,5 @@ if __name__ == '__main__':
 
     if args.type == 'linux':
         linux_announce()
+    elif args.type == 'osdn':
+        osdn_announce()
