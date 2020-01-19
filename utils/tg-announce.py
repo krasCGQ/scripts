@@ -132,12 +132,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    path = environ['HOME'] + '/.tg-announce/'
+    path = join(environ['HOME'] + '/.tg-announce/')
     # attempt removal of file of same name
     if exists(path) and not isdir(path):
         remove(path)
 
-    path = path + args.type
+    path = join(path + args.type)
     # create cache directory if not exists
     if not exists(path):
         makedirs(path)
