@@ -30,17 +30,15 @@ def write_to(file, content):
 
 # telegram sendMessage wrapper
 def notify(msg):
-    token = environ['TELEGRAM_TOKEN']
-    chat_id = environ['TELEGRAM_CHAT']
-    tg_url = 'https://api.telegram.org/bot' + token + '/SendMessage'
+    tg_url = 'https://api.telegram.org/bot' + environ['TELEGRAM_TOKEN'] + '/SendMessage'
     query = {
-        'chat_id': chat_id,
+        'chat_id': environ['TELEGRAM_CHAT'],
         'text': msg,
         'parse_mode': 'Markdown',
         'disable_web_page_preview': 'true'
     }
 
-    return post(tg_url, data=query)
+    post(tg_url, data=query)
 
 # linux kernel announcement
 def linux_announce():
