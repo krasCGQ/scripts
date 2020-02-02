@@ -137,7 +137,7 @@ if [[ -n $CLANG ]]; then
     [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin || CLANG_PATH=android/clang-$CLANG_VERSION/bin
 fi
 # GCC compiler
-if [[ -z $STOCK ]] || [[ -n $CLANG && $DEVICE = mido ]]; then
+if [[ -z $STOCK ]]; then
     if [[ -n $CLANG ]]; then
         # Unified Binutils path
         [[ -d $OPT_DIR/binutils ]] && TC_UNIFIED_PATH=binutils/bin || TC_UNIFIED_PATH=$CLANG_PATH
