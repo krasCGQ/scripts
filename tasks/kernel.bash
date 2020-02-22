@@ -74,12 +74,12 @@ parse_params() {
             -cv | --clang-version) shift
                 # Supported latest AOSP Clang versions:
                 case $1 in
-                    5) CLANG_VERSION=4053586 ;;  # 5.0.300080
-                    6) CLANG_VERSION=4691093 ;;  # 6.0.2
-                    7) CLANG_VERSION=r328903 ;;  # 7.0.2
-                    8) CLANG_VERSION=r349610b ;; # 8.0.9
-                    9) CLANG_VERSION=r365631c ;; # 9.0.8
-                    10) CLANG_VERSION=r370808 ;; # 10.0.1
+                     5) CLANG_VERSION=4053586 ;;  # 5.0.300080
+                     6) CLANG_VERSION=4691093 ;;  # 6.0.2
+                     7) CLANG_VERSION=r328903 ;;  # 7.0.2
+                     8) CLANG_VERSION=r349610b ;; # 8.0.9
+                     9) CLANG_VERSION=r365631c ;; # 9.0.8
+                    10) CLANG_VERSION=r377782b ;; # 10.0.4
                     *) die "Invalid version specified!" ;;
                 esac ;;
 
