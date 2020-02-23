@@ -55,39 +55,44 @@ opus_convert() {
     return 0
 }
 
-# Setup environment for AOSP building
-function aosp_init { (
+# Setup zRAM to take the whole RAM size
+function zram_init { (
     [[ $(whoami) != root ]] && return 1
 
-    local PROJECT_DIR SRC_KERNEL_DIR AOSP_DIR DEST_KERNEL_DIR
-    PROJECT_DIR=/mnt/ssd
-    SRC_KERNEL_DIR=$PROJECT_DIR/kernels
-    AOSP_DIR=$PROJECT_DIR/android
-    DEST_KERNEL_DIR=$AOSP_DIR/lineage-16.0/kernel
+    local MEMSIZE
+    # Get amount of physical memory (in kB)
+    MEMSIZE=$(grep MemTotal /proc/meminfo | awk '{print $2$3}')
 
-    # Turn off swap
+    # Turn off HDD swap first
     swapoff /dev/sda1
 
-    # Mount kernel sources to proper directory
-    mount -B $SRC_KERNEL_DIR/grus $DEST_KERNEL_DIR/xiaomi/sdm710
-    mount -B $SRC_KERNEL_DIR/mido $DEST_KERNEL_DIR/xiaomi/msm8953-3.18
-) || return 1; }
-alias aosp_init='check_sudo --preserve-env=USER_DIR su -c "$(declare -f aosp_init) && aosp_init &> /dev/null"'
+    # Setup zRAM as swap
+    modprobe zram
+    # Write same amount of physical memory
+    echo "$MEMSIZE" > /sys/devices/virtual/block/zram0/disksize
+    mkswap /dev/zram0
+    swapon -p 100 /dev/zram0
 
-# De-init AOSP environment set before
-aosp_deinit() {(
+    # Set swappiness to 100
+    sysctl vm.swappiness=100
+) || return 1; }
+alias zram_init='check_sudo su -c "$(declare -f zram_init) && zram_init &> /dev/null"'
+
+# De-init zRAM configuration set before
+zram_deinit() {(
     [[ $(whoami) != root ]] && return 1
 
-    cd /mnt/ssd/android/lineage-16.0/kernel
+    # Turn off zRAM
+    swapoff /dev/zram0
+    rmmod zram
 
-    # Umount kernel source binds
-    umount xiaomi/msm8953-3.18
-    umount xiaomi/sdm710
+    # Turn back on HDD swap
+    swapon -p -2 /dev/sda1
 
-    # Turn on swap
-    swapon --priority -2 /dev/sda1
+    # Set swappiness to 1
+    sysctl vm.swappiness=1
 ) || return 0; } # suppress non-zero exit status
-alias aosp_deinit='check_sudo su -c "$(declare -f aosp_deinit) && aosp_deinit 2> /dev/null"'
+alias zram_deinit='check_sudo su -c "$(declare -f zram_deinit) && zram_deinit &> /dev/null"'
 
 # Quick way to install MoeSyndrome Kernel packages
 _vk_install() {
