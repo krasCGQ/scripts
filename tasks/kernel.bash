@@ -300,6 +300,7 @@ grep -q 'BUILD_ARM64_DT_OVERLAY=y' "$OUT"/.config && NEEDS_DTBO=true
 info "Building kernel..."
 # Export new LD_LIBRARY_PATH before building; should be safe for all targets
 export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$(dirname $TC_UNIFIED_PATH)/lib}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export KBUILD_BUILD_TIMESTAMP="$(date)"
 PATH=${CLANG_PATH:+$CLANG_PATH:}$TC_PATHs:$PATH \
 make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
