@@ -385,7 +385,6 @@ if [[ -n $UPLOAD ]]; then
 
             info "Uploading $RELEASE_ZIP..."
             if { rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/;
-                 rsync -qP -e 'ssh -p 1983' --relative "$RELEASE_ZIP" kud@dl.wafuu.id:/var/www/dl.wafuu.id/"$KERNEL_DIR"/;
                  rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/; }; then
                 info "$RELEASE_ZIP uploaded successfully." \
                      "GitHub releases and AndroidFileHost uploads need manual intervention, though."
