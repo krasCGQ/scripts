@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck source=/dev/null
 # KudProject kernel build tasks
-# Copyright (C) 2018-2019 Albert I (krasCGQ)
+# Copyright (C) 2018-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 ## Import common environment script
