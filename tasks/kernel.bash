@@ -109,8 +109,8 @@ parse_params() {
 
 # Assume target device is 64-bit
 IS_64BIT=true
-# Unset build targets just in case
-unset TARGETS
+# Unset the following parameters just in case
+unset LIB_PATHs TARGETS
 parse_params "$@"
 
 # Make '**' recursive
@@ -138,15 +138,10 @@ if [[ -n $CLANG ]]; then
 fi
 # GCC compiler
 if [[ -z $STOCK ]]; then
-    if [[ -n $CLANG ]]; then
-        # Unified Binutils path
-        [[ -d $OPT_DIR/binutils ]] && TC_UNIFIED_PATH=binutils/bin || TC_UNIFIED_PATH=$CLANG_PATH
-    else
-        # Aarch64 toolchain
-        TC_64BIT_PATH=aarch64-linux-gnu/bin
-        # Aarch32 toolchain, required for compat vDSO on ARM64 devices
-        TC_32BIT_PATH=arm-linux-gnueabi/bin
-    fi
+    # Aarch64 toolchain
+    TC_64BIT_PATH=aarch64-linux-gnu/bin
+    # Aarch32 toolchain, required for compat vDSO on ARM64 devices
+    TC_32BIT_PATH=arm-linux-gnueabi/bin
     # Compiler prefixes
     if [[ -n $IS_64BIT ]]; then
         CROSS_COMPILE=aarch64-linux-gnu-
@@ -168,16 +163,33 @@ else
     fi
 fi
 
-# Set compiler PATHs here to be used later while building
-if [[ -n $CLANG && -z $STOCK ]]; then
-    TC_UNIFIED_PATH=$OPT_DIR/$TC_UNIFIED_PATH
-    TC_PATHs=$TC_UNIFIED_PATH
-else
-    TC_64BIT_PATH=$OPT_DIR/$TC_64BIT_PATH
-    TC_32BIT_PATH=$OPT_DIR/$TC_32BIT_PATH
-    TC_PATHs=${IS_64BIT:+$TC_64BIT_PATH:}$TC_32BIT_PATH
+# Set compiler PATHs and LD_LIBRARY_PATHs here to be used later while building
+# FIXME: Find a way to reverse this; introduce a variable for now
+[[ -n $CLANG && -z $STOCK ]] && CLANG_CUSTOM=true
+if [[ -n $CLANG ]]; then
+    CLANG_PATH=$OPT_DIR/$CLANG_PATH
+    LD_PATHs=${CLANG_PATH/bin/lib}
+    if [[ -n $STOCK ]]; then
+        # Include lib64 for AOSP Clang
+        LD_PATHs+=:${CLANG_PATH/bin/lib64}
+    elif [[ -d $OPT_DIR/binutils ]]; then
+        # Only include Binutils if they're separate from Clang directory
+        TC_UNIFIED_PATH=$OPT_DIR/binutils/bin
+        TC_PATHs=$TC_UNIFIED_PATH
+        LD_PATHs+=:$OPT_DIR/binutils/lib
+    fi
 fi
-[[ -n $CLANG ]] && CLANG_PATH=$OPT_DIR/$CLANG_PATH
+if [[ -z $CLANG_CUSTOM ]]; then
+    if [[ -n $IS_64BIT ]]; then
+        TC_64BIT_PATH=$OPT_DIR/$TC_64BIT_PATH
+        TC_PATHs=$TC_64BIT_PATH
+        LD_PATHs+=${LD_PATHs:+:}${TC_64BIT_PATH/bin/lib}
+    fi
+    TC_32BIT_PATH=$OPT_DIR/$TC_32BIT_PATH
+    TC_PATHs+=${TC_PATHs:+:}$TC_32BIT_PATH
+    LD_PATHs+=${LD_PATHs:+:}${TC_32BIT_PATH/bin/lib}
+fi
+export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 # Kernel build variables
 AK=$ROOT_DIR/AnyKernel/$DEVICE
@@ -230,8 +242,8 @@ if [[ -n $CLANG ]]; then
     fi
 fi
 # Missing GCC and/or Clang
-for VARIABLE in ${IS_64BIT:+${TC_64BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE}elfedit} ${TC_32BIT_PATH:-$TC_UNIFIED_PATH}/${CROSS_COMPILE_ARM32:-$CROSS_COMPILE}elfedit ${CLANG_PATH:+$CLANG_PATH/clang}; do
-    find $VARIABLE &> /dev/null || die "$BLD$(basename "$VARIABLE")$RST doesn't exist in defined path."
+for BIN in ${CROSS_COMPILE}elfedit ${CROSS_COMPILE_ARM32:+${CROSS_COMPILE_ARM32}elfedit} ${CLANG:+clang}; do
+    PATH="${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs:}$PATH" command -v "$BIN" > /dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
 done
 # Build-only isn't requested, but missing device's AnyKernel resource
 [[ -z $BUILD_ONLY && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
@@ -298,13 +310,13 @@ grep -q 'BUILD_ARM64_DT_OVERLAY=y' "$OUT"/.config && NEEDS_DTBO=true
 
 # Let's build the kernel!
 info "Building kernel..."
-# Export new LD_LIBRARY_PATH before building; should be safe for all targets
-export LD_LIBRARY_PATH=${TC_UNIFIED_PATH:+$(dirname $TC_UNIFIED_PATH)/lib}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-export KBUILD_BUILD_TIMESTAMP="$(date)"
-PATH=${CLANG_PATH:+$CLANG_PATH:}$TC_PATHs:$PATH \
+# Export timestamp earlier before build
+KBUILD_BUILD_TIMESTAMP="$(date)"
+export KBUILD_BUILD_TIMESTAMP
+PATH=${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs}:$PATH \
 make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
-     CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32" "${CLANG_EXTRAS[@]}" \
-     "${TARGETS[@]}" ${HAS_MODULES:+modules}
+     ${CROSS_COMPILE_ARM32:+CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32"} \
+     "${CLANG_EXTRAS[@]}" "${TARGETS[@]}" ${HAS_MODULES:+modules}
 
 # Build dtbo.img if needed
 if [[ -n $NEEDS_DTBO ]]; then
