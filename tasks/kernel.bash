@@ -43,6 +43,9 @@ trap '{
     tg_error
 }' ERR
 
+# Wait every process before exit
+trap 'wait' EXIT
+
 ## Parse parameters
 
 parse_params() {
@@ -257,7 +260,7 @@ fi
 # Script beginning
 info "Starting build script..."
 tg_post "$MSG has been started on \`$(hostname)\`." \
-        "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*."
+        "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
 # Explicitly declare build script startup
 STARTED=true
 START_TIME=$(date +%s)
@@ -375,7 +378,7 @@ if [[ -z $BUILD_ONLY ]]; then
 fi
 
 # Notify successful build
-tg_post "$MSG completed in $(show_duration)."
+tg_post "$MSG completed in $(show_duration)." &
 unset STARTED
 
 # Upload kernel zip if requested, else the end
@@ -383,11 +386,11 @@ if [[ -n $UPLOAD ]]; then
     if [[ -z $RELEASE ]]; then
         # To Telegram
         info "Uploading $ZIP to Telegram..."
-        tg_post "*[BuildCI]* Uploading test build..."
+        tg_post "*[BuildCI]* Uploading test build..." &
         if ! "$TELEGRAM" -f "$AK/$ZIP" -c "-1001494373196" \
             "New #$DEVICE test build with branch $BRANCH at commit $(git_pretty)."; then
             warn "Failed to upload $ZIP."
-            tg_post "*[BuildCI]* Unable to upload the build."
+            tg_post "*[BuildCI]* Unable to upload the build." &
         fi
     else
         # or to webserver for release zip
@@ -404,7 +407,7 @@ if [[ -n $UPLOAD ]]; then
                 tg_post "*New KudKernel build is available!*" \
                         "*Name:* \`$RELEASE_ZIP\`" \
                         "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
-                        "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [Mirror](https://dl.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) - [CDN](https://dl-cdn.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)"
+                        "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [Mirror](https://dl.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) - [CDN](https://dl-cdn.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
             else
                 warn "Failed to upload $RELEASE_ZIP."
             fi
