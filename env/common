@@ -20,8 +20,6 @@ EDITOR=nano
 # My kernel identity in nutshell
 KBUILD_BUILD_USER=krasCGQ
 KBUILD_BUILD_HOST=KudProject
-# ClangBuiltLinux's tc-build build directory
-CBL_DIR=$HOME/build/clang
 # Export some variables to satisfy shellcheck requirements
 export USER_DIR GPG_TTY EDITOR KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
