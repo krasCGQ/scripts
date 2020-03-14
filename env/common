@@ -87,13 +87,12 @@ zipsigner() {
 
 # Get latest Proton clang from GitHub releases
 get_proton-clang() {
-    local INSTALL_DIR LATEST NAME URL VERSION
+    local INSTALL_DIR LATEST NAME REPO URL VERSION
     INSTALL_DIR=/opt/kud/proton-clang
+    REPO=kdrag0n/proton-clang
 
     info "Obtaining latest version info..."
-    curl -so /tmp/latest.json https://api.github.com/repos/kdrag0n/proton-clang-build/releases/latest
-
-    LATEST=$(grep -w tag_name /tmp/latest.json | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
+    LATEST=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -w tag_name | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
     if [[ $(cat $INSTALL_DIR/ClangVersion.txt 2> /dev/null) -eq $LATEST ]]; then
         # we're up to date, skip.
         info "Clang build $LATEST is up to date."
@@ -101,10 +100,9 @@ get_proton-clang() {
         return
     fi
 
-    URL=$(grep -w browser_download_url /tmp/latest.json | cut -d ':' -f 2,3 | sed -e 's/[[:space:]]//' -e 's/"//g')
-    NAME=$(basename "$URL")
+    URL=https://github.com/$REPO/archive/$LATEST.tar.gz
+    NAME=$(echo $REPO | cut -d "/" -f 2)-$LATEST.tar.gz
     info "Downloading $NAME..."
-    # can't download with all threads; will fail near completion.
     if ! aria2c -d /tmp "$URL"; then
         warn "Failed to download $NAME."
         rm /tmp/"$NAME"
@@ -119,7 +117,7 @@ get_proton-clang() {
 
     info "Extracting $NAME..."
     tar -C /opt/kud -xf /tmp/"$NAME"
-    mv /opt/kud/"${NAME/.tar.zst}" $INSTALL_DIR
+    mv /opt/kud/"${NAME/.tar.gz}" $INSTALL_DIR
     # write build version
     echo "$LATEST" > $INSTALL_DIR/ClangVersion.txt
     rm /tmp/"$NAME"
