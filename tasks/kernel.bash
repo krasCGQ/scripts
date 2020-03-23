@@ -56,11 +56,16 @@ parse_params() {
             -d | --device) shift
                 # Supported devices:
                 case ${1,,} in
-                    grus | mido | sirius)
+                    grus | sirius)
+                        DEVICE=${1,,}
+                        PAGE_SIZE=4096 ;;
+                    mido)
                         DEVICE=${1,,} ;;
                     scale)
                         DEVICE=${1,,}
-                        unset IS_64BIT ;;
+                        unset IS_64BIT
+                        NEEDS_DT_IMG=true
+                        PAGE_SIZE=2048 ;;
                     x00t)
                         DEVICE=${1^^} ;;
                     *)
@@ -115,6 +120,8 @@ IS_64BIT=true
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
 parse_params "$@"
+# Enable system-as-root flag for selected devices
+[[ $DEVICE = grus ]] && SYSTEM_AS_ROOT=true
 
 # Make '**' recursive
 shopt -s globstar
@@ -205,15 +212,22 @@ if [[ $DEVICE = mido ]]; then
 else
     NAME=$BRANCH
 fi
+# Set required ARCH, kernel name
 if [[ -n $IS_64BIT ]]; then
     ARCH=arm64
-    KERNEL_NAME=Image.gz-dtb
+    # Older device that needs dt.img instead of DTB appended to kernel image
+    [[ -n $NEEDS_DT_IMG ]] && KERNEL_NAME=Image.gz || KERNEL_NAME=Image.gz-dtb
 else
     ARCH=arm
-    KERNEL_NAME=zImage-dtb
+    # Older device that needs dt.img instead of DTB appended to kernel image
+    [[ -n $NEEDS_DT_IMG ]] && KERNEL_NAME=zImage || KERNEL_NAME=zImage-dtb
 fi
+# For system as root, ship uncompressed kernel instead for Magisk patching
+[[ -n $SYSTEM_AS_ROOT ]] && KERNEL_NAME=Image
+# This is our main target
+[[ -n $SYSTEM_AS_ROOT || -n $NEEDS_DT_IMG ]] && TARGETS+=( "$KERNEL_NAME" dtbs) || TARGETS+=( "$KERNEL_NAME" )
 OUT=/tmp/kernel-build/$DEVICE
-DTS_DIR=$OUT/arch/$ARCH/boot/dts/qcom
+DTS_DIR=$OUT/arch/$ARCH/boot/dts
 if [[ -n $RELEASE ]]; then
     # Release builds: Set build version
     export KBUILD_BUILD_VERSION=$RELEASE
@@ -221,8 +235,6 @@ else
     # CI builds: Set build username
     export KBUILD_BUILD_USER=BuildCI
 fi
-# Enable system-as-root flag for selected devices
-[[ $DEVICE = grus ]] && SYSTEM_AS_ROOT=true
 
 ## Commands
 
@@ -283,16 +295,14 @@ if [[ -n $CLANG ]]; then
         export KBUILD_COMPILER_STRING
     fi
 fi
-# Set up main build targets
-[[ -n $SYSTEM_AS_ROOT ]] && TARGETS+=( Image dtbs ) || TARGETS+=( "$KERNEL_NAME" )
 
 # Clean build directory
 if [[ -d $OUT/$DEVICE ]]; then
     info "Cleaning build directory..."
     # TODO: Completely clean build?
     make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
-    # Delete earlier dtbo.img created by this build script
-    rm -f "$DTS_DIR"/dtbo.img
+    # Delete earlier dt{,bo}.img created by this build script
+    rm -f "$DTS_DIR"/dt{,bo}.img
 fi
 
 # Linux kernel < 3.15 doesn't automatically create out folder without an upstream
@@ -327,11 +337,15 @@ make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      ${CROSS_COMPILE_ARM32:+CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32"} \
      "${CLANG_EXTRAS[@]}" "${TARGETS[@]}" ${HAS_MODULES:+modules}
 
-# Build dtbo.img if needed
+# Build dt.img or dtbo.img if needed
 if [[ -n $NEEDS_DTBO ]]; then
     info "Creating dtbo.img..."
     python2 "$SCRIPTDIR"/modules/libufdt/utils/src/mkdtboimg.py \
-        create "$DTS_DIR"/dtbo.img --page_size=4096 "$DTS_DIR"/*.dtbo
+        create "$DTS_DIR"/dtbo.img --page_size=$PAGE_SIZE "$DTS_DIR"/**/*.dtbo
+elif [[ -n $NEEDS_DT_IMG ]]; then
+    info "Creating dt.img..."
+    "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage \
+        -s $PAGE_SIZE -o "$DTS_DIR"/dt.img -p "$OUT"/scripts/dtc/ "$DTS_DIR"/
 fi
 
 if [[ -z $BUILD_ONLY ]]; then
@@ -342,13 +356,15 @@ if [[ -z $BUILD_ONLY ]]; then
     if [[ -n $SYSTEM_AS_ROOT ]]; then
         mkdir "$AK"/files
         # Copy uncompressed kernel image and DTBs
-        for FILES in "$OUT"/arch/$ARCH/boot/Image "$DTS_DIR"/*.dtb; do
+        for FILES in "$OUT"/arch/$ARCH/boot/$KERNEL_NAME "$DTS_DIR"/**/*.dtb; do
             cp -f "$FILES" "$AK"/files
         done
     else
-        # Copy compressed kernel with appended DTB image
+        # Copy compressed kernel (optionally with appended DTB) image
         cp -f "$OUT"/arch/$ARCH/boot/$KERNEL_NAME "$AK"
     fi
+    # Copy dt.img when needed
+    [[ -n $NEEDS_DT_IMG ]] && cp -f "$DTS_DIR"/dt.img "$AK"
     # Copy dtbo.img for supported devices
     [[ -n $NEEDS_DTBO ]] && cp -f "$DTS_DIR"/dtbo.img "$AK"
     # Copy kernel modules if target device has them
