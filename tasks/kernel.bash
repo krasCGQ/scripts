@@ -197,8 +197,14 @@ export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 # Kernel build variables
 AK=$ROOT_DIR/AnyKernel/$DEVICE
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-# KudKernel is only available for mido; use current branch name for other devices
-[[ $DEVICE = mido ]] && NAME=KudKernel || NAME=$BRANCH
+# MoeSyndrome Kernel is only available for mido; use branch name for others
+if [[ $DEVICE = mido ]]; then
+    NAME=MoeSyndrome
+    # Define which variant we're building
+    [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
+else
+    NAME=$BRANCH
+fi
 if [[ -n $IS_64BIT ]]; then
     ARCH=arm64
     KERNEL_NAME=Image.gz-dtb
