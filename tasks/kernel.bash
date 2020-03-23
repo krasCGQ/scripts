@@ -160,16 +160,18 @@ if [[ -z $STOCK ]]; then
         CROSS_COMPILE=arm-linux-gnueabi-
     fi
 else
-    # Aarch64 toolchain
-    TC_64BIT_PATH=android/aarch64-linux-android-4.9/bin
-    # Aarch32 toolchain, required for compat vDSO on ARM64 devices
-    TC_32BIT_PATH=android/arm-linux-androideabi-4.9/bin
     # Compiler prefixes
     if [[ -n $IS_64BIT ]]; then
+        # Aarch64 toolchain
+        TC_64BIT_PATH=android/aarch64-linux-android-4.9/bin
         CROSS_COMPILE=aarch64-linux-android-
+
+        # Aarch32 toolchain, required for compat vDSO on ARM64 devices
+        TC_32BIT_PATH=android/arm-linux-androideabi-4.9/bin
         CROSS_COMPILE_ARM32=arm-linux-androideabi-
     else
-        CROSS_COMPILE=arm-linux-androideabi-
+        TC_32BIT_PATH=android/arm-eabi-4.8/bin
+        CROSS_COMPILE=arm-eabi-
     fi
 fi
 
