@@ -227,7 +227,7 @@ fi
 # For system as root, ship uncompressed kernel instead for Magisk patching
 [[ -n $SYSTEM_AS_ROOT ]] && KERNEL_NAME=Image
 # This is our main target
-[[ -n $SYSTEM_AS_ROOT || -n $NEEDS_DT_IMG ]] && TARGETS+=( "$KERNEL_NAME" dtbs) || TARGETS+=( "$KERNEL_NAME" )
+[[ -n $SYSTEM_AS_ROOT || -n $NEEDS_DT_IMG ]] && TARGETS+=( "$KERNEL_NAME" dtbs ) || TARGETS+=( "$KERNEL_NAME" )
 OUT=/tmp/kernel-build/$DEVICE
 DTS_DIR=$OUT/arch/$ARCH/boot/dts
 if [[ -n $RELEASE ]]; then
