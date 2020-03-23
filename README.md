@@ -10,8 +10,10 @@ $ git submodule update --init
 # or clone this repository recursively
 $ git clone --recursive git://github.com/krasCGQ/scripts
 
-# Python 3 scripts (installing distro-provided one is preferred, though)
-$ sudo pip3 install -r requirements.txt
+# Python 3 scripts, from PyPI in user mode (latest version whenever possible):
+$ python3 -m pip install --user -r requirements.txt
+# or from ones provided by distro (recommended, but not all may be available):
+$ sudo pacman -S $(for i in $(cat requirements.txt); do echo python-$i; done) # Arch Linux
 ```
 
 Enjoy!
