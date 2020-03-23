@@ -345,7 +345,7 @@ if [[ -n $NEEDS_DTBO ]]; then
 elif [[ -n $NEEDS_DT_IMG ]]; then
     info "Creating dt.img..."
     "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage \
-        -s $PAGE_SIZE -o "$DTS_DIR"/dt.img -p "$OUT"/scripts/dtc/ "$DTS_DIR"/
+        -s $PAGE_SIZE -o "$DTS_DIR"/dt.img -p "$OUT"/scripts/dtc/ "$DTS_DIR"/ > /dev/null
 fi
 
 if [[ -z $BUILD_ONLY ]]; then
