@@ -18,7 +18,7 @@ Enjoy!
 
 ## License
 
-### All scripts in this repository (excluding dependencies as submodules)
+### All scripts in this repository (excluding dependencies as submodules):
 
 ```
 Copyright (C) 2017-2020 Albert I (krasCGQ)
@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Complete license can be read [here](./LICENSE).
 
-### Also applies to [snippets/rom_sign](./snippets/rom_sign)
+### Also applies to [snippets/rom_sign](./snippets/rom_sign):
 
 ```
 Copyright 2017-2020 Albert I (krasCGQ)
@@ -58,3 +58,9 @@ limitations under the License.
 ```
 
 Complete license can be read [here](./LICENSE.rom_sign).
+
+### Prebuilt dtbToolLineage:
+
+dtbToolLineage is based on initial dtbTool source by Code Aurora Forum (CAF),
+which is licensed under a modified BSD 3-Clause license, which can be read
+[here](./LICENSE.dtbTool).
