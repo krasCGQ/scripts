@@ -420,12 +420,12 @@ if [[ -n $UPLOAD ]]; then
             if { rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/;
                  rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/; }; then
                 info "$RELEASE_ZIP uploaded successfully." \
-                     "GitHub releases and AndroidFileHost uploads need manual intervention, though."
+                     "GitHub releases upload requires manual intervention, though."
                 TELEGRAM_CHAT="-1001368407111 -1001181003922" \
-                tg_post "*New KudKernel build is available!*" \
+                tg_post "*New MoeSyndrome Kernel build is available!*" \
                         "*Name:* \`$RELEASE_ZIP\`" \
                         "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
-                        "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [Mirror](https://dl.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) - [CDN](https://dl-cdn.wafuu.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
+                        "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
             else
                 warn "Failed to upload $RELEASE_ZIP."
             fi
