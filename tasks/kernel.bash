@@ -331,16 +331,17 @@ make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      ${CROSS_COMPILE_ARM32:+CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32"} \
      "${CLANG_EXTRAS[@]}" "${TARGETS[@]}" Image dtbs ${HAS_MODULES:+modules}
 
-# Build dt.img or dtbo.img if needed
+# Build dt.img and/or dtbo.img if needed
+if [[ -n $NEEDS_DT_IMG ]]; then
+    info "Creating dt.img..."
+    "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
+        -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ > /dev/null
+fi
 if [[ -n $NEEDS_DTBO ]]; then
     info "Creating dtbo.img..."
     python2 "$SCRIPTDIR"/modules/libufdt/utils/src/mkdtboimg.py create \
         "$OUT_KERNEL"/dts/dtbo.img --page_size=$PAGE_SIZE \
         "$OUT_KERNEL"/dts/**/*.dtbo
-elif [[ -n $NEEDS_DT_IMG ]]; then
-    info "Creating dt.img..."
-    "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
-        -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ > /dev/null
 fi
 
 if [[ -z $BUILD_ONLY ]]; then
