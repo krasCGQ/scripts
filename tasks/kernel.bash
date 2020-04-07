@@ -120,8 +120,6 @@ IS_64BIT=true
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
 parse_params "$@"
-# Enable system-as-root flag for selected devices
-[[ $DEVICE = grus ]] && SYSTEM_AS_ROOT=true
 
 # Make '**' recursive
 shopt -s globstar
@@ -217,19 +215,13 @@ fi
 # Set required ARCH, kernel name
 if [[ -n $IS_64BIT ]]; then
     ARCH=arm64
-    # Older device that needs dt.img instead of DTB appended to kernel image
-    [[ -n $NEEDS_DT_IMG ]] && KERNEL_NAME=Image.gz || KERNEL_NAME=Image.gz-dtb
+    KERNEL_NAME=Image.gz
 else
     ARCH=arm
-    # Older device that needs dt.img instead of DTB appended to kernel image
-    [[ -n $NEEDS_DT_IMG ]] && KERNEL_NAME=zImage || KERNEL_NAME=zImage-dtb
+    KERNEL_NAME=zImage
 fi
-# For system as root, ship uncompressed kernel instead for Magisk patching
-[[ -n $SYSTEM_AS_ROOT ]] && KERNEL_NAME=Image
-# This is our main target
-[[ -n $SYSTEM_AS_ROOT || -n $NEEDS_DT_IMG ]] && TARGETS+=( "$KERNEL_NAME" dtbs ) || TARGETS+=( "$KERNEL_NAME" )
 OUT=/tmp/kernel-build/$DEVICE
-DTS_DIR=$OUT/arch/$ARCH/boot/dts
+OUT_KERNEL=$OUT/arch/$ARCH/boot
 if [[ -n $RELEASE ]]; then
     # Release builds: Set build version
     export KBUILD_BUILD_VERSION=$RELEASE
@@ -299,12 +291,12 @@ if [[ -n $CLANG ]]; then
 fi
 
 # Clean build directory
-if [[ -d $OUT/$DEVICE ]]; then
+if [[ -d $OUT ]]; then
     info "Cleaning build directory..."
     # TODO: Completely clean build?
     make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
     # Delete earlier dt{,bo}.img created by this build script
-    rm -f "$DTS_DIR"/dt{,bo}.img
+    rm -f "$OUT_KERNEL"/dts/dt{,bo}.img
 fi
 
 # Linux kernel < 3.15 doesn't automatically create out folder without an upstream
@@ -330,45 +322,44 @@ grep -q '=m' "$OUT"/.config && HAS_MODULES=true
 grep -q 'BUILD_ARM64_DT_OVERLAY=y' "$OUT"/.config && NEEDS_DTBO=true
 
 # Let's build the kernel!
-info "Building kernel..."
+info "Building kernel${HAS_MODULES:+ and modules}..."
 # Export timestamp earlier before build
 KBUILD_BUILD_TIMESTAMP="$(date)"
 export KBUILD_BUILD_TIMESTAMP
 PATH=${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs}:$PATH \
 make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      ${CROSS_COMPILE_ARM32:+CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32"} \
-     "${CLANG_EXTRAS[@]}" "${TARGETS[@]}" ${HAS_MODULES:+modules}
+     "${CLANG_EXTRAS[@]}" "${TARGETS[@]}" Image dtbs ${HAS_MODULES:+modules}
 
 # Build dt.img or dtbo.img if needed
 if [[ -n $NEEDS_DTBO ]]; then
     info "Creating dtbo.img..."
-    python2 "$SCRIPTDIR"/modules/libufdt/utils/src/mkdtboimg.py \
-        create "$DTS_DIR"/dtbo.img --page_size=$PAGE_SIZE "$DTS_DIR"/**/*.dtbo
+    python2 "$SCRIPTDIR"/modules/libufdt/utils/src/mkdtboimg.py create \
+        "$OUT_KERNEL"/dts/dtbo.img --page_size=$PAGE_SIZE \
+        "$OUT_KERNEL"/dts/**/*.dtbo
 elif [[ -n $NEEDS_DT_IMG ]]; then
     info "Creating dt.img..."
-    "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage \
-        -s $PAGE_SIZE -o "$DTS_DIR"/dt.img -p "$OUT"/scripts/dtc/ "$DTS_DIR"/ > /dev/null
+    "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
+        -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ > /dev/null
 fi
 
 if [[ -z $BUILD_ONLY ]]; then
     info "Cleaning and copying required file(s) to AnyKernel folder..."
     # Clean everything except zip files
     git -C "$AK" clean -qdfx -e '*.zip'
-    # Kernel image task(s)
-    if [[ -n $SYSTEM_AS_ROOT ]]; then
-        mkdir "$AK"/files
-        # Copy uncompressed kernel image and DTBs
-        for FILES in "$OUT"/arch/$ARCH/boot/$KERNEL_NAME "$DTS_DIR"/**/*.dtb; do
-            cp -f "$FILES" "$AK"/files
-        done
+    # Compress resulting kernel image with fastest compression
+    gzip -1 "$OUT_KERNEL"/Image
+    [[ -z $IS_64BIT ]] && mv "$OUT_KERNEL"/{Image.gz,$KERNEL_NAME}
+    if [[ -n $NEEDS_DT_IMG ]]; then
+        # Copy compressed kernel image and dt.img
+        cp -f "$OUT_KERNEL"/$KERNEL_NAME "$AK"
+        cp -f "$OUT_KERNEL"/dts/dt.img "$AK"
     else
-        # Copy compressed kernel (optionally with appended DTB) image
-        cp -f "$OUT"/arch/$ARCH/boot/$KERNEL_NAME "$AK"
+        # Append dtbs to compressed kernel image and copy
+        cat "$OUT_KERNEL"/$KERNEL_NAME "$OUT_KERNEL"/dts/**/*.dtb > "$AK"/$KERNEL_NAME-dtb
     fi
-    # Copy dt.img when needed
-    [[ -n $NEEDS_DT_IMG ]] && cp -f "$DTS_DIR"/dt.img "$AK"
     # Copy dtbo.img for supported devices
-    [[ -n $NEEDS_DTBO ]] && cp -f "$DTS_DIR"/dtbo.img "$AK"
+    [[ -n $NEEDS_DTBO ]] && cp -f "$OUT_KERNEL"/dts/dtbo.img "$AK"
     # Copy kernel modules if target device has them
     if [[ -n $HAS_MODULES ]]; then
         mkdir -p "$AK"/modules/vendor/lib/modules
