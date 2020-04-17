@@ -329,7 +329,7 @@ PATH=${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs}:$PATH \
 make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      ${CROSS_COMPILE_ARM32:+CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32"} \
      "${CLANG_EXTRAS[@]}" ${TC_32BIT_PATH_48:+LD=arm-eabi-ld} "${TARGETS[@]}" \
-     Image dtbs ${HAS_MODULES:+modules}
+     ${IS_32BIT:+z}Image dtbs ${HAS_MODULES:+modules}
 
 # Build dt.img and/or dtbo.img if needed
 if [[ -n $NEEDS_DT_IMG ]]; then
@@ -348,9 +348,8 @@ if [[ -z $BUILD_ONLY ]]; then
     info "Cleaning and copying required file(s) to AnyKernel folder..."
     # Clean everything except zip files
     git -C "$AK" clean -qdfx -e '*.zip'
-    # Compress resulting kernel image with fastest compression
-    gzip -1 "$OUT_KERNEL"/Image
-    [[ -n $IS_32BIT ]] && mv "$OUT_KERNEL"/{Image.gz,$KERNEL_NAME}
+    # ARM64: Compress resulting kernel image with fastest compression
+    [[ -z $IS_32BIT ]] && gzip -1 "$OUT_KERNEL"/Image
     if [[ -n $NEEDS_DT_IMG ]]; then
         # Copy compressed kernel image and dt.img
         cp -f "$OUT_KERNEL"/$KERNEL_NAME "$AK"
