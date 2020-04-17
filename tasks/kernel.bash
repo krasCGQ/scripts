@@ -158,18 +158,18 @@ if [[ -z $STOCK ]]; then
         CROSS_COMPILE=arm-linux-gnueabi-
     fi
 else
+    # Aarch64 toolchain
+    TC_64BIT_PATH=android/aarch64-linux-android-4.9/bin
+    # Aarch32 toolchain, required for compat vDSO on ARM64 devices
+    TC_32BIT_PATH=android/arm-linux-androideabi-4.9/bin
     # Compiler prefixes
     if [[ -n $IS_64BIT ]]; then
-        # Aarch64 toolchain
-        TC_64BIT_PATH=android/aarch64-linux-android-4.9/bin
         CROSS_COMPILE=aarch64-linux-android-
-
-        # Aarch32 toolchain, required for compat vDSO on ARM64 devices
-        TC_32BIT_PATH=android/arm-linux-androideabi-4.9/bin
         CROSS_COMPILE_ARM32=arm-linux-androideabi-
     else
-        TC_32BIT_PATH=android/arm-eabi-4.8/bin
-        CROSS_COMPILE=arm-eabi-
+        # For arm-eabi-ld
+        TC_32BIT_PATH_48=android/arm-eabi-4.8/bin
+        CROSS_COMPILE=arm-linux-androideabi-
     fi
 fi
 
@@ -196,8 +196,9 @@ if [[ -z $CLANG_CUSTOM ]]; then
         LD_PATHs+=${LD_PATHs:+:}${TC_64BIT_PATH/bin/lib}
     fi
     TC_32BIT_PATH=$OPT_DIR/$TC_32BIT_PATH
-    TC_PATHs+=${TC_PATHs:+:}$TC_32BIT_PATH
-    LD_PATHs+=${LD_PATHs:+:}${TC_32BIT_PATH/bin/lib}
+    [[ -z $IS_64BIT && -n $STOCK ]] && TC_32BIT_PATH_48=$OPT_DIR/$TC_32BIT_PATH_48
+    TC_PATHs+=${TC_PATHs:+:}$TC_32BIT_PATH${TC_32BIT_PATH_48:+:$TC_32BIT_PATH_48}
+    LD_PATHs+=${LD_PATHs:+:}${TC_32BIT_PATH/bin/lib}${TC_32BIT_PATH_48:+:${TC_32BIT_PATH_48/bin/lib}}
 fi
 export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
@@ -257,7 +258,7 @@ if [[ -n $CLANG ]]; then
     fi
 fi
 # Missing GCC and/or Clang
-for BIN in ${CROSS_COMPILE}elfedit ${CROSS_COMPILE_ARM32:+${CROSS_COMPILE_ARM32}elfedit} ${CLANG:+clang}; do
+for BIN in ${CROSS_COMPILE}elfedit ${CROSS_COMPILE_ARM32:+${CROSS_COMPILE_ARM32}elfedit} ${TC_32BIT_PATH_48:+arm-eabi-ld} ${CLANG:+clang}; do
     PATH="${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs:}$PATH" command -v "$BIN" > /dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
 done
 # Build-only isn't requested, but missing device's AnyKernel resource
@@ -329,7 +330,8 @@ export KBUILD_BUILD_TIMESTAMP
 PATH=${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs}:$PATH \
 make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
      ${CROSS_COMPILE_ARM32:+CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32"} \
-     "${CLANG_EXTRAS[@]}" "${TARGETS[@]}" Image dtbs ${HAS_MODULES:+modules}
+     "${CLANG_EXTRAS[@]}" ${TC_32BIT_PATH_48:+LD=arm-eabi-ld} "${TARGETS[@]}" \
+     Image dtbs ${HAS_MODULES:+modules}
 
 # Build dt.img and/or dtbo.img if needed
 if [[ -n $NEEDS_DT_IMG ]]; then
