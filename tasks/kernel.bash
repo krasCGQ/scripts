@@ -63,7 +63,7 @@ parse_params() {
                         DEVICE=${1,,} ;;
                     scale)
                         DEVICE=${1,,}
-                        unset IS_64BIT
+                        IS_32BIT=true
                         NEEDS_DT_IMG=true
                         PAGE_SIZE=2048 ;;
                     x00t)
@@ -115,8 +115,6 @@ parse_params() {
     done
 }
 
-# Assume target device is 64-bit
-IS_64BIT=true
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
 parse_params "$@"
@@ -151,7 +149,7 @@ if [[ -z $STOCK ]]; then
     # Aarch32 toolchain, required for compat vDSO on ARM64 devices
     TC_32BIT_PATH=arm-linux-gnueabi/bin
     # Compiler prefixes
-    if [[ -n $IS_64BIT ]]; then
+    if [[ -z $IS_32BIT ]]; then
         CROSS_COMPILE=aarch64-linux-gnu-
         CROSS_COMPILE_ARM32=arm-linux-gnueabi-
     else
@@ -163,7 +161,7 @@ else
     # Aarch32 toolchain, required for compat vDSO on ARM64 devices
     TC_32BIT_PATH=android/arm-linux-androideabi-4.9/bin
     # Compiler prefixes
-    if [[ -n $IS_64BIT ]]; then
+    if [[ -z $IS_32BIT ]]; then
         CROSS_COMPILE=aarch64-linux-android-
         CROSS_COMPILE_ARM32=arm-linux-androideabi-
     else
@@ -190,13 +188,13 @@ if [[ -n $CLANG ]]; then
     fi
 fi
 if [[ -z $CLANG_CUSTOM ]]; then
-    if [[ -n $IS_64BIT ]]; then
+    if [[ -z $IS_32BIT ]]; then
         TC_64BIT_PATH=$OPT_DIR/$TC_64BIT_PATH
         TC_PATHs=$TC_64BIT_PATH
         LD_PATHs+=${LD_PATHs:+:}${TC_64BIT_PATH/bin/lib}
     fi
     TC_32BIT_PATH=$OPT_DIR/$TC_32BIT_PATH
-    [[ -z $IS_64BIT && -n $STOCK ]] && TC_32BIT_PATH_48=$OPT_DIR/$TC_32BIT_PATH_48
+    [[ -n $IS_32BIT && -n $STOCK ]] && TC_32BIT_PATH_48=$OPT_DIR/$TC_32BIT_PATH_48
     TC_PATHs+=${TC_PATHs:+:}$TC_32BIT_PATH${TC_32BIT_PATH_48:+:$TC_32BIT_PATH_48}
     LD_PATHs+=${LD_PATHs:+:}${TC_32BIT_PATH/bin/lib}${TC_32BIT_PATH_48:+:${TC_32BIT_PATH_48/bin/lib}}
 fi
@@ -214,7 +212,7 @@ else
     NAME=$BRANCH
 fi
 # Set required ARCH, kernel name
-if [[ -n $IS_64BIT ]]; then
+if [[ -z $IS_32BIT ]]; then
     ARCH=arm64
     KERNEL_NAME=Image.gz
 else
@@ -283,7 +281,7 @@ sleep 1
 if [[ -n $CLANG ]]; then
     # Define additional parameters that'll be passed to make
     CLANG_EXTRAS=( "CC=clang" )
-    [[ -n $IS_64BIT ]] && CLANG_EXTRAS+=( "CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" ) || CLANG_EXTRAS+=( "CLANG_TRIPLE=arm-linux-gnueabi" )
+    [[ -z $IS_32BIT ]] && CLANG_EXTRAS+=( "CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" ) || CLANG_EXTRAS+=( "CLANG_TRIPLE=arm-linux-gnueabi" )
     # Export custom compiler string for AOSP variant
     if [[ -n $STOCK ]]; then
         KBUILD_COMPILER_STRING=$($CLANG_PATH/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
@@ -352,7 +350,7 @@ if [[ -z $BUILD_ONLY ]]; then
     git -C "$AK" clean -qdfx -e '*.zip'
     # Compress resulting kernel image with fastest compression
     gzip -1 "$OUT_KERNEL"/Image
-    [[ -z $IS_64BIT ]] && mv "$OUT_KERNEL"/{Image.gz,$KERNEL_NAME}
+    [[ -n $IS_32BIT ]] && mv "$OUT_KERNEL"/{Image.gz,$KERNEL_NAME}
     if [[ -n $NEEDS_DT_IMG ]]; then
         # Copy compressed kernel image and dt.img
         cp -f "$OUT_KERNEL"/$KERNEL_NAME "$AK"
