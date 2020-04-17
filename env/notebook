@@ -19,6 +19,9 @@ else
     return 1
 fi
 
+# Initialize GNOME Keyring for non-GTK environments
+[[ -n $DESKTOP_SESSION ]] && { eval "$(gnome-keyring-daemon --start)" && export SSH_AUTH_SOCK; }
+
 # Import common environment script
 # shellcheck source=/dev/null
 source "$SCRIPTDIR"/env/common
