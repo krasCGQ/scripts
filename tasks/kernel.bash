@@ -257,7 +257,8 @@ if [[ -n $CLANG ]]; then
 fi
 # Missing GCC and/or Clang
 for BIN in ${CROSS_COMPILE}elfedit ${CROSS_COMPILE_ARM32:+${CROSS_COMPILE_ARM32}elfedit} ${TC_32BIT_PATH_48:+arm-eabi-ld} ${CLANG:+clang}; do
-    PATH="${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs:}$PATH" command -v "$BIN" > /dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
+    PATH="${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs:}/dev/null" \
+        command -v "$BIN" > /dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
 done
 # Build-only isn't requested, but missing device's AnyKernel resource
 [[ -z $BUILD_ONLY && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
