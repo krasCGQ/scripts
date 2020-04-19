@@ -33,7 +33,7 @@ def notify(msg):
     tg_url = 'https://api.telegram.org/bot' + environ['TELEGRAM_TOKEN'] + '/SendMessage'
     query = {
         'chat_id': environ['TELEGRAM_CHAT'],
-        'text': msg,
+        'text': msg + '\n\n— @KudNotifier —',
         'parse_mode': 'Markdown',
         'disable_web_page_preview': 'true'
     }
