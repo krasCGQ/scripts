@@ -101,6 +101,7 @@ def linux_announce():
         if 'linux-next' not in list.entries[i].title:
             # release details is under id
             details = list.entries[i].id.split(',')
+            digest = sha384(list.entries[i].title.encode()).hexdigest()
 
             if 'mainline' in list.entries[i].title:
                 # mainline must be treated differently
@@ -111,13 +112,8 @@ def linux_announce():
                 # version naming: x.y-version
                 version_file = join(path + '/' + version + '-version')
 
-            # get content hash if any
-            hash_a = get_hash(version_file)
-            # sha384 of the new version
-            hash_b = sha384(str.encode(list.entries[i].title)).hexdigest()
-
-            # both hashes are different, announce it
-            if hash_a != hash_b:
+            # announce new version
+            if get_hash(version_file) != digest:
                 if 'mainline' in list.entries[i].title:
                     msg = '*New Linux mainline release available!*\n'
                     msg += '\n'
@@ -148,26 +144,20 @@ def osdn_announce():
     for i in range(len(list.entries) - 1, -1, -1):
         # get the file name instead of full path
         name = list.entries[i].title.split('/')[-1]
-        date = list.entries[i].published
-        # use shortlink provided by OSDN
-        url = 'https://osdn.net/dl/' + project_name + '/' + name
+        digest = sha384(list.entries[i].title.encode()).hexdigest()
         # cache file: use file name
         cache_file = join(path + '/' + name)
 
-        # get content hash if any
-        hash_a = get_hash(cache_file)
-        # sha384 of the new version
-        hash_b = sha384(str.encode(list.entries[i].title)).hexdigest()
-
         # both hashes are different, announce it
-        if hash_a != hash_b:
+        if get_hash(cache_file) != digest:
             # i hab nu idea pls halp // pun intended
             msg = '*New file detected on *[KudProject](' + base_url + ')*\'s OSDN!*\n'
             msg += '\n'
             msg += '`' + name + '`\n'
-            msg += 'Upload date: ' + date + '\n'
+            msg += 'Upload date: ' + list.entries[i].published + '\n'
             msg += '\n'
-            msg += '[Download](' + url + ')'
+            # use shortlink provided by OSDN
+            msg += '[Download](https://osdn.net/dl/' + project_name + '/' + name + ')'
 
             notify(msg)
             # write new version
