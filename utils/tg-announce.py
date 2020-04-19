@@ -10,17 +10,27 @@ from argparse import ArgumentParser
 from feedparser import parse
 from requests import post
 
+# get content from a file
+def get_content(file):
+    try:
+        file = open(file, 'rb')
+        content = file.read().decode()
+        file.close()
+
+    except FileNotFoundError:
+        content = None
+
+    return content
+
 # get content hash from a file using sha384
 def get_hash(file):
-    if exists(file):
-        file = open(file, 'rb')
-        hash = sha384(file.read()).hexdigest()
-        file.close()
+    content = get_content(file)
+
+    if content is not None:
+        return sha384(content.encode()).hexdigest()
     else:
         # assume empty
-        hash = ''
-
-    return hash
+        return ''
 
 # write content to a file
 def write_to(file, content):
