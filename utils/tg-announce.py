@@ -71,10 +71,12 @@ def linux_announce():
             if hash_a != hash_b:
                 if 'mainline' in list.entries[i].title:
                     msg = '*New Linux mainline release available!*\n'
+                    msg += '\n'
                 else:
                     msg = '*New Linux ' + version + ' series release available!*\n'
+                    msg += '\n'
                     msg += 'Release type: ' + details[1] + '\n'
-                msg += 'Version: ' + details[2] + '\n'
+                msg += 'Version: `' + details[2] + '`\n'
                 msg += 'Release date: ' + details[3]
                 if 'mainline' not in list.entries[i].title:
                     msg += '\n\n'
