@@ -8,6 +8,7 @@ from os.path import exists, join, isdir
 
 from argparse import ArgumentParser
 from feedparser import parse
+from git import cmd as git_cmd
 from requests import post
 
 # get content from a file
@@ -49,6 +50,44 @@ def notify(msg):
     }
 
     post(tg_url, data=query)
+
+# git release announcement
+def git_announce():
+    # initialize GitPython
+    git = git_cmd.Git()
+    # list of urls to announce
+    url = ['git://git.zx2c4.com/wireguard-linux-compat']
+
+    # for each url...
+    for i in range (0, len(url)):
+        # repository name
+        repo = url[i].split('/')[-1]
+        # list of tags
+        tags = git.ls_remote('--tags', url[i]).split('\n')
+
+        repo_path = join(path + '/' + repo)
+        # create repo directory if not exists
+        if not exists(repo_path):
+            makedirs(repo_path)
+
+        # parse every 2 entries, next one is tagged commit
+        for j in range (0, len(tags), 2):
+            tag = tags[j].replace('/', '\t').split('\t')
+            tag_file = join(repo_path + '/' + tag[3])
+            # short SHA-1 format – first 12 letters
+            tag_sha = tag[0][:12]
+
+            # although rare since tag re-releases are uncommon, announce if tag is different
+            if get_content(tag_file) != tag_sha:
+                msg = '*New Git release detected!*\n'
+                msg += '\n'
+                msg += 'Repository: [' + repo + '](' + url[i].replace('git:', 'https:') + ')' + '\n'
+                msg += 'Tag: `' + tag[3] + '` (`' + tag_sha + '`)\n'
+                msg += 'Commit: `' + tags[j + 1][:12] + '`'
+
+                notify(msg)
+                # write tag sha
+                write_to(tag_file, tag_sha)
 
 # linux kernel announcement
 def linux_announce():
@@ -138,7 +177,7 @@ def osdn_announce():
 if __name__ == '__main__':
     parser = ArgumentParser(description='All-in-one Telegram announcement script using Telegram Bot API.')
     parser.add_argument('-t', '--type', help='select announcement type desired',
-                        type=str, choices=['linux', 'osdn'])
+                        type=str, choices=['git', 'linux', 'osdn'])
 
     args = parser.parse_args()
 
@@ -152,7 +191,9 @@ if __name__ == '__main__':
     if not exists(path):
         makedirs(path)
 
-    if args.type == 'linux':
+    if args.type == 'git':
+        git_announce()
+    elif args.type == 'linux':
         linux_announce()
     elif args.type == 'osdn':
         osdn_announce()
