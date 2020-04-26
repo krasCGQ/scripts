@@ -131,43 +131,64 @@ def linux_announce():
                 # write new version
                 write_to(version_file, list.entries[i].title)
 
-# OSDN File Storage announcement
-def osdn_announce():
-    # project name
-    project_name = 'kudproject'
-    # url of the project
-    base_url = 'https://osdn.net/projects/' + project_name
-    osdn_url = base_url + '/storage/!rss'
-    list = parse(osdn_url)
+# projects (SourceForge, OSDN File Storage) announcement
+def project_announce():
+    # list of project names
+    projects = ['kudproject']
+    # only valid for SourceForge and OSDN File Storage
+    services = ['osdn']
 
-    # start from the oldest
-    for i in range(len(list.entries) - 1, -1, -1):
-        # get the file name instead of full path
-        name = list.entries[i].title.split('/')[-1]
-        digest = sha384(list.entries[i].title.encode()).hexdigest()
-        # cache file: use file name
-        cache_file = join(path + '/' + name)
+    for i in range(0, len(projects)):
+        # url of the project
+        base_url = 'https://' + services[i] + '.net/projects/' + projects[i]
+        if services[i] == 'sourceforge':
+            project_url = base_url + '/rss'
+        elif services[i] == 'osdn':
+            project_url = base_url + '/storage/!rss'
+        else:
+            # error out
+            raise Exception(services[i] + " isn't a valid service. Valid services: sourceforge, osdn.")
 
-        # both hashes are different, announce it
-        if get_hash(cache_file) != digest:
-            # i hab nu idea pls halp // pun intended
-            msg = '*New file detected on *[KudProject](' + base_url + ')*\'s OSDN!*\n'
-            msg += '\n'
-            msg += '`' + name + '`\n'
-            msg += 'Upload date: ' + list.entries[i].published + '\n'
-            msg += '\n'
-            # use shortlink provided by OSDN
-            msg += '[Download](https://osdn.net/dl/' + project_name + '/' + name + ')'
+        list = parse(project_url)
 
-            notify(msg)
-            # write new version
-            write_to(cache_file, list.entries[i].title)
+        # start from the oldest
+        for j in range(len(list.entries) - 1, -1, -1):
+            # get the file name instead of full path
+            name = list.entries[j].title.split('/')[-1]
+            digest = sha384(list.entries[j].title.encode()).hexdigest()
+
+            service_path = join(path + '/' + services[i])
+            # create service directory if not exists
+            if not exists(service_path):
+                makedirs(service_path)
+
+            # cache file: use file name
+            cache_file = join(service_path + '/' + name)
+            # both hashes are different, announce it
+            if get_hash(cache_file) != digest:
+                if services[i] == 'sourceforge':
+                    msg = '*New file detected on SourceForge:* [' + projects[i] + '](' + project_url + ')\n'
+                elif services[i] == 'osdn':
+                    msg = '*New file detected on OSDN File Storage:* [' + projects[i] + '](' + project_url + ')\n'
+                msg += '\n'
+                msg += 'Name: `' + name + '`\n' # avoid markdown parsing
+                msg += 'Upload date: ' + list.entries[j].published + '\n'
+                msg += '\n'
+                if services[i] == 'sourceforge':
+                    msg += '[Download](' + list.entries[j].link + ')'
+                elif services[i] == 'osdn':
+                    # use shortlink provided by OSDN
+                    msg += '[Download](https://' + services[i] + '.net/dl/' + projects[i] + '/' + name + ')'
+
+                notify(msg)
+                # write new version
+                write_to(cache_file, list.entries[j].title)
 
 # main functions
 if __name__ == '__main__':
     parser = ArgumentParser(description='All-in-one Telegram announcement script using Telegram Bot API.')
     parser.add_argument('-t', '--type', help='select announcement type desired',
-                        type=str, choices=['git', 'linux', 'osdn'])
+                        type=str, choices=['git', 'linux', 'project'])
 
     args = parser.parse_args()
 
@@ -185,5 +206,5 @@ if __name__ == '__main__':
         git_announce()
     elif args.type == 'linux':
         linux_announce()
-    elif args.type == 'osdn':
-        osdn_announce()
+    elif args.type == 'project':
+        project_announce()
