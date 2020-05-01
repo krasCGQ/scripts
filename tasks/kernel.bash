@@ -350,7 +350,7 @@ if [[ -z $BUILD_ONLY ]]; then
     # Clean everything except zip files
     git -C "$AK" clean -qdfx -e '*.zip'
     # ARM64: Compress resulting kernel image with fastest compression
-    [[ -z $IS_32BIT ]] && gzip -f1 "$OUT_KERNEL"/Image
+    [[ -z $IS_32BIT ]] && gzip -f9 "$OUT_KERNEL"/Image
     if [[ -n $NEEDS_DT_IMG ]]; then
         # Copy compressed kernel image and dt.img
         cp -f "$OUT_KERNEL"/$KERNEL_NAME "$AK"
