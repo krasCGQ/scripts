@@ -57,7 +57,7 @@ esac
 # Number of CPUs/Threads
 CPUs=$(nproc --all)
 # Clang
-[[ -n $CLANG ]] && LLVM=/opt/kud/android/clang-r377782c
+[[ -n $CLANG ]] && LLVM=/opt/kud/android/clang-r377782d
 
 # ARM tasks
 (
