@@ -30,6 +30,7 @@ case "${MSM_KERNVER/*-}" in
         echo "==== Testing kernel: $MSM_KERNVER ===="
         CLANG=true
         arm32_configs=(
+            mdm9607         # mdm9607 Wear OS
             msm8909         # msm8909 Android Go
             msm8909-minimal # msm8909 Android Go (minimal)
             msm8909w        # msm8909 Android Watch
@@ -41,6 +42,7 @@ case "${MSM_KERNVER/*-}" in
             sdm429-bg       # sdm429 with G-Link BGCOM Transport
             sdm670          # sdm710
             sdxpoorwills    # sda845
+            spyro           # spyro Wear OS
         )
         arm64_configs=(
             msm8937     # sdm429 / sdm439 / qm215
