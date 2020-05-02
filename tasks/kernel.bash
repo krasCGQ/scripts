@@ -95,6 +95,9 @@ parse_params() {
                 # Assume section mismatch(es) debugging as a target
                 TARGETS=( "CONFIG_DEBUG_SECTION_MISMATCH=y" ) ;;
 
+            --dirty)
+                DIRTY=true ;;
+
             -r | --release) shift
                 # Only integers are accepted
                 RELEASE=$1
@@ -291,7 +294,7 @@ if [[ -n $CLANG ]]; then
 fi
 
 # Clean build directory
-if [[ -d $OUT ]]; then
+if [[ -z $DIRTY && -d $OUT ]]; then
     info "Cleaning build directory..."
     # TODO: Completely clean build?
     make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
