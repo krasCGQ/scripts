@@ -79,6 +79,11 @@ parse_params() {
             -c | --clang)
                 CLANG=true ;;
 
+            --clean)
+                FULL_CLEAN=true
+                # This can't co-exist
+                unset DIRTY ;;
+
             -cv | --clang-version) shift
                 # Supported latest AOSP Clang versions:
                 case $1 in
@@ -96,7 +101,9 @@ parse_params() {
                 TARGETS=( "CONFIG_DEBUG_SECTION_MISMATCH=y" ) ;;
 
             --dirty)
-                DIRTY=true ;;
+                DIRTY=true
+                # This can't co-exist
+                unset FULL_CLEAN ;;
 
             -r | --release) shift
                 # Only integers are accepted
@@ -296,10 +303,14 @@ fi
 # Clean build directory
 if [[ -z $DIRTY && -d $OUT ]]; then
     info "Cleaning build directory..."
-    # TODO: Completely clean build?
-    make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
-    # Delete earlier dt{,bo}.img created by this build script
-    rm -f "$OUT_KERNEL"/dts/dt{,bo}.img
+    if [[ -z $FULL_CLEAN ]]; then
+        make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
+        # Delete earlier dt{,bo}.img created by this build script
+        rm -f "$OUT_KERNEL"/dts/dt{,bo}.img
+    else
+        # Remove out folder instead of doing mrproper/distclean
+        rm -rf "$OUT"
+    fi
 fi
 
 # Linux kernel < 3.15 doesn't automatically create out folder without an upstream
