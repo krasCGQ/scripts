@@ -93,7 +93,8 @@ parse_params() {
                      8) CLANG_VERSION=r349610b ;;  # 8.0.9
                      9) CLANG_VERSION=r365631c1 ;; # 9.0.8
                     10) CLANG_VERSION=r377782d ;;  # 10.0.6
-                    *) die "Invalid version specified!" ;;
+                    11) CLANG_VERSION=r383902 ;;   # 11.0.1
+                     *) die "Invalid version specified!" ;;
                 esac ;;
 
             --debug)
