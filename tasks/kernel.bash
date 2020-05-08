@@ -151,7 +151,8 @@ THREADS=$(nproc --all)
 
 # Clang compiler (if used)
 if [[ -n $CLANG ]]; then
-    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin || CLANG_PATH=android/clang-$CLANG_VERSION/bin
+    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin \
+                    || CLANG_PATH=android/clang-$CLANG_VERSION/bin
 fi
 # GCC compiler
 if [[ -z $STOCK ]]; then
@@ -209,6 +210,8 @@ if [[ -z $CLANG_CUSTOM ]]; then
     TC_PATHs+=${TC_PATHs:+:}$TC_32BIT_PATH${TC_32BIT_PATH_48:+:$TC_32BIT_PATH_48}
     LD_PATHs+=${LD_PATHs:+:}${TC_32BIT_PATH/bin/lib}${TC_32BIT_PATH_48:+:${TC_32BIT_PATH_48/bin/lib}}
 fi
+# Not exported; will be passed to make instead
+PATH=${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs}:$PATH
 export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 # Kernel build variables
@@ -280,6 +283,12 @@ if [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
     . $OPT_DIR/venv2/bin/activate
 fi
 
+# Set compiler version here to avoid being included in total build time
+[[ -z $CLANG_CUSTOM ]] && CUT=,2
+[[ -n $CLANG ]] && COMPILER=$(clang --version | head -1 | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') \
+                || COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
+LINKER=$(PATH=$PATH ${CROSS_COMPILE}ld --version | head -1)
+
 # Script beginning
 info "Starting build script..."
 tg_post "$MSG has been started on \`$(hostname)\`." \
@@ -293,12 +302,8 @@ sleep 1
 if [[ -n $CLANG ]]; then
     # Define additional parameters that'll be passed to make
     CLANG_EXTRAS=( "CC=clang" )
-    [[ -z $IS_32BIT ]] && CLANG_EXTRAS+=( "CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" ) || CLANG_EXTRAS+=( "CLANG_TRIPLE=arm-linux-gnueabi" )
-    # Export custom compiler string for AOSP variant
-    if [[ -n $STOCK ]]; then
-        KBUILD_COMPILER_STRING=$($CLANG_PATH/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
-        export KBUILD_COMPILER_STRING
-    fi
+    [[ -z $IS_32BIT ]] && CLANG_EXTRAS+=( "CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" ) \
+                       || CLANG_EXTRAS+=( "CLANG_TRIPLE=arm-linux-gnueabi" )
 fi
 
 # Clean build directory
@@ -331,6 +336,13 @@ else
     make -j"$THREADS" -s ARCH=$ARCH O="$OUT" "${DEFCONFIG}"_defconfig
 fi
 
+# Announce build information; only pass as minimum as possible make variables
+VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2> /dev/null)
+tg_post "*[BuildCI]* Build information:" "" \
+        "*Kernel version:* \`$VERSION\`" \
+        "*Compiler:* $COMPILER" \
+        "*Linker:* $LINKER" &
+
 # Only execute modules build if it's explicitly needed
 grep -q '=m' "$OUT"/.config && HAS_MODULES=true
 # Whether target needs DTBO
@@ -341,10 +353,10 @@ info "Building kernel${HAS_MODULES:+ and modules}..."
 # Export timestamp earlier before build
 KBUILD_BUILD_TIMESTAMP="$(date)"
 export KBUILD_BUILD_TIMESTAMP
-PATH=${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs}:$PATH \
-make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE="$CROSS_COMPILE" \
-     ${CROSS_COMPILE_ARM32:+CROSS_COMPILE_ARM32="$CROSS_COMPILE_ARM32"} \
-     "${CLANG_EXTRAS[@]}" ${TC_32BIT_PATH_48:+LD=arm-eabi-ld} "${TARGETS[@]}" \
+PATH=$PATH \
+make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE=$CROSS_COMPILE \
+     CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" \
+     ${TC_32BIT_PATH_48:+LD=arm-eabi-ld} "${TARGETS[@]}" \
      ${IS_32BIT:+z}Image dtbs ${HAS_MODULES:+modules}
 
 # Build dt.img and/or dtbo.img if needed
