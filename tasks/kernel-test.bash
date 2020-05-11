@@ -19,15 +19,21 @@ case "${MSM_KERNVER/*-}" in
     3.18)
         echo "==== Testing kernel: $MSM_KERNVER ===="
         arm32_configs=(
-            msm8909      # msm8909 Android Go
-            msm8909w     # msm8909 Android Watch
-            msm8909w-1gb # msm8909 Android Watch (1 GB)
-            msm8937      # msm8917 / msm8937
-            msmcortex    # msm8953
-            sdx          # sdx20
+            apq8053_IoE
+            mdm           # mdm9650 IoT
+            mdm9607       # mdm9607 IoT
+            mdm9607-128mb # mdm9607 IoT (128 MB)
+            mdm9640       # mdm9640 IoT
+            msm8909       # msm8909 Android Go
+            msm8909w      # msm8909 Android Watch
+            msm8909w-1gb  # msm8909 Android Watch (1 GB)
+            msm8937       # msm8917 / msm8937
+            msmcortex     # msm8953
+            sdx           # sdx20
         )
 
         arm64_configs=(
+            apq8053_IoE
             msm8937     # msm8917 / msm8937
             msmcortex   # msm8953
             msm         # msm8996
