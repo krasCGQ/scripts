@@ -7,6 +7,9 @@
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
 
+# Exit script on error
+set -e
+
 # Idea stolen from scripts/patch-kernel
 # shellcheck disable=SC1090
 source <(grep -E '^(VERSION|PATCHLEVEL)' Makefile | sed -e s/[[:space:]]//g)
@@ -92,7 +95,7 @@ CPUs=$(nproc --all)
         fi
         echo -e '\n'
     done
-) || exit $?
+)
 
 # ARM64 tasks
 (
@@ -119,4 +122,4 @@ CPUs=$(nproc --all)
         fi
         echo -e '\n'
     done
-) || exit $?
+)
