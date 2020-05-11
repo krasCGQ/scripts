@@ -3,6 +3,10 @@
 # Copyright (C) 2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+## Import common kernel script
+# shellcheck source=/dev/null
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
+
 # Idea stolen from scripts/patch-kernel
 # shellcheck disable=SC1090
 source <(grep -E '^(VERSION|PATCHLEVEL)' Makefile | sed -e s/[[:space:]]//g)
@@ -59,7 +63,7 @@ esac
 # Number of CPUs/Threads
 CPUs=$(nproc --all)
 # Clang
-[[ -n $CLANG ]] && LLVM=/opt/kud/android/clang-r377782d
+[[ -n $CLANG ]] && get_clang-ver 10
 
 # ARM tasks
 (
@@ -67,37 +71,52 @@ CPUs=$(nproc --all)
     GCC_48=/opt/kud/android/arm-eabi-4.8
     # For compiler only
     GCC_49=/opt/kud/android/arm-linux-androideabi-4.9
-    BIN=${CLANG:+$LLVM/bin:}$GCC_48/bin:$GCC_49/bin:$PATH
-    LD=${CLANG:+$LLVM/lib:}$GCC_48/lib:$GCC_49/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    BIN=${CLANG:+$CLANG_PATH:}$GCC_48/bin:$GCC_49/bin:$PATH
+    LD=${CLANG:+${CLANG_PATH/bin/lib}:}$GCC_48/lib:$GCC_49/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     [[ -n $CLANG ]] && TARGETS=( "CROSS_COMPILE=arm-linux-androideabi-" "CC=clang" "LD=arm-eabi-ld" "CLANG_TRIPLE=arm-linux-gnueabi" ) \
                     || TARGETS=( "CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc" )
 
     for arm32_config in "${arm32_configs[@]}"; do
         echo "==== Testing ARM: $arm32_config-perf_defconfig ===="
         rm -rf /tmp/build
+        START_TIME=$(date +%s)
         make -sj"$CPUs" ARCH=arm O=/tmp/build "$arm32_config"-perf_defconfig
-        time PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" \
-                            zImage-dtb modules || exit $?
+        PATH=$BIN LD_LIBRARY_PATH=$LD \
+        make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" \
+                        zImage-dtb modules || STATUS=$?
         echo
+        echo -n "Build done in $(show_duration)"
+        if [[ -n $STATUS ]]; then
+            echo " and ${BLD}failed$RST"
+            exit $STATUS
+        fi
+        echo -e '\n'
     done
 ) || exit $?
 
 # ARM64 tasks
 (
     GCC=/opt/kud/android/aarch64-linux-android-4.9
-    BIN=${CLANG:+$LLVM/bin:}$GCC/bin:$PATH
-    LD=${CLANG:+$LLVM/lib:}$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    BIN=${CLANG:+$CLANG_PATH:}$GCC/bin:$PATH
+    LD=${CLANG:+${CLANG_PATH/bin/lib}:}$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     [[ -n $CLANG ]] && TARGETS=( "CC=clang" "CLANG_TRIPLE=aarch64-linux-gnu" ) \
                     || TARGETS=( "CC=aarch64-linux-android-gcc" )
 
     for arm64_config in "${arm64_configs[@]}"; do
         echo "==== Testing ARM64: $arm64_config-perf_defconfig ===="
         rm -rf /tmp/build
+        # shellcheck disable=SC2034
+        START_TIME=$(date +%s)
         make -sj"$CPUs" ARCH=arm64 O=/tmp/build "$arm64_config"-perf_defconfig
-        time PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-                            "${TARGETS[@]}" Image.gz-dtb modules || exit $?
+        PATH=$BIN LD_LIBRARY_PATH=$LD \
+        make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
+                        "${TARGETS[@]}" Image.gz-dtb modules || STATUS=$?
         echo
+        echo -n "Build done in $(show_duration)"
+        if [[ -n $STATUS ]]; then
+            echo " and ${BLD}failed$RST"
+            exit $STATUS
+        fi
+        echo -e '\n'
     done
 ) || exit $?

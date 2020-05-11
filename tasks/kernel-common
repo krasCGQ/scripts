@@ -1,0 +1,43 @@
+# shellcheck shell=bash
+# Common kernel functions
+# Copyright (C) 2020 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Exit if it's being executed
+if ! (return 2> /dev/null); then
+    echo "! Please source this script instead of running directly." >&2
+    exit 126
+fi
+
+## Import common environment script
+# shellcheck source=/dev/null
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/../env/common
+
+## Functions
+
+# Show build script duration
+show_duration() { date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)'; }
+
+# Get supported AOSP Clang version
+get_clang-ver() {
+    ROOT_DIR=/opt/kud/android
+
+    case $1 in
+         5) CLANG_VERSION=4053586 ;;   # 5.0.300080
+         6) CLANG_VERSION=4691093 ;;   # 6.0.2
+         7) CLANG_VERSION=r328903 ;;   # 7.0.2
+         8) CLANG_VERSION=r349610b ;;  # 8.0.9
+         9) CLANG_VERSION=r365631c1 ;; # 9.0.8
+        10) CLANG_VERSION=r377782d ;;  # 10.0.6
+        11) CLANG_VERSION=r383902 ;;   # 11.0.1
+         *) warn "Invalid version specified!"
+            return 1 ;;
+    esac
+
+    CLANG_PATH=$ROOT_DIR/clang-$CLANG_VERSION/bin
+    if [[ ! -f $CLANG_PATH/clang ]]; then
+        warn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path."
+        return 1
+    fi
+    export CLANG_PATH
+}

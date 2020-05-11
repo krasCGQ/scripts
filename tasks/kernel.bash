@@ -4,15 +4,13 @@
 # Copyright (C) 2018-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-## Import common environment script
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/../env/common
+## Import common kernel script
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
 
 ## Functions
 
 # 'git log --pretty' alias
 git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
-# Show build script duration
-show_duration() { date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)'; }
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
 tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &> /dev/null || return 0; }
 
@@ -85,17 +83,8 @@ parse_params() {
                 unset DIRTY ;;
 
             -cv | --clang-version) shift
-                # Supported latest AOSP Clang versions:
-                case $1 in
-                     5) CLANG_VERSION=4053586 ;;   # 5.0.300080
-                     6) CLANG_VERSION=4691093 ;;   # 6.0.2
-                     7) CLANG_VERSION=r328903 ;;   # 7.0.2
-                     8) CLANG_VERSION=r349610b ;;  # 8.0.9
-                     9) CLANG_VERSION=r365631c1 ;; # 9.0.8
-                    10) CLANG_VERSION=r377782d ;;  # 10.0.6
-                    11) CLANG_VERSION=r383902 ;;   # 11.0.1
-                     *) die "Invalid version specified!" ;;
-                esac ;;
+                # Supported Clang corresponding to function in kernel-common
+                get_clang-ver "$1" || exit ;;
 
             --debug)
                 # Assume section mismatch(es) debugging as a target
@@ -150,10 +139,7 @@ KERNEL_DIR=kernels/$DEVICE
 THREADS=$(nproc --all)
 
 # Clang compiler (if used)
-if [[ -n $CLANG ]]; then
-    [[ -z $STOCK ]] && CLANG_PATH=proton-clang/bin \
-                    || CLANG_PATH=android/clang-$CLANG_VERSION/bin
-fi
+[[ -n $CLANG && -z $STOCK ]] && CLANG_PATH=$OPT_DIR/proton-clang/bin
 # GCC compiler
 if [[ -z $STOCK ]]; then
     # Aarch64 toolchain
@@ -187,7 +173,6 @@ fi
 # FIXME: Find a way to reverse this; introduce a variable for now
 [[ -n $CLANG && -z $STOCK ]] && CLANG_CUSTOM=true
 if [[ -n $CLANG ]]; then
-    CLANG_PATH=$OPT_DIR/$CLANG_PATH
     LD_PATHs=${CLANG_PATH/bin/lib}
     if [[ -n $STOCK ]]; then
         # Include lib64 for AOSP Clang
@@ -295,6 +280,7 @@ tg_post "$MSG has been started on \`$(hostname)\`." \
         "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
 # Explicitly declare build script startup
 STARTED=true
+# shellcheck disable=SC2034
 START_TIME=$(date +%s)
 sleep 1
 
