@@ -75,7 +75,7 @@ esac
 # Number of CPUs/Threads
 CPUs=$(nproc --all)
 # Clang
-[[ -n $CLANG ]] && get_clang-ver 10
+[[ -n $CLANG ]] && get_clang-ver 11
 
 # ARM tasks
 (
