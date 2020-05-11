@@ -38,7 +38,10 @@ case "${MSM_KERNVER/*-}" in
             msmcortex   # msm8953
             msm         # msm8996
             msm-auto    # msm8996 Android Auto
-        ) ;;
+        )
+
+        prima_enabled=( apq8053_IoE msm8909 msm8909w msm8909w-1gb msm8937 msmcortex )
+        qcacld_enabled=( mdm mdm9607 mdm9607-128m mdm9640 msm sdx ) ;;
     4.9)
         echo "==== Testing kernel: $MSM_KERNVER ===="
         CLANG=true
@@ -86,12 +89,23 @@ CPUs=$(nproc --all)
                     || TARGETS=( "CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc" )
 
     for arm32_config in "${arm32_configs[@]}"; do
+        for target in "${prima_enabled[@]}"; do
+            [[ $target == "$arm32_config" ]] && WLAN=( "CONFIG_PRONTO_WLAN=y" )
+            break
+        done
+        for target in "${qcacld_enabled[@]}"; do
+            [[ $target == "$arm32_config" ]] && WLAN=( "CONFIG_QCA_CLD_WLAN=y" )
+            # Just in case it's still SDXHEDGEHOG instead of SDX20
+            [[ $target == sdx ]] && WLAN=( "CONFIG_ARCH_SDXHEDGEHOG=y" )
+            break
+        done
+
         echo "==== Testing ARM: $arm32_config-perf_defconfig ===="
         rm -rf /tmp/build
         START_TIME=$(date +%s)
         make -sj"$CPUs" ARCH=arm O=/tmp/build "$arm32_config"-perf_defconfig
         PATH=$BIN LD_LIBRARY_PATH=$LD \
-        make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" \
+        make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
                         zImage-dtb modules || STATUS=$?
         echo
         echo -n "Build done in $(show_duration)"
@@ -100,6 +114,7 @@ CPUs=$(nproc --all)
             exit $STATUS
         fi
         echo -e '\n'
+        unset WLAN
     done
 )
 
@@ -112,6 +127,15 @@ CPUs=$(nproc --all)
                     || TARGETS=( "CC=aarch64-linux-android-gcc" )
 
     for arm64_config in "${arm64_configs[@]}"; do
+        for target in "${prima_enabled[@]}"; do
+            [[ $target == "$arm64_config" ]] && WLAN=( "CONFIG_PRONTO_WLAN=y" )
+            break
+        done
+        for target in "${qcacld_enabled[@]}"; do
+            [[ $target == "$arm64_config" ]] && WLAN=( "CONFIG_QCA_CLD_WLAN=y" )
+            break
+        done
+
         echo "==== Testing ARM64: $arm64_config-perf_defconfig ===="
         rm -rf /tmp/build
         # shellcheck disable=SC2034
@@ -119,7 +143,7 @@ CPUs=$(nproc --all)
         make -sj"$CPUs" ARCH=arm64 O=/tmp/build "$arm64_config"-perf_defconfig
         PATH=$BIN LD_LIBRARY_PATH=$LD \
         make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-                        "${TARGETS[@]}" Image.gz-dtb modules || STATUS=$?
+                        "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules || STATUS=$?
         echo
         echo -n "Build done in $(show_duration)"
         if [[ -n $STATUS ]]; then
@@ -127,5 +151,6 @@ CPUs=$(nproc --all)
             exit $STATUS
         fi
         echo -e '\n'
+        unset WLAN
     done
 )
