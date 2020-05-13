@@ -230,9 +230,6 @@ fi
 
 ## Commands
 
-# Run this inside kernel source
-[[ ! -f Makefile || ! -d kernel ]] && die "Please run this script inside kernel source folder!"
-
 # Sanity checks
 info "Running sanity checks..."
 sleep 1

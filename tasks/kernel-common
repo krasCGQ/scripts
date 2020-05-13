@@ -41,3 +41,13 @@ get_clang-ver() {
     fi
     export CLANG_PATH
 }
+
+# Run this inside kernel source
+if ! [[ -f Makefile && -d kernel ]]; then
+    warn "Please run this script inside kernel source folder!"
+    exit 1
+fi
+
+# Get kernel release - idea stolen from scripts/patch-kernel
+# shellcheck disable=SC1090
+source <(grep -E '^(VERSION|PATCHLEVEL)' Makefile | sed -e s/[[:space:]]//g)

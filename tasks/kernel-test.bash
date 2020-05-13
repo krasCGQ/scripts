@@ -3,16 +3,14 @@
 # Copyright (C) 2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+## Exit script on error
+set -e
+
 ## Import common kernel script
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
 
-# Exit script on error
-set -e
-
-# Idea stolen from scripts/patch-kernel
-# shellcheck disable=SC1090
-source <(grep -E '^(VERSION|PATCHLEVEL)' Makefile | sed -e s/[[:space:]]//g)
+# Kernel repository
 MSM_KERNVER=msm-$VERSION.$PATCHLEVEL
 
 case "${MSM_KERNVER/*-}" in
