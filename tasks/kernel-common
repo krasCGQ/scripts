@@ -51,3 +51,7 @@ fi
 # Get kernel release - idea stolen from scripts/patch-kernel
 # shellcheck disable=SC1090
 source <(grep -E '^(VERSION|PATCHLEVEL)' Makefile | sed -e s/[[:space:]]//g)
+if ! [[ -n $VERSION && -n $PATCHLEVEL ]]; then
+    warn "Unable to get kernel version from Makefile!"
+    exit 1
+fi
