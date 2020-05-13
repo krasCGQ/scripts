@@ -124,10 +124,13 @@ shopt -s globstar
 
 ## Variables
 
+# Kernel version
+KERNEL=$VERSION.$PATCHLEVEL
+
 # Telegram-specific environment setup
 TELEGRAM=$SCRIPTDIR/modules/telegram/telegram
 # Default message for posting to Telegram
-MSG="*[BuildCI]* Kernel build job for #$DEVICE"
+MSG="*[BuildCI]* Kernel build job for #$DEVICE ($KERNEL)"
 tg_getid kp-on
 
 # Paths
@@ -380,7 +383,7 @@ if [[ -z $BUILD_ONLY ]]; then
     fi
 
     # Export zip name here to be picked later
-    ZIP=$NAME-$DEVICE-$(date +%Y%m%d-%H%M).zip
+    ZIP=$NAME-$DEVICE-$KERNEL-$(date +%Y%m%d-%H%M).zip
     [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
@@ -416,7 +419,7 @@ if [[ -n $UPLOAD ]]; then
         info "Uploading $ZIP to Telegram..."
         tg_post "*[BuildCI]* Uploading test build..." &
         if ! "$TELEGRAM" -f "$AK/$ZIP" -c "-1001494373196" \
-            "New #$DEVICE test build with branch $BRANCH at commit $(git_pretty)."; then
+            "New #$DEVICE test build ($KERNEL) with branch $BRANCH at commit $(git_pretty)."; then
             warn "Failed to upload $ZIP."
             tg_post "*[BuildCI]* Unable to upload the build." &
         fi
