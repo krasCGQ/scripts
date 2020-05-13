@@ -31,7 +31,7 @@ get_clang-ver() {
         10) CLANG_VERSION=r377782d ;;  # 10.0.6
         11) CLANG_VERSION=r383902 ;;   # 11.0.1
          *) warn "Invalid version specified!"
-            return 1 ;;
+            exit 1 ;;
     esac
 
     CLANG_PATH=$ROOT_DIR/clang-$CLANG_VERSION/bin

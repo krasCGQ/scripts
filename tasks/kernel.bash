@@ -84,7 +84,7 @@ parse_params() {
 
             -cv | --clang-version) shift
                 # Supported Clang corresponding to function in kernel-common
-                get_clang-ver "$1" || exit ;;
+                get_clang-ver "$1" ;;
 
             --debug)
                 # Assume section mismatch(es) debugging as a target
