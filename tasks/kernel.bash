@@ -323,7 +323,7 @@ else
 fi
 
 # Announce build information; only pass as minimum as possible make variables
-VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2> /dev/null)
+VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2> /dev/null | tail -1)
 tg_post "*[BuildCI]* Build information:" "" \
         "*Kernel version:* \`$VERSION\`" \
         "*Compiler:* $COMPILER" \
