@@ -27,6 +27,8 @@ build_prehook() {
     rm -rf /tmp/build
     START_TIME=$(date +%s)
     make -sj"$CPUs" ARCH="$1" O=/tmp/build "$config"-perf_defconfig
+    # override to disable qm215 on msm8937 targets
+    [[ $KERNVER == 4.9 && $config =~ msm8937 ]] && scripts/config --file /tmp/build/.config -d ARCH_QM215
     export START_TIME WLAN
 }
 
@@ -43,10 +45,11 @@ build_posthook() {
 }
 
 # Kernel repository
-MSM_KERNVER=msm-$VERSION.$PATCHLEVEL
+KERNVER=$VERSION.$PATCHLEVEL
+MSM_KERNVER=msm-$KERNVER
 
 # Kernel detection
-case "${MSM_KERNVER/*-}" in
+case "$KERNVER" in
     3.18)
         arm32_configs=(
             apq8053_IoE
@@ -126,9 +129,17 @@ CPUs=$(nproc --all)
 
     for config in "${arm32_configs[@]}"; do
         build_prehook arm
+        if [[ $KERNVER == 4.9 ]]; then
+            # override to enable qm215 on msm8909 targets
+            [[ $config =~ msm8909 ]] && scripts/config --file /tmp/build/.config -e ARCH_QM215
+            # override to force disable techpack/audio
+            [[ $config == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
+        fi
         PATH=$BIN LD_LIBRARY_PATH=$LD \
         make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
                         zImage-dtb modules || STATUS=$?
+        # override to re-enable techpack/audio
+        [[ $KERNVER == 4.9 && $config == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953_FALSE/ARCH_MSM8953/g' techpack/audio/Makefile
         build_posthook
     done
 )
