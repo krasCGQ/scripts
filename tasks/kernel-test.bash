@@ -10,12 +10,44 @@ set -e
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
 
+# Pre-hook
+build_prehook() {
+    for target in "${prima_enabled[@]}"; do
+        [[ $target == "$config" ]] && WLAN=( "CONFIG_PRONTO_WLAN=y" )
+        break
+    done
+    for target in "${qcacld_enabled[@]}"; do
+        [[ $target == "$config" ]] && WLAN=( "CONFIG_QCA_CLD_WLAN=y" )
+        # Just in case it's still SDXHEDGEHOG instead of SDX20
+        [[ $target == sdx ]] && WLAN=( "CONFIG_ARCH_SDXHEDGEHOG=y" )
+        break
+    done
+
+    echo "==== Testing ${1^^}: $config-perf_defconfig ===="
+    rm -rf /tmp/build
+    START_TIME=$(date +%s)
+    make -sj"$CPUs" ARCH="$1" O=/tmp/build "$config"-perf_defconfig
+    export START_TIME WLAN
+}
+
+# Post-hook
+build_posthook() {
+    echo
+    echo -n "Build done in $(show_duration)"
+    if [[ -n $STATUS ]]; then
+        echo " and ${BLD}failed$RST"
+        exit "$STATUS"
+    fi
+    echo -e '\n'
+    unset START_TIME WLAN
+}
+
 # Kernel repository
 MSM_KERNVER=msm-$VERSION.$PATCHLEVEL
 
+# Kernel detection
 case "${MSM_KERNVER/*-}" in
     3.18)
-        echo "==== Testing kernel: $MSM_KERNVER ===="
         arm32_configs=(
             apq8053_IoE
             mdm           # mdm9650 IoT
@@ -41,7 +73,7 @@ case "${MSM_KERNVER/*-}" in
         prima_enabled=( apq8053_IoE msm8909 msm8909w msm8909w-1gb msm8937 msmcortex )
         qcacld_enabled=( mdm mdm9607 mdm9607-128m mdm9640 msm sdx ) ;;
     4.9)
-        echo "==== Testing kernel: $MSM_KERNVER ===="
+        # Clang by default for this target
         CLANG=true
         arm32_configs=(
             mdm9607         # mdm9607 Wear OS
@@ -75,6 +107,7 @@ case "${MSM_KERNVER/*-}" in
         exit ;;
 esac
 
+echo "==== Testing kernel: $MSM_KERNVER ===="
 # Number of CPUs/Threads
 CPUs=$(nproc --all)
 # Clang
@@ -91,33 +124,12 @@ CPUs=$(nproc --all)
     [[ -n $CLANG ]] && TARGETS=( "CROSS_COMPILE=arm-linux-androideabi-" "CC=clang" "LD=arm-eabi-ld" "CLANG_TRIPLE=arm-linux-gnueabi" ) \
                     || TARGETS=( "CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc" )
 
-    for arm32_config in "${arm32_configs[@]}"; do
-        for target in "${prima_enabled[@]}"; do
-            [[ $target == "$arm32_config" ]] && WLAN=( "CONFIG_PRONTO_WLAN=y" )
-            break
-        done
-        for target in "${qcacld_enabled[@]}"; do
-            [[ $target == "$arm32_config" ]] && WLAN=( "CONFIG_QCA_CLD_WLAN=y" )
-            # Just in case it's still SDXHEDGEHOG instead of SDX20
-            [[ $target == sdx ]] && WLAN=( "CONFIG_ARCH_SDXHEDGEHOG=y" )
-            break
-        done
-
-        echo "==== Testing ARM: $arm32_config-perf_defconfig ===="
-        rm -rf /tmp/build
-        START_TIME=$(date +%s)
-        make -sj"$CPUs" ARCH=arm O=/tmp/build "$arm32_config"-perf_defconfig
+    for config in "${arm32_configs[@]}"; do
+        build_prehook arm
         PATH=$BIN LD_LIBRARY_PATH=$LD \
         make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
                         zImage-dtb modules || STATUS=$?
-        echo
-        echo -n "Build done in $(show_duration)"
-        if [[ -n $STATUS ]]; then
-            echo " and ${BLD}failed$RST"
-            exit $STATUS
-        fi
-        echo -e '\n'
-        unset WLAN
+        build_posthook
     done
 )
 
@@ -129,31 +141,11 @@ CPUs=$(nproc --all)
     [[ -n $CLANG ]] && TARGETS=( "CC=clang" "CLANG_TRIPLE=aarch64-linux-gnu" ) \
                     || TARGETS=( "CC=aarch64-linux-android-gcc" )
 
-    for arm64_config in "${arm64_configs[@]}"; do
-        for target in "${prima_enabled[@]}"; do
-            [[ $target == "$arm64_config" ]] && WLAN=( "CONFIG_PRONTO_WLAN=y" )
-            break
-        done
-        for target in "${qcacld_enabled[@]}"; do
-            [[ $target == "$arm64_config" ]] && WLAN=( "CONFIG_QCA_CLD_WLAN=y" )
-            break
-        done
-
-        echo "==== Testing ARM64: $arm64_config-perf_defconfig ===="
-        rm -rf /tmp/build
-        # shellcheck disable=SC2034
-        START_TIME=$(date +%s)
-        make -sj"$CPUs" ARCH=arm64 O=/tmp/build "$arm64_config"-perf_defconfig
+    for config in "${arm64_configs[@]}"; do
+        build_prehook arm64
         PATH=$BIN LD_LIBRARY_PATH=$LD \
         make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
                         "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules || STATUS=$?
-        echo
-        echo -n "Build done in $(show_duration)"
-        if [[ -n $STATUS ]]; then
-            echo " and ${BLD}failed$RST"
-            exit $STATUS
-        fi
-        echo -e '\n'
-        unset WLAN
+        build_posthook
     done
 )
