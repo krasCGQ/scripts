@@ -64,7 +64,12 @@ case "${MSM_KERNVER/*-}" in
             qcs605
             sdm670      # sdm710
             sdm845
-        ) ;;
+        )
+
+        prima_enabled=( msm8909 msm8909-minimal msm8909w msm8937 msm8937go
+                        msm8953 msm8953-batcam sdm429-bg spyro )
+        # msm8917 on 4.9 apparently also has one with qcacld instead of prima
+        qcacld_enabled=( mdm9607 qcs605 sdm670 sdm845 ) ;;
     *)
         # nothing to do
         exit ;;
