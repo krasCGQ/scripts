@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
-[[ $(hostname) = wafuu.id || $(hostname) = rimuru ]] || return 1
+[[ $(hostname) == wafuu.id || $(hostname) == rimuru ]] || return 1
 
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
@@ -30,7 +30,10 @@ alias update='sudo su -c "apt update && apt-get dist-upgrade -y"'
 # Shortcut for ssh-agent setup
 ssh_setup() {
     # Do an unconditional check
-    [[ ! -f $HOME/.ssh/id_ed25519 ]] && { warn "Please generate an SSH key before using this command."; return 1; }
+    [[ ! -f $HOME/.ssh/id_ed25519 ]] && {
+        warn "Please generate an SSH key before using this command."
+        return 1
+    }
 
     # The actual setup is here
     eval "$(ssh-agent -s)"

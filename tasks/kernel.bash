@@ -12,7 +12,7 @@
 # 'git log --pretty' alias
 git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
-tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &> /dev/null || return 0; }
+tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
@@ -50,66 +50,85 @@ parse_params() {
     [[ $# -eq 0 ]] && die "No parameter specified!"
     while [[ $# -ge 1 ]]; do
         case $1 in
-            # REQUIRED
-            -d | --device) shift
-                # Supported devices:
-                case ${1,,} in
-                    grus | sirius)
-                        DEVICE=${1,,}
-                        PAGE_SIZE=4096 ;;
-                    mido)
-                        DEVICE=${1,,} ;;
-                    scale)
-                        DEVICE=${1,,}
-                        IS_32BIT=true
-                        NEEDS_DT_IMG=true
-                        PAGE_SIZE=2048 ;;
-                    x00t)
-                        DEVICE=${1^^} ;;
-                    *)
-                        die "Invalid device specified!" ;;
-                esac ;;
-
-            # OPTIONAL
-            -b | --build-only)
-                BUILD_ONLY=true ;;
-
-            -c | --clang)
-                CLANG=true ;;
-
-            --clean)
-                FULL_CLEAN=true
-                # This can't co-exist
-                unset DIRTY ;;
-
-            -cv | --clang-version) shift
-                # Supported Clang corresponding to function in kernel-common
-                get_clang-ver "$1" ;;
-
-            --debug)
-                # Assume section mismatch(es) debugging as a target
-                TARGETS=( "CONFIG_DEBUG_SECTION_MISMATCH=y" ) ;;
-
-            --dirty)
-                DIRTY=true
-                # This can't co-exist
-                unset FULL_CLEAN ;;
-
-            -r | --release) shift
-                # Only integers are accepted
-                RELEASE=$1
-                [[ -n ${RELEASE//[0-9]} ]] && die "Invalid version specified!" ;;
-
-            -s | --stock)
-                STOCK=true ;;
-
-            -u | --upload)
-                # Will be ignored if BUILD_ONLY=true
-                UPLOAD=true ;;
-
-            # Unsupported parameter, skip
+        # REQUIRED
+        -d | --device)
+            shift
+            # Supported devices:
+            case ${1,,} in
+            grus | sirius)
+                DEVICE=${1,,}
+                PAGE_SIZE=4096
+                ;;
+            mido)
+                DEVICE=${1,,}
+                ;;
+            scale)
+                DEVICE=${1,,}
+                IS_32BIT=true
+                NEEDS_DT_IMG=true
+                PAGE_SIZE=2048
+                ;;
+            x00t)
+                DEVICE=${1^^}
+                ;;
             *)
-                warn "Unrecognized parameter specified: \"$1\"" ;;
+                die "Invalid device specified!"
+                ;;
+            esac
+            ;;
+
+        # OPTIONAL
+        -b | --build-only)
+            BUILD_ONLY=true
+            ;;
+
+        -c | --clang)
+            CLANG=true
+            ;;
+
+        --clean)
+            FULL_CLEAN=true
+            # This can't co-exist
+            unset DIRTY
+            ;;
+
+        -cv | --clang-version)
+            shift
+            # Supported Clang corresponding to function in kernel-common
+            get_clang-ver "$1"
+            ;;
+
+        --debug)
+            # Assume section mismatch(es) debugging as a target
+            TARGETS=("CONFIG_DEBUG_SECTION_MISMATCH=y")
+            ;;
+
+        --dirty)
+            DIRTY=true
+            # This can't co-exist
+            unset FULL_CLEAN
+            ;;
+
+        -r | --release)
+            shift
+            # Only integers are accepted
+            RELEASE=$1
+            [[ -n ${RELEASE//[0-9]/} ]] && die "Invalid version specified!"
+            ;;
+
+        -s | --stock)
+            STOCK=true
+            ;;
+
+        -u | --upload)
+            # Will be ignored if BUILD_ONLY=true
+            UPLOAD=true
+            ;;
+
+        # Unsupported parameter, skip
+        *)
+            warn "Unrecognized parameter specified: \"$1\""
+            ;;
         esac
         shift
     done
@@ -206,7 +225,7 @@ export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 AK=$ROOT_DIR/AnyKernel/$DEVICE
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # MoeSyndrome Kernel is only available for mido; use branch name for others
-if [[ $DEVICE = mido ]]; then
+if [[ $DEVICE == mido ]]; then
     NAME=MoeSyndrome
     # Define which variant we're building
     [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
@@ -257,7 +276,7 @@ fi
 # Missing GCC and/or Clang
 for BIN in ${CROSS_COMPILE}elfedit ${CROSS_COMPILE_ARM32:+${CROSS_COMPILE_ARM32}elfedit} ${TC_32BIT_PATH_48:+arm-eabi-ld} ${CLANG:+clang}; do
     PATH="${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs:}/dev/null" \
-        command -v "$BIN" > /dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
+        command -v "$BIN" >/dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
 done
 # Build-only isn't requested, but missing device's AnyKernel resource
 [[ -z $BUILD_ONLY && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
@@ -270,14 +289,14 @@ fi
 
 # Set compiler version here to avoid being included in total build time
 [[ -z $CLANG_CUSTOM ]] && CUT=,2
-[[ -n $CLANG ]] && COMPILER=$(clang --version | head -1 | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') \
-                || COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
+[[ -n $CLANG ]] && COMPILER=$(clang --version | head -1 | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
+    COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
 LINKER=$(PATH=$PATH ${CROSS_COMPILE}ld --version | head -1)
 
 # Script beginning
 info "Starting build script..."
 tg_post "$MSG has been started on \`$(hostname)\`." \
-        "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
+    "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
 # Explicitly declare build script startup
 STARTED=true
 # shellcheck disable=SC2034
@@ -287,16 +306,16 @@ sleep 1
 # Clang-only setup
 if [[ -n $CLANG ]]; then
     # Define additional parameters that'll be passed to make
-    CLANG_EXTRAS=( "CC=clang" )
-    [[ -z $IS_32BIT ]] && CLANG_EXTRAS+=( "CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi" ) \
-                       || CLANG_EXTRAS+=( "CLANG_TRIPLE=arm-linux-gnueabi" )
+    CLANG_EXTRAS=("CC=clang")
+    [[ -z $IS_32BIT ]] && CLANG_EXTRAS+=("CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi") ||
+        CLANG_EXTRAS+=("CLANG_TRIPLE=arm-linux-gnueabi")
 fi
 
 # Clean build directory
 if [[ -z $DIRTY && -d $OUT ]]; then
     info "Cleaning build directory..."
     if [[ -z $FULL_CLEAN ]]; then
-        make -s ARCH=$ARCH O="$OUT" clean 2> /dev/null
+        make -s ARCH=$ARCH O="$OUT" clean 2>/dev/null
         # Delete earlier dt{,bo}.img created by this build script
         rm -f "$OUT_KERNEL"/dts/dt{,bo}.img
     else
@@ -323,11 +342,11 @@ else
 fi
 
 # Announce build information; only pass as minimum as possible make variables
-VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2> /dev/null | tail -1)
+VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2>/dev/null | tail -1)
 tg_post "*[BuildCI]* Build information:" "" \
-        "*Kernel version:* \`$VERSION\`" \
-        "*Compiler:* $COMPILER" \
-        "*Linker:* $LINKER" &
+    "*Kernel version:* \`$VERSION\`" \
+    "*Compiler:* $COMPILER" \
+    "*Linker:* $LINKER" &
 
 # Only execute modules build if it's explicitly needed
 grep -q '=m' "$OUT"/.config && HAS_MODULES=true
@@ -340,16 +359,16 @@ info "Building kernel${HAS_MODULES:+ and modules}..."
 KBUILD_BUILD_TIMESTAMP="$(date)"
 export KBUILD_BUILD_TIMESTAMP
 PATH=$PATH \
-make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE=$CROSS_COMPILE \
-     CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" \
-     ${TC_32BIT_PATH_48:+LD=arm-eabi-ld} "${TARGETS[@]}" \
-     ${IS_32BIT:+z}Image dtbs ${HAS_MODULES:+modules}
+    make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE=$CROSS_COMPILE \
+    CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" \
+    ${TC_32BIT_PATH_48:+LD=arm-eabi-ld} "${TARGETS[@]}" \
+    ${IS_32BIT:+z}Image dtbs ${HAS_MODULES:+modules}
 
 # Build dt.img and/or dtbo.img if needed
 if [[ -n $NEEDS_DT_IMG ]]; then
     info "Creating dt.img..."
     "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
-        -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ > /dev/null
+        -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ >/dev/null
 fi
 if [[ -n $NEEDS_DTBO ]]; then
     info "Creating dtbo.img..."
@@ -370,7 +389,7 @@ if [[ -z $BUILD_ONLY ]]; then
         cp -f "$OUT_KERNEL"/dts/dt.img "$AK"
     else
         # Append dtbs to compressed kernel image and copy
-        cat "$OUT_KERNEL"/$KERNEL_NAME "$OUT_KERNEL"/dts/**/*.dtb > "$AK"/$KERNEL_NAME-dtb
+        cat "$OUT_KERNEL"/$KERNEL_NAME "$OUT_KERNEL"/dts/**/*.dtb >"$AK"/$KERNEL_NAME-dtb
     fi
     # Copy dtbo.img for supported devices
     [[ -n $NEEDS_DTBO ]] && cp -f "$OUT_KERNEL"/dts/dtbo.img "$AK"
@@ -430,15 +449,17 @@ if [[ -n $UPLOAD ]]; then
             cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 
             info "Uploading $RELEASE_ZIP..."
-            if { rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/;
-                 rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/; }; then
+            if {
+                rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/
+                rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/
+            }; then
                 info "$RELEASE_ZIP uploaded successfully." \
-                     "GitHub releases upload requires manual intervention, though."
+                    "GitHub releases upload requires manual intervention, though."
                 TELEGRAM_CHAT="-1001368407111 -1001181003922" \
-                tg_post "*New MoeSyndrome Kernel build is available!*" \
-                        "*Name:* \`$RELEASE_ZIP\`" \
-                        "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
-                        "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
+                    tg_post "*New MoeSyndrome Kernel build is available!*" \
+                    "*Name:* \`$RELEASE_ZIP\`" \
+                    "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
+                    "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
             else
                 warn "Failed to upload $RELEASE_ZIP."
             fi

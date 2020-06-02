@@ -34,7 +34,7 @@ korg_merge() { git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/lin
 if [[ -n $BASH ]]; then
     parse_git_branch() {
         local BRANCH
-        BRANCH=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/^* //')
+        BRANCH=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/^* //')
 
         if [[ -n $BRANCH ]]; then
             # Don't give extra brackets if project isn't at any branch or is currently detached
@@ -58,19 +58,22 @@ zipsigner() {
         return 1
     elif [[ $# -lt 1 ]]; then
         warn "${BLD}Usage:$RST zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
-             "If signed-zip is undefined, it'll default to zip name + signed."
+            "If signed-zip is undefined, it'll default to zip name + signed."
         return 1
     fi
 
     while [[ $# -ge 1 ]]; do
         case $1 in
-            -s|--signing-key) shift
-                SIGNATURE=$1 ;;
+        -s | --signing-key)
+            shift
+            SIGNATURE=$1
+            ;;
 
-            *)
-                UNSIGNED=$1
-                shift
-                [[ -n $1 ]] && SIGNED=$1 || SIGNED=${UNSIGNED/.zip/-signed.zip} ;;
+        *)
+            UNSIGNED=$1
+            shift
+            [[ -n $1 ]] && SIGNED=$1 || SIGNED=${UNSIGNED/.zip/-signed.zip}
+            ;;
         esac
         shift
     done
@@ -91,7 +94,7 @@ get_proton-clang() {
 
     info "Obtaining latest version info..."
     LATEST=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -w tag_name | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
-    if [[ $(cat $INSTALL_DIR/ClangVersion.txt 2> /dev/null) -eq $LATEST ]]; then
+    if [[ $(cat $INSTALL_DIR/ClangVersion.txt 2>/dev/null) -eq $LATEST ]]; then
         # we're up to date, skip.
         info "Clang build $LATEST is up to date."
         rm /tmp/latest.json
@@ -115,9 +118,9 @@ get_proton-clang() {
 
     info "Extracting $NAME..."
     tar -C /opt/kud -xf /tmp/"$NAME"
-    mv /opt/kud/"${NAME/.tar.gz}" $INSTALL_DIR
+    mv /opt/kud/"${NAME/.tar.gz/}" $INSTALL_DIR
     # write build version
-    echo "$LATEST" > $INSTALL_DIR/ClangVersion.txt
+    echo "$LATEST" >$INSTALL_DIR/ClangVersion.txt
     rm /tmp/"$NAME"
 
     # {29} = last 28 letters of SHA-1 + trailing right parentheses

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Don't setup if not in correct environment
-[[ $(hostname) = harutsuki || $(hostname) = strelka ]] || return 1
+[[ $(hostname) == harutsuki || $(hostname) == strelka ]] || return 1
 
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
@@ -40,26 +40,33 @@ alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 # Convert all FLAC, WAV, and/or AIFF files to Opus
 opus_convert() {
     # Ask to install opus-tools package if opusenc doesn't exist
-    [[ -z $(command -v opusenc) ]] && { warn "Please install opus-tools package before continuing."; return 1; }
+    [[ -z $(command -v opusenc) ]] && {
+        warn "Please install opus-tools package before continuing."
+        return 1
+    }
 
     for SONG in ./*; do
         case "$SONG" in
-            *.aiff|*.flac|*.wav)
-                # Not supporting wildcards for converting
-                opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 \
-                        "$SONG" "$(basename "$SONG" | sed 's/\(.*\)\..*/\1/').ogg" || return 1
-                SUPPORTED=true ;;
+        *.aiff | *.flac | *.wav)
+            # Not supporting wildcards for converting
+            opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 \
+                "$SONG" "$(basename "$SONG" | sed 's/\(.*\)\..*/\1/').ogg" || return 1
+            SUPPORTED=true
+            ;;
         esac
     done
 
     # Return non-zero status if nothing to do
-    [[ -z $SUPPORTED ]] && { warn "There's nothing to do."; return 1; }
+    [[ -z $SUPPORTED ]] && {
+        warn "There's nothing to do."
+        return 1
+    }
 
     return 0
 }
 
 # Setup zRAM to take the whole RAM size
-function zram_init { (
+function zram_init() { (
     [[ $(whoami) != root ]] && return 1
 
     local MEMSIZE
@@ -72,7 +79,7 @@ function zram_init { (
     # Setup zRAM as swap
     modprobe zram
     # Write same amount of physical memory
-    echo "$MEMSIZE" > /sys/devices/virtual/block/zram0/disksize
+    echo "$MEMSIZE" >/sys/devices/virtual/block/zram0/disksize
     mkswap /dev/zram0
     swapon -p 100 /dev/zram0
 
@@ -82,7 +89,7 @@ function zram_init { (
 alias zram_init='check_sudo su -c "$(declare -f zram_init) && zram_init &> /dev/null"'
 
 # De-init zRAM configuration set before
-zram_deinit() {(
+zram_deinit() { (
     [[ $(whoami) != root ]] && return 1
 
     # Turn off zRAM

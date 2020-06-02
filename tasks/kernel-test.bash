@@ -13,13 +13,13 @@ set -e
 # Pre-hook
 build_prehook() {
     for target in "${prima_enabled[@]}"; do
-        [[ $target == "$config" ]] && WLAN=( "CONFIG_PRONTO_WLAN=y" )
+        [[ $target == "$config" ]] && WLAN=("CONFIG_PRONTO_WLAN=y")
         break
     done
     for target in "${qcacld_enabled[@]}"; do
-        [[ $target == "$config" ]] && WLAN=( "CONFIG_QCA_CLD_WLAN=y" )
+        [[ $target == "$config" ]] && WLAN=("CONFIG_QCA_CLD_WLAN=y")
         # Just in case it's still SDXHEDGEHOG instead of SDX20
-        [[ $target == sdx ]] && WLAN=( "CONFIG_ARCH_SDXHEDGEHOG=y" )
+        [[ $target == sdx ]] && WLAN=("CONFIG_ARCH_SDXHEDGEHOG=y")
         break
     done
 
@@ -50,64 +50,67 @@ MSM_KERNVER=msm-$KERNVER
 
 # Kernel detection
 case "$KERNVER" in
-    3.18)
-        arm32_configs=(
-            apq8053_IoE
-            mdm           # mdm9650 IoT
-            mdm9607       # mdm9607 IoT
-            mdm9607-128mb # mdm9607 IoT (128 MB)
-            mdm9640       # mdm9640 IoT
-            msm8909       # msm8909 Android Go
-            msm8909w      # msm8909 Android Watch
-            msm8909w-1gb  # msm8909 Android Watch (1 GB)
-            msm8937       # msm8917 / msm8937
-            msmcortex     # msm8953
-            sdx           # sdx20
-        )
+3.18)
+    arm32_configs=(
+        apq8053_IoE
+        mdm           # mdm9650 IoT
+        mdm9607       # mdm9607 IoT
+        mdm9607-128mb # mdm9607 IoT (128 MB)
+        mdm9640       # mdm9640 IoT
+        msm8909       # msm8909 Android Go
+        msm8909w      # msm8909 Android Watch
+        msm8909w-1gb  # msm8909 Android Watch (1 GB)
+        msm8937       # msm8917 / msm8937
+        msmcortex     # msm8953
+        sdx           # sdx20
+    )
 
-        arm64_configs=(
-            apq8053_IoE
-            msm8937     # msm8917 / msm8937
-            msmcortex   # msm8953
-            msm         # msm8996
-            msm-auto    # msm8996 Android Auto
-        )
+    arm64_configs=(
+        apq8053_IoE
+        msm8937   # msm8917 / msm8937
+        msmcortex # msm8953
+        msm       # msm8996
+        msm-auto  # msm8996 Android Auto
+    )
 
-        prima_enabled=( apq8053_IoE msm8909 msm8909w msm8909w-1gb msm8937 msmcortex )
-        qcacld_enabled=( mdm mdm9607 mdm9607-128m mdm9640 msm sdx ) ;;
-    4.9)
-        # Clang by default for this target
-        CLANG=true
-        arm32_configs=(
-            mdm9607         # mdm9607 Wear OS
-            msm8909         # msm8909 Android Go
-            msm8909-minimal # msm8909 Android Go (minimal)
-            msm8909w        # msm8909 Android Watch
-            msm8937         # sdm429 / sdm439 / qm215
-            msm8937go       # sdm429 / sdm439 / qm215 Android Go
-            msm8953         # sdm450 / sdm632
-            msm8953-batcam  # sdm450 / sdm632 with batcam (?)
-            sa415m
-            sdm429-bg       # sdm429 with G-Link BGCOM Transport
-            sdm670          # sdm710
-            sdxpoorwills    # sda845
-            spyro           # spyro Wear OS
-        )
-        arm64_configs=(
-            msm8937     # sdm429 / sdm439 / qm215
-            msm8953     # sdm450 / sdm632
-            qcs605
-            sdm670      # sdm710
-            sdm845
-        )
+    prima_enabled=(apq8053_IoE msm8909 msm8909w msm8909w-1gb msm8937 msmcortex)
+    qcacld_enabled=(mdm mdm9607 mdm9607-128m mdm9640 msm sdx)
+    ;;
+4.9)
+    # Clang by default for this target
+    CLANG=true
+    arm32_configs=(
+        mdm9607         # mdm9607 Wear OS
+        msm8909         # msm8909 Android Go
+        msm8909-minimal # msm8909 Android Go (minimal)
+        msm8909w        # msm8909 Android Watch
+        msm8937         # sdm429 / sdm439 / qm215
+        msm8937go       # sdm429 / sdm439 / qm215 Android Go
+        msm8953         # sdm450 / sdm632
+        msm8953-batcam  # sdm450 / sdm632 with batcam (?)
+        sa415m
+        sdm429-bg    # sdm429 with G-Link BGCOM Transport
+        sdm670       # sdm710
+        sdxpoorwills # sda845
+        spyro        # spyro Wear OS
+    )
+    arm64_configs=(
+        msm8937 # sdm429 / sdm439 / qm215
+        msm8953 # sdm450 / sdm632
+        qcs605
+        sdm670 # sdm710
+        sdm845
+    )
 
-        prima_enabled=( msm8909 msm8909-minimal msm8909w msm8937 msm8937go
-                        msm8953 msm8953-batcam sdm429-bg spyro )
-        # msm8917 on 4.9 apparently also has one with qcacld instead of prima
-        qcacld_enabled=( mdm9607 qcs605 sdm670 sdm845 ) ;;
-    *)
-        # nothing to do
-        exit ;;
+    prima_enabled=(msm8909 msm8909-minimal msm8909w msm8937 msm8937go
+        msm8953 msm8953-batcam sdm429-bg spyro)
+    # msm8917 on 4.9 apparently also has one with qcacld instead of prima
+    qcacld_enabled=(mdm9607 qcs605 sdm670 sdm845)
+    ;;
+*)
+    # nothing to do
+    exit
+    ;;
 esac
 
 echo "==== Testing kernel: $MSM_KERNVER ===="
@@ -124,8 +127,8 @@ CPUs=$(nproc --all)
     GCC_49=/opt/kud/android/arm-linux-androideabi-4.9
     BIN=${CLANG:+$CLANG_PATH:}$GCC_48/bin:$GCC_49/bin:$PATH
     LD=${CLANG:+${CLANG_PATH/bin/lib}:}$GCC_48/lib:$GCC_49/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-    [[ -n $CLANG ]] && TARGETS=( "CROSS_COMPILE=arm-linux-androideabi-" "CC=clang" "LD=arm-eabi-ld" "CLANG_TRIPLE=arm-linux-gnueabi" ) \
-                    || TARGETS=( "CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc" )
+    [[ -n $CLANG ]] && TARGETS=("CROSS_COMPILE=arm-linux-androideabi-" "CC=clang" "LD=arm-eabi-ld" "CLANG_TRIPLE=arm-linux-gnueabi") ||
+        TARGETS=("CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc")
 
     for config in "${arm32_configs[@]}"; do
         build_prehook arm
@@ -136,8 +139,8 @@ CPUs=$(nproc --all)
             [[ $config == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
         fi
         PATH=$BIN LD_LIBRARY_PATH=$LD \
-        make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
-                        zImage-dtb modules || STATUS=$?
+            make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
+            zImage-dtb modules || STATUS=$?
         # override to re-enable techpack/audio
         [[ $KERNVER == 4.9 && $config == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953_FALSE/ARCH_MSM8953/g' techpack/audio/Makefile
         build_posthook
@@ -149,14 +152,14 @@ CPUs=$(nproc --all)
     GCC=/opt/kud/android/aarch64-linux-android-4.9
     BIN=${CLANG:+$CLANG_PATH:}$GCC/bin:$PATH
     LD=${CLANG:+${CLANG_PATH/bin/lib}:}$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-    [[ -n $CLANG ]] && TARGETS=( "CC=clang" "CLANG_TRIPLE=aarch64-linux-gnu" ) \
-                    || TARGETS=( "CC=aarch64-linux-android-gcc" )
+    [[ -n $CLANG ]] && TARGETS=("CC=clang" "CLANG_TRIPLE=aarch64-linux-gnu") ||
+        TARGETS=("CC=aarch64-linux-android-gcc")
 
     for config in "${arm64_configs[@]}"; do
         build_prehook arm64
         PATH=$BIN LD_LIBRARY_PATH=$LD \
-        make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-                        "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules || STATUS=$?
+            make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
+            "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules || STATUS=$?
         build_posthook
     done
 )

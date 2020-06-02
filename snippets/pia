@@ -23,28 +23,35 @@ pia_ovpnsetup() {
     }' ERR INT TERM
 
     # Make sure OpenVPN is installed
-    [[ -z $(command -v openvpn) ]] && { warn "Please install openvpn package before continuing."; return 1; }
+    [[ -z $(command -v openvpn) ]] && {
+        warn "Please install openvpn package before continuing."
+        return 1
+    }
 
     # Parse parameters
     # Only one type at a time, latter function will override already assigned
     while [[ $# -ge 1 ]]; do
         case $1 in
-            # AEAD
-            -a|--aead)
-                # For now only TCP
-                [[ $MODE = tcp ]] && AEAD=true ;;
+        # AEAD
+        -a | --aead)
+            # For now only TCP
+            [[ $MODE == tcp ]] && AEAD=true
+            ;;
 
-            # TCP
-            -t|--tcp)
-                MODE=tcp ;;
+        # TCP
+        -t | --tcp)
+            MODE=tcp
+            ;;
 
-            # UDP
-            -u|--udp)
-                MODE=udp ;;
+        # UDP
+        -u | --udp)
+            MODE=udp
+            ;;
 
-            # Unrecognized parameter, skip
-            *)
-                warn "Unrecognized parameter specified: \"${1}\"" ;;
+        # Unrecognized parameter, skip
+        *)
+            warn "Unrecognized parameter specified: \"${1}\""
+            ;;
         esac
         shift
     done
@@ -55,7 +62,7 @@ pia_ovpnsetup() {
 
     # Fetch recommended configuration files
     info "Fetching configuration files..."
-    [[ $MODE = tcp ]] && EXTRA_ARGS+=-tcp
+    [[ $MODE == tcp ]] && EXTRA_ARGS+=-tcp
     if [[ -n $AEAD ]]; then
         EXTRA_ARGS+=-aead
         # This is hosted on my VPS since PIA doesn't provide it by default
@@ -85,7 +92,7 @@ pia_ovpnsetup() {
     check_sudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
 
     # Go back to previous directory and remove temporary directory
-    cd - > /dev/null || return 1
+    cd - >/dev/null || return 1
     rm -rf $TMP_DIR
 
     if [[ ! -f $AUTH_FILE ]]; then
@@ -97,7 +104,7 @@ pia_ovpnsetup() {
 
         # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
         info "Saving credientials to $AUTH_FILE..."
-        echo -e "$USER\n$PASS" | check_sudo tee $AUTH_FILE > /dev/null
+        echo -e "$USER\n$PASS" | check_sudo tee $AUTH_FILE >/dev/null
         check_sudo su -c "chown root:network $AUTH_FILE && chmod 600 $AUTH_FILE"
     fi
 
@@ -116,8 +123,8 @@ _pia_ovpnconnect() {
 
     # Make sure OpenVPN is installed
     if [[ -z $(command -v openvpn) ]]; then
-       warn "Please install openvpn package before continuing."
-       return 1
+        warn "Please install openvpn package before continuing."
+        return 1
     # Warn for specification of more than a country
     elif [[ $# -gt 1 ]]; then
         warn "This function uses one parameter only."
@@ -132,7 +139,7 @@ _pia_ovpnconnect() {
     # OpenVPN config file
     CONFIG=/etc/openvpn/client/"$COUNTRY".ovpn
     # Exit function immediately if provided country doesn't exist
-    if [[ ! -f "$CONFIG" ]]; then
+    if [[ ! -f $CONFIG ]]; then
         warn "Invalid country provided: $COUNTRY"
         return 1
     fi
@@ -145,18 +152,18 @@ _pia_ovpnconnect() {
     # If .ip-address.saved is exist, probably it wasn't disconnected properly
     if [[ -f $SCRIPTDIR/.ip-address.saved ]]; then
         warn "Redundant rules detected! Disabling VPN kill switch..."
-        "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" > /dev/null
+        "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
     fi
 
     # Use PIA DNS servers in resolv.conf
-    echo -e "nameserver 209.222.18.222\nnameserver 209.222.18.218" > /etc/resolv.conf
+    echo -e "nameserver 209.222.18.222\nnameserver 209.222.18.218" >/etc/resolv.conf
 
     # Make resolv.conf read-only
     chattr +i /etc/resolv.conf
 
     # Enable VPN kill switch
     info "Enabling VPN kill switch..."
-    "$SCRIPTDIR"/utils/killswitch.bash on "$SERVER" "$PORT/$PROTOCOL" > /dev/null
+    "$SCRIPTDIR"/utils/killswitch.bash on "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Restart name server cache daemon
     # TODO: For other distros?
@@ -182,7 +189,7 @@ _pia_ovpnconnect() {
 
     # Disable VPN kill switch
     info "Disabling VPN kill switch..."
-    "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" > /dev/null
+    "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Make resolv.conf read/write
     chattr -i /etc/resolv.conf

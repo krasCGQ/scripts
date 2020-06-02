@@ -8,7 +8,7 @@
 # Modified to be as dead simple and minimal as possible.
 
 die() {
-    [[ -n $1 ]] && \
+    [[ -n $1 ]] &&
         echo "! $1"
 
     exit 1
@@ -26,9 +26,10 @@ if [[ $# -ge 1 && $# -le 3 ]]; then
     # Just to remove IP addresses list file if we're going to be enable
     # Actual $1 parsing is after everything else is queried
     case $1 in
-        -e|--enable|on)
-            [[ -f $IP_LIST ]] && \
-                rm -f "$IP_LIST" ;;
+    -e | --enable | on)
+        [[ -f $IP_LIST ]] &&
+            rm -f "$IP_LIST"
+        ;;
     esac
 
     if [[ $# -eq 2 ]] && echo "$2" | grep -q "/"; then
@@ -39,18 +40,18 @@ if [[ $# -ge 1 && $# -le 3 ]]; then
         if echo "$2" | grep -qv '[[:alpha:]]'; then
             # Static IP address
             IP_ADDRESS="$2"
-            [[ $(echo "$IP_ADDRESS" | sed -e 's/[.]/ /g' | wc -w) -ne 4 ]] && \
+            [[ $(echo "$IP_ADDRESS" | sed -e 's/[.]/ /g' | wc -w) -ne 4 ]] &&
                 die "Invalid IP address specified!"
         else
             # Assume it's a URL with dynamic IP addresses
             if [[ ! -f $IP_LIST ]]; then
                 # Use getent from Glibc to obtain list of IP addresses
                 IP_ADDRESS="$(getent hosts "$2" | awk '{print $1}')"
-                [[ -z $IP_ADDRESS ]] && \
+                [[ -z $IP_ADDRESS ]] &&
                     die "Unable to resolve $2."
 
                 # Save IP addresses list to .ip-address.saved
-                echo "$IP_ADDRESS" > "$IP_LIST"
+                echo "$IP_ADDRESS" >"$IP_LIST"
             fi
         fi
         if echo "$3" | grep -q "/"; then
@@ -60,49 +61,52 @@ if [[ $# -ge 1 && $# -le 3 ]]; then
     fi
 
     case $1 in
-        # Disable kill switch
-        -d|--disable|off)
-            # Load list of IP addresses is exist then delete it
-            if [[ -f $IP_LIST ]]; then
-                IP_ADDRESS="$(cat "$IP_LIST")"
-                rm -f "$IP_LIST"
-            fi
+    # Disable kill switch
+    -d | --disable | off)
+        # Load list of IP addresses is exist then delete it
+        if [[ -f $IP_LIST ]]; then
+            IP_ADDRESS="$(cat "$IP_LIST")"
+            rm -f "$IP_LIST"
+        fi
 
-            CONFIG=( "default allow outgoing"
-                     "delete allow out on tun0"
-                     "delete allow out 53/udp" )
+        CONFIG=("default allow outgoing"
+            "delete allow out on tun0"
+            "delete allow out 53/udp")
 
-            if [[ -n $IP_ADDRESS ]]; then
-                for IP in $IP_ADDRESS; do
-                    [[ -n $PORT_PROTOCOL ]] && \
-                        CONFIG+=( "delete allow out proto ${PORT_PROTOCOL#*/} to $IP port ${PORT_PROTOCOL/\/*}" ) || \
-                        CONFIG+=( "delete allow out to $IP" )
-                done
-            else
-                [[ -n $PORT_PROTOCOL ]] && \
-                    CONFIG+=( "delete allow out $PORT_PROTOCOL" )
-            fi ;;
+        if [[ -n $IP_ADDRESS ]]; then
+            for IP in $IP_ADDRESS; do
+                [[ -n $PORT_PROTOCOL ]] &&
+                    CONFIG+=("delete allow out proto ${PORT_PROTOCOL#*/} to $IP port ${PORT_PROTOCOL/\/*/}") ||
+                    CONFIG+=("delete allow out to $IP")
+            done
+        else
+            [[ -n $PORT_PROTOCOL ]] &&
+                CONFIG+=("delete allow out $PORT_PROTOCOL")
+        fi
+        ;;
 
-        # Enable kill switch
-        -e|--enable|on)
-            CONFIG=( "default deny outgoing"
-                     "allow out on tun0"
-                     "allow out 53/udp" )
+    # Enable kill switch
+    -e | --enable | on)
+        CONFIG=("default deny outgoing"
+            "allow out on tun0"
+            "allow out 53/udp")
 
-            if [[ -n $IP_ADDRESS ]]; then
-                for IP in $IP_ADDRESS; do
-                    [[ -n $PORT_PROTOCOL ]] && \
-                        CONFIG+=( "allow out proto ${PORT_PROTOCOL#*/} to $IP port ${PORT_PROTOCOL/\/*}" ) || \
-                        CONFIG+=( "allow out to $IP" )
-                done
-            else
-                [[ -n $PORT_PROTOCOL ]] && \
-                    CONFIG+=( "allow out $PORT_PROTOCOL" )
-            fi ;;
+        if [[ -n $IP_ADDRESS ]]; then
+            for IP in $IP_ADDRESS; do
+                [[ -n $PORT_PROTOCOL ]] &&
+                    CONFIG+=("allow out proto ${PORT_PROTOCOL#*/} to $IP port ${PORT_PROTOCOL/\/*/}") ||
+                    CONFIG+=("allow out to $IP")
+            done
+        else
+            [[ -n $PORT_PROTOCOL ]] &&
+                CONFIG+=("allow out $PORT_PROTOCOL")
+        fi
+        ;;
 
-        # Suicide
-        *)
-            die "Invalid parameter specified!" ;;
+    # Suicide
+    *)
+        die "Invalid parameter specified!"
+        ;;
     esac
 else
     die "Usage: $0 <-e|--enable|on|-d|--disable|off> [IP|URL] [port/protocol]"

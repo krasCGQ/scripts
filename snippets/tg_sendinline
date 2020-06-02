@@ -12,40 +12,57 @@ tg_sendinline() {
     # Parse parameters
     while [[ $# -ge 1 ]]; do
         case $1 in
-            # REQUIRED
-            -in |--inline-name) shift
-                INLINE_TEXT=$1 ;;
+        # REQUIRED
+        -in | --inline-name)
+            shift
+            INLINE_TEXT=$1
+            ;;
 
-            -inr|--inline-name-row) shift
-                INLINE_TEXT=$1
-                ON_SAME_ROW=true ;;
+        -inr | --inline-name-row)
+            shift
+            INLINE_TEXT=$1
+            ON_SAME_ROW=true
+            ;;
 
-            -iu |--inline-url) shift
-                INLINE_URL=$1 ;;
+        -iu | --inline-url)
+            shift
+            INLINE_URL=$1
+            ;;
 
-            -iur|--inline-url-row) shift
-                INLINE_URL=$1
-                ON_SAME_ROW=true ;;
+        -iur | --inline-url-row)
+            shift
+            INLINE_URL=$1
+            ON_SAME_ROW=true
+            ;;
 
-            # REQUIRED, BUT CAN BE SET EXTERNALLY
-            -c  |--chat-id) shift
-                local TELEGRAM_CHAT
-                TELEGRAM_CHAT=$1 ;;
+        # REQUIRED, BUT CAN BE SET EXTERNALLY
+        -c | --chat-id)
+            shift
+            local TELEGRAM_CHAT
+            TELEGRAM_CHAT=$1
+            ;;
 
-            -t  |--token) shift
-                [[ $1 != *:* ]] && { warn "Invalid value specified!"; return 1; }
-                local TELEGRAM_TOKEN
-                TELEGRAM_TOKEN=$1 ;;
+        -t | --token)
+            shift
+            [[ $1 != *:* ]] && {
+                warn "Invalid value specified!"
+                return 1
+            }
+            local TELEGRAM_TOKEN
+            TELEGRAM_TOKEN=$1
+            ;;
 
-            # OPTIONAL
-            -b  |--break)
-                INLINE+="
+        # OPTIONAL
+        -b | --break)
+            INLINE+="
             ],"
-                unset ROW_COUNT ;;
+            unset ROW_COUNT
+            ;;
 
-            # EVERYTHING ELSE: Send as part of message instead
-            *)
-                TEXT+="$1\n" ;;
+        # EVERYTHING ELSE: Send as part of message instead
+        *)
+            TEXT+="$1\n"
+            ;;
         esac
         shift
 
@@ -64,7 +81,7 @@ tg_sendinline() {
                 fi
                 [[ -z $COUNT ]] && COUNT=1 || COUNT=$((COUNT + 1))
             fi
-            [[ -z $ROW_COUNT || ( $ROW_COUNT = 1 && -n $ON_SAME_ROW ) ]] && INLINE+="
+            [[ -z $ROW_COUNT || ($ROW_COUNT == 1 && -n $ON_SAME_ROW) ]] && INLINE+="
             [
                 {" || INLINE+="
                 {"
@@ -90,7 +107,7 @@ tg_sendinline() {
     fi
 
     # Add missing ending square bracket if needed
-    [[ $(echo "$INLINE" | tail -c 2) = "}" ]] && INLINE+="
+    [[ $(echo "$INLINE" | tail -c 2) == "}" ]] && INLINE+="
             ]"
 
     # Request JSON
@@ -105,5 +122,5 @@ tg_sendinline() {
 
     # Post using provided request JSON
     curl -s -X POST https://api.telegram.org/bot"$TELEGRAM_TOKEN"/sendMessage \
-         -H "Content-Type: application/json" -d "$REQUEST" &> /dev/null
+        -H "Content-Type: application/json" -d "$REQUEST" &>/dev/null
 }
