@@ -13,7 +13,7 @@ if [[ -n $BASH ]]; then
 elif [[ -n $ZSH_VERSION ]]; then
     # Zsh
     # shellcheck disable=SC2154
-    SCRIPTDIR=$(dirname ${(%):-%x})/..
+    SCRIPTDIR=$(dirname "${(%):-%x}")/..
 else
     echo "! Unsupported shell. Exiting." >&2
     return 1

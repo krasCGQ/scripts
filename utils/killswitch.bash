@@ -1,4 +1,5 @@
 #!/usr/bin/sudo /usr/bin/bash
+# shellcheck shell=bash
 # VPN kill switch enabler/disabler script for UFW
 # Copyright (C) 2018-2019 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
