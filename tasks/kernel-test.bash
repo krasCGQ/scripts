@@ -125,8 +125,8 @@ CPUs=$(nproc --all)
     GCC_48=/opt/kud/android/arm-eabi-4.8
     # For compiler only
     GCC_49=/opt/kud/android/arm-linux-androideabi-4.9
-    BIN=${CLANG:+$CLANG_PATH:}$GCC_48/bin:$GCC_49/bin:$PATH
-    LD=${CLANG:+${CLANG_PATH/bin/lib}:}$GCC_48/lib:$GCC_49/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    BIN=${CLANG:+$CLANG_PATH/bin:}$GCC_48/bin:$GCC_49/bin:$PATH
+    LD=${CLANG:+$CLANG_PATH/lib:}$GCC_48/lib:$GCC_49/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     [[ -n $CLANG ]] && TARGETS=("CROSS_COMPILE=arm-linux-androideabi-" "CC=clang" "LD=arm-eabi-ld" "CLANG_TRIPLE=arm-linux-gnueabi") ||
         TARGETS=("CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc")
 
@@ -150,8 +150,8 @@ CPUs=$(nproc --all)
 # ARM64 tasks
 (
     GCC=/opt/kud/android/aarch64-linux-android-4.9
-    BIN=${CLANG:+$CLANG_PATH:}$GCC/bin:$PATH
-    LD=${CLANG:+${CLANG_PATH/bin/lib}:}$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    BIN=${CLANG:+$CLANG_PATH/bin:}$GCC/bin:$PATH
+    LD=${CLANG:+$CLANG_PATH/lib:}$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     [[ -n $CLANG ]] && TARGETS=("CC=clang" "CLANG_TRIPLE=aarch64-linux-gnu") ||
         TARGETS=("CC=aarch64-linux-android-gcc")
 

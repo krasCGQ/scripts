@@ -161,7 +161,10 @@ KERNEL_DIR=kernels/$DEVICE
 THREADS=$(nproc --all)
 
 # Clang compiler (if used)
-[[ -n $CLANG && -z $STOCK ]] && CLANG_PATH=$OPT_DIR/proton-clang/bin
+if [[ -n $CLANG ]]; then
+    [[ -z $STOCK ]] && CLANG_PATH=$OPT_DIR/proton-clang
+    CLANG_PATH=$CLANG_PATH/bin
+fi
 # GCC compiler
 if [[ -z $STOCK ]]; then
     # Aarch64 toolchain
