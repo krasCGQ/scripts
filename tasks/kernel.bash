@@ -302,7 +302,7 @@ fi
 [[ $CLANG_VERSION == qti ]] && LINE=2 || LINE=1
 [[ -n $CLANG ]] && COMPILER=$(clang --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
     COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
-LINKER=$(PATH=$PATH ${CROSS_COMPILE}ld --version | head -1)
+LINKER=$(${CROSS_COMPILE}ld --version | head -1)
 
 # Script beginning
 info "Starting build script..."
