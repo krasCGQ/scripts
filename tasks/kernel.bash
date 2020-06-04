@@ -120,6 +120,12 @@ parse_params() {
             STOCK=true
             ;;
 
+        -sd | --sdclang)
+            # gives no effect if STOCK isn't set since it'll be overridden
+            CLANG_PATH=$OPT_DIR/android/sdclang
+            CLANG_VERSION=qti
+            ;;
+
         -u | --upload)
             # Will be ignored if BUILD_ONLY=true
             UPLOAD=true
@@ -134,6 +140,8 @@ parse_params() {
     done
 }
 
+# opt directory
+OPT_DIR=/opt/kud
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
 parse_params "$@"
@@ -154,7 +162,6 @@ tg_getid kp-on
 
 # Paths
 ROOT_DIR=$HOME/KudProject
-OPT_DIR=/opt/kud
 # Kernel path on server and OSDN File Storage
 KERNEL_DIR=kernels/$DEVICE
 # Number of threads used
@@ -291,8 +298,9 @@ if [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
 fi
 
 # Set compiler version here to avoid being included in total build time
-[[ -z $CLANG_CUSTOM ]] && CUT=,2
-[[ -n $CLANG ]] && COMPILER=$(clang --version | head -1 | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
+[[ -z $CLANG_CUSTOM && $CLANG_VERSION != qti ]] && CUT=,2
+[[ $CLANG_VERSION == qti ]] && LINE=2 || LINE=1
+[[ -n $CLANG ]] && COMPILER=$(clang --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
     COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
 LINKER=$(PATH=$PATH ${CROSS_COMPILE}ld --version | head -1)
 
