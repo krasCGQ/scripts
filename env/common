@@ -127,3 +127,55 @@ get_proton-clang() {
     VERSION=$($INSTALL_DIR/bin/clang --version | head -1 | cut -d ' ' -f 1,2,4,6 | sed -e 's/.\{29\}$//')
     info "Successfully installed $VERSION."
 }
+
+# Fix Snapdragon LLVM permissions and symlinks; prebuilts extracted from BSP
+fix_sdllvm() {
+    cd "$1" || {
+        warn "$BLD$(basename "$1")$RST doesn't exist in defined path"
+        return 1
+    }
+
+    # try to get Clang major version
+    chmod +x bin/clang
+    VERSION=$(bin/clang --version | head -1 | cut -d' ' -f3 | cut -d. -f1)
+
+    info "Fixing permissions and symlinks..."
+    (
+        cd bin || return 1
+        for i in {aarch64,arm}-link; do
+            rm -f $i
+            ln -s ld.qcld $i
+        done
+        for i in clang{++,c{l,pp}}; do
+            rm -f $i
+            ln -s clang $i
+        done
+        for i in ld{,64}.lld lld-link wasm-ld; do
+            rm -f $i
+            ln -s lld $i
+        done
+        for i in llvm-{dlltool,lib,ranlib}; do
+            rm -f $i
+            ln -s llvm-ar $i
+        done
+        rm -f clang llvm-strip
+        ln -s clang{-"$VERSION",}
+        ln -s llvm-{objcopy,strip}
+    )
+    (
+        cd lib || return 1
+        for i in LTO LW; do
+            rm -f lib$i.so
+            ln -s lib$i.so{."$VERSION",}
+        done
+        rm -f libc++.so.1 libc++abi.so{,.1}
+        ln -s libc++.so.1{.0,}
+        ln -s libc++abi.so{.1,}
+        ln -s libc++abi.so.1{.0,}
+    )
+    find ./**/bin -type f -exec chmod +x {} \;
+    find libexec -type f -exec chmod +x {} \;
+
+    info "Done."
+    cd - || true
+}
