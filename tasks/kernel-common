@@ -37,8 +37,8 @@ get_clang-ver() {
     esac
 
     CLANG_PATH=$ROOT_DIR/clang-$CLANG_VERSION
-    if [[ ! -f $CLANG_PATH/bin/clang ]]; then
-        warn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path."
+    if [[ ! -x $CLANG_PATH/bin/clang ]]; then
+        warn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path nor executable."
         return 1
     fi
     export CLANG_PATH
