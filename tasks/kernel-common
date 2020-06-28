@@ -30,13 +30,18 @@ get_clang-ver() {
     9) CLANG_VERSION=r365631c2 ;; # 9.0.8
     10) CLANG_VERSION=r377782d ;; # 10.0.6
     11) CLANG_VERSION=r383902c ;; # 11.0.3
+    qti)
+        # Snapdragon LLVM - doesn't really have version to consider right now
+        CLANG_PATH=$ROOT_DIR/sdclang
+        CLANG_VERSION=qti
+        ;;
     *)
         warn "Invalid version specified!"
         exit 1
         ;;
     esac
 
-    CLANG_PATH=$ROOT_DIR/clang-$CLANG_VERSION
+    [[ -z $CLANG_PATH ]] && CLANG_PATH=$ROOT_DIR/clang-$CLANG_VERSION
     if [[ ! -x $CLANG_PATH/bin/clang ]]; then
         warn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path nor executable."
         return 1

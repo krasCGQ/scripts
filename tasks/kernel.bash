@@ -128,9 +128,8 @@ parse_params() {
             ;;
 
         -sd | --sdclang)
-            # gives no effect if STOCK isn't set since it'll be overridden
-            CLANG_PATH=$OPT_DIR/android/sdclang
-            CLANG_VERSION=qti
+            # This is now aliased to `-cv qti` or `--clang-version qti`
+            get_clang-ver qti
             ;;
 
         -u | --upload)
@@ -147,8 +146,6 @@ parse_params() {
     done
 }
 
-# opt directory
-OPT_DIR=/opt/kud
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
 parse_params "$@"
@@ -177,6 +174,7 @@ tg_getid kp-on
 
 # Paths
 ROOT_DIR=$HOME/KudProject
+OPT_DIR=/opt/kud
 # Kernel path on server and OSDN File Storage
 KERNEL_DIR=kernels/$DEVICE
 # Number of threads used
