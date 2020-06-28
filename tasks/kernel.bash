@@ -98,13 +98,18 @@ parse_params() {
 
         --debug)
             # Assume section mismatch(es) debugging as a target
-            TARGETS=("CONFIG_DEBUG_SECTION_MISMATCH=y")
+            TARGETS+=("CONFIG_DEBUG_SECTION_MISMATCH=y")
             ;;
 
         --dirty)
             DIRTY=true
             # This can't co-exist
             unset FULL_CLEAN
+            ;;
+
+        --external-dtc)
+            # This has no effect on sources without or has DTC_EXT removed
+            TARGETS+=("DTC_EXT=/usr/bin/dtc")
             ;;
 
         --no-announce)
