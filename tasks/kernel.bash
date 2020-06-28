@@ -11,8 +11,6 @@
 
 # 'git log --pretty' alias
 git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
-# telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
-tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
@@ -109,6 +107,10 @@ parse_params() {
             unset FULL_CLEAN
             ;;
 
+        --no-announce)
+            NO_ANNOUNCE=true
+            ;;
+
         -r | --release)
             shift
             # Only integers are accepted
@@ -145,6 +147,14 @@ OPT_DIR=/opt/kud
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
 parse_params "$@"
+
+# telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
+if [[ -z $NO_ANNOUNCE ]]; then
+    tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
+else
+    # Allow bypassing announcement altogether
+    tg_post() { return 0; }
+fi
 
 # Make '**' recursive
 shopt -s globstar
