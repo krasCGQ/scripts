@@ -179,3 +179,20 @@ fix_sdllvm() {
     info "Done."
     cd - || true
 }
+
+# Update Arch Linux (CN) mirrorlist, sorted by the fastest
+updMirrorlist() {
+    # Arch Linux official repositories can just use reflector
+    info "Updating Arch Linux mirrorlist..."
+    reflector --save /etc/pacman.d/mirrorlist --sort rate --threads "$(nproc --all)"
+
+    # Arch Linux CN
+    info "Updating Arch Linux CN mirrorlist..."
+    # repo.archlinuxcn.org will fail with rankmirrors and so is omitted
+    curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
+        sed -e s/#Server/Server/g -e /##/d -e /archlinuxcn.org/d |
+        rankmirrors - >/etc/pacman.d/archlinuxcn-mirrorlist
+
+    info "Done."
+}
+alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'
