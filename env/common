@@ -182,6 +182,10 @@ fix_sdllvm() {
 
 # Update Arch Linux (CN) mirrorlist, sorted by the fastest
 updMirrorlist() {
+    # Prevent executing on non-Arch
+    . /etc/os-release
+    [[ $ID != arch ]] && { warn "This function is only available for Arch Linux." && exit 1; }
+
     # Arch Linux official repositories can just use reflector
     info "Updating Arch Linux mirrorlist..."
     reflector --save /etc/pacman.d/mirrorlist --sort rate --threads "$(nproc --all)"
