@@ -200,3 +200,25 @@ updMirrorlist() {
     prInfo "Done."
 }
 alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'
+
+# Shortcut to do system update; completely depends on distribution
+sysUpdate() {
+    . /etc/os-release
+    case $ID in
+    arch | manjaro)
+        # AUR, please fuck yourself
+        [[ -n $(command -v powerpill) ]] && UPD=powerpill || UPD=pacman
+        pacman -Sy
+        $UPD -Su --noconfirm
+        ;;
+    debian | ubuntu)
+        apt update
+        apt dist-upgrade -y
+        ;;
+    *)
+        prWarn "This distribution ($ID) is currently not supported."
+        exit
+        ;;
+    esac
+}
+alias sysUpdate='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f sysUpdate) && sysUpdate"'

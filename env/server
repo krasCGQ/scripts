@@ -25,7 +25,6 @@ source "$SCRIPTDIR"/env/common
 
 # Aliases
 alias tmux='force_color_prompt=yes tmux'
-alias update='sudo su -c "apt update && apt-get dist-upgrade -y"'
 
 # Shortcut for ssh-agent setup
 ssh_setup() {
