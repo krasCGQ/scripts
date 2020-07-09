@@ -40,7 +40,7 @@ alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 opus_convert() {
     # Ask to install opus-tools package if opusenc doesn't exist
     [[ -z $(command -v opusenc) ]] && {
-        warn "Please install opus-tools package before continuing."
+        prWarn "Please install opus-tools package before continuing."
         return 1
     }
 
@@ -57,7 +57,7 @@ opus_convert() {
 
     # Return non-zero status if nothing to do
     [[ -z $SUPPORTED ]] && {
-        warn "There's nothing to do."
+        prWarn "There's nothing to do."
         return 1
     }
 

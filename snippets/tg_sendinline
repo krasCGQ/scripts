@@ -45,7 +45,7 @@ tg_sendinline() {
         -t | --token)
             shift
             [[ $1 != *:* ]] && {
-                warn "Invalid value specified!"
+                prWarn "Invalid value specified!"
                 return 1
             }
             local TELEGRAM_TOKEN
@@ -98,11 +98,11 @@ tg_sendinline() {
 
     # Make sure we have token of the bot and target chat ID
     if [[ -z $TELEGRAM_TOKEN || -z $TELEGRAM_CHAT ]]; then
-        warn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."
+        prWarn "TELEGRAM_TOKEN or TELEGRAM_CHAT wasn't assigned."
         return 1
     # If no inline buttons to include, abort the function
     elif [[ -z $INLINE ]]; then
-        warn "INLINE is empty. Do you really want to use this function?"
+        prWarn "INLINE is empty. Do you really want to use this function?"
         return 1
     fi
 

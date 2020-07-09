@@ -24,7 +24,7 @@ pia_ovpnsetup() {
 
     # Make sure OpenVPN is installed
     [[ -z $(command -v openvpn) ]] && {
-        warn "Please install openvpn package before continuing."
+        prWarn "Please install openvpn package before continuing."
         return 1
     }
 
@@ -50,7 +50,7 @@ pia_ovpnsetup() {
 
         # Unrecognized parameter, skip
         *)
-            warn "Unrecognized parameter specified: \"${1}\""
+            prWarn "Unrecognized parameter specified: \"${1}\""
             ;;
         esac
         shift
@@ -61,7 +61,7 @@ pia_ovpnsetup() {
     cd $TMP_DIR || return 1
 
     # Fetch recommended configuration files
-    info "Fetching configuration files..."
+    prInfo "Fetching configuration files..."
     [[ $MODE == tcp ]] && EXTRA_ARGS+=-tcp
     if [[ -n $AEAD ]]; then
         EXTRA_ARGS+=-aead
@@ -72,23 +72,23 @@ pia_ovpnsetup() {
     fi
 
     # Extract configuration files and remove the archive
-    info "Extracting configuration files..."
+    prInfo "Extracting configuration files..."
     unzip -q openvpn$EXTRA_ARGS.zip
     rm -f openvpn$EXTRA_ARGS.zip
 
     # sed configuration files to include auth-user-pass file path
-    info "Patching configuration files..."
+    prInfo "Patching configuration files..."
     for CONFIG in ./*.ovpn; do
         # Single quote doesn't expand things
         sed -i 's|auth-user-pass|auth-user-pass /etc/openvpn/pia-auth.conf|' "$CONFIG"
     done
 
     # Remove existing configuration files if any
-    info "Removing existing configuration files..."
+    prInfo "Removing existing configuration files..."
     check_sudo rm -rf /etc/openvpn/client/*
 
     # Move everything to /etc/openvpn/client and set correct permissions
-    info "Moving configuration files to /etc/openvpn..."
+    prInfo "Moving configuration files to /etc/openvpn..."
     check_sudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
 
     # Go back to previous directory and remove temporary directory
@@ -103,13 +103,13 @@ pia_ovpnsetup() {
         read -r PASS
 
         # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
-        info "Saving credientials to $AUTH_FILE..."
+        prInfo "Saving credientials to $AUTH_FILE..."
         echo -e "$USER\n$PASS" | check_sudo tee $AUTH_FILE >/dev/null
         check_sudo su -c "chown root:network $AUTH_FILE && chmod 600 $AUTH_FILE"
     fi
 
     # And... it's done.
-    info "The operation completed successfully."
+    prInfo "The operation completed successfully."
 }
 
 # Wrapper to connect to Private Internet Access with OpenVPN
@@ -123,14 +123,14 @@ _pia_ovpnconnect() {
 
     # Make sure OpenVPN is installed
     if [[ -z $(command -v openvpn) ]]; then
-        warn "Please install openvpn package before continuing."
+        prWarn "Please install openvpn package before continuing."
         return 1
     # Warn for specification of more than a country
     elif [[ $# -gt 1 ]]; then
-        warn "This function uses one parameter only."
+        prWarn "This function uses one parameter only."
     # Exit function if no country is specified
     elif [[ $# -lt 1 ]]; then
-        warn "Please specify a country to connect."
+        prWarn "Please specify a country to connect."
         return 1
     fi
 
@@ -140,7 +140,7 @@ _pia_ovpnconnect() {
     CONFIG=/etc/openvpn/client/"$COUNTRY".ovpn
     # Exit function immediately if provided country doesn't exist
     if [[ ! -f $CONFIG ]]; then
-        warn "Invalid country provided: $COUNTRY"
+        prWarn "Invalid country provided: $COUNTRY"
         return 1
     fi
 
@@ -151,7 +151,7 @@ _pia_ovpnconnect() {
 
     # If .ip-address.saved is exist, probably it wasn't disconnected properly
     if [[ -f $SCRIPTDIR/.ip-address.saved ]]; then
-        warn "Redundant rules detected! Disabling VPN kill switch..."
+        prWarn "Redundant rules detected! Disabling VPN kill switch..."
         "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
     fi
 
@@ -162,7 +162,7 @@ _pia_ovpnconnect() {
     chattr +i /etc/resolv.conf
 
     # Enable VPN kill switch
-    info "Enabling VPN kill switch..."
+    prInfo "Enabling VPN kill switch..."
     "$SCRIPTDIR"/utils/killswitch.bash on "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Restart name server cache daemon
@@ -178,17 +178,17 @@ _pia_ovpnconnect() {
     trap 'break' INT
 
     # Connect with supplied country name in the background
-    info "Establishing connection to $COUNTRY..."
+    prInfo "Establishing connection to $COUNTRY..."
     while true; do
         openvpn --config "$CONFIG" --auth-nocache --keepalive 60 720 --remap-usr1 SIGTERM
-        warn "Reconnecting to $COUNTRY..."
+        prWarn "Reconnecting to $COUNTRY..."
     done
 
     # Upon disconnection, warn it
-    warn "Connection has been terminated."
+    prWarn "Connection has been terminated."
 
     # Disable VPN kill switch
-    info "Disabling VPN kill switch..."
+    prInfo "Disabling VPN kill switch..."
     "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Make resolv.conf read/write

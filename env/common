@@ -51,13 +51,13 @@ zipsigner() {
     local SIGNATURE SIGNED UNSIGNED
 
     if [[ -z $(command -v java) ]]; then
-        warn "Please install any of OpenJDK version before continuing."
+        prWarn "Please install any of OpenJDK version before continuing."
         return 1
     elif [[ -z $ZIPSIGNER || ! -f $ZIPSIGNER ]]; then
-        warn "${BLD}ZIPSIGNER$RST is empty or doesn't exist. Refusing to continue."
+        prWarn "${BLD}ZIPSIGNER$RST is empty or doesn't exist. Refusing to continue."
         return 1
     elif [[ $# -lt 1 ]]; then
-        warn "${BLD}Usage:$RST zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
+        prWarn "${BLD}Usage:$RST zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
             "If signed-zip is undefined, it'll default to zip name + signed."
         return 1
     fi
@@ -81,7 +81,7 @@ zipsigner() {
     # Create target folder if it doesn't exist
     [[ ! -d $(dirname "$SIGNED") ]] && mkdir -p "$(dirname "$SIGNED")"
 
-    info "Signing $(basename "$UNSIGNED") as $(basename "$SIGNED")..."
+    prInfo "Signing $(basename "$UNSIGNED") as $(basename "$SIGNED")..."
     # TODO: Something better than this?
     java -jar "$ZIPSIGNER" "$SIGNATURE"{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "$UNSIGNED" "$SIGNED"
 }
@@ -92,31 +92,31 @@ get_proton-clang() {
     INSTALL_DIR=/opt/kud/proton-clang
     REPO=kdrag0n/proton-clang
 
-    info "Obtaining latest version info..."
+    prInfo "Obtaining latest version info..."
     LATEST=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -w tag_name | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
     if [[ $(cat $INSTALL_DIR/ClangVersion.txt 2>/dev/null) -eq $LATEST ]]; then
         # we're up to date, skip.
-        info "Clang build $LATEST is up to date."
+        prInfo "Clang build $LATEST is up to date."
         rm /tmp/latest.json
         return
     fi
 
     URL=https://github.com/$REPO/archive/$LATEST.tar.gz
     NAME=$(echo $REPO | cut -d "/" -f 2)-$LATEST.tar.gz
-    info "Downloading $NAME..."
+    prInfo "Downloading $NAME..."
     if ! aria2c -d /tmp "$URL"; then
-        warn "Failed to download $NAME."
+        prWarn "Failed to download $NAME."
         rm /tmp/"$NAME"
         return 1
     fi
 
     if [[ -d $INSTALL_DIR ]]; then
-        info "Backing up old Clang build..."
+        prInfo "Backing up old Clang build..."
         [[ -d $INSTALL_DIR-old ]] && rm -r $INSTALL_DIR-old
         mv -f $INSTALL_DIR{,-old}
     fi
 
-    info "Extracting $NAME..."
+    prInfo "Extracting $NAME..."
     tar -C /opt/kud -xf /tmp/"$NAME"
     mv /opt/kud/"${NAME/.tar.gz/}" $INSTALL_DIR
     # write build version
@@ -125,13 +125,13 @@ get_proton-clang() {
 
     # {29} = last 28 letters of SHA-1 + trailing right parentheses
     VERSION=$($INSTALL_DIR/bin/clang --version | head -1 | cut -d ' ' -f 1,2,4,6 | sed -e 's/.\{29\}$//')
-    info "Successfully installed $VERSION."
+    prInfo "Successfully installed $VERSION."
 }
 
 # Fix Snapdragon LLVM permissions and symlinks; prebuilts extracted from BSP
 fix_sdllvm() {
     cd "$1" || {
-        warn "$BLD$(basename "$1")$RST doesn't exist in defined path"
+        prWarn "$BLD$(basename "$1")$RST doesn't exist in defined path"
         return 1
     }
 
@@ -139,7 +139,7 @@ fix_sdllvm() {
     chmod +x bin/clang
     VERSION=$(bin/clang --version | head -1 | cut -d' ' -f3 | cut -d. -f1)
 
-    info "Fixing permissions and symlinks..."
+    prInfo "Fixing permissions and symlinks..."
     (
         cd bin || return 1
         for i in {aarch64,arm}-link; do
@@ -176,7 +176,7 @@ fix_sdllvm() {
     find ./**/bin -type f -exec chmod +x {} \;
     find libexec -type f -exec chmod +x {} \;
 
-    info "Done."
+    prInfo "Done."
     cd - || true
 }
 
@@ -184,19 +184,19 @@ fix_sdllvm() {
 updMirrorlist() {
     # Prevent executing on non-Arch
     . /etc/os-release
-    [[ $ID != arch ]] && { warn "This function is only available for Arch Linux." && exit 1; }
+    [[ $ID != arch ]] && { prWarn "This function is only available for Arch Linux." && exit 1; }
 
     # Arch Linux official repositories can just use reflector
-    info "Updating Arch Linux mirrorlist..."
+    prInfo "Updating Arch Linux mirrorlist..."
     reflector --save /etc/pacman.d/mirrorlist --sort rate --threads "$(nproc --all)"
 
     # Arch Linux CN
-    info "Updating Arch Linux CN mirrorlist..."
+    prInfo "Updating Arch Linux CN mirrorlist..."
     # repo.archlinuxcn.org will fail with rankmirrors and so is omitted
     curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
         sed -e s/#Server/Server/g -e /##/d -e /archlinuxcn.org/d |
         rankmirrors - >/etc/pacman.d/archlinuxcn-mirrorlist
 
-    info "Done."
+    prInfo "Done."
 }
 alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'

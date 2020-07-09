@@ -29,7 +29,7 @@ tg_error() {
 # Prints message to stderr and exit script, OR call tg_error function
 die() {
     [[ -z $STATUS && -n $STARTED ]] && STATUS=$?
-    warn "$1"
+    prWarn "$1"
     [[ -n $STARTED ]] && tg_error || exit 1
 }
 
@@ -139,7 +139,7 @@ parse_params() {
 
         # Unsupported parameter, skip
         *)
-            warn "Unrecognized parameter specified: \"$1\""
+            prWarn "Unrecognized parameter specified: \"$1\""
             ;;
         esac
         shift
@@ -276,14 +276,14 @@ fi
 ## Commands
 
 # Sanity checks
-info "Running sanity checks..."
+prInfo "Running sanity checks..."
 sleep 1
 
 # Missing device choice
 [[ -z $DEVICE ]] && die "Please specify target device."
 # Requested to only build; upload option is practically doing nothing
 if [[ -n $UPLOAD && -n $BUILD_ONLY ]]; then
-    warn "Requested to only build but upload was assigned, disabling."
+    prWarn "Requested to only build but upload was assigned, disabling."
     unset UPLOAD
 fi
 # Clang-specific checks
@@ -292,7 +292,7 @@ if [[ -n $CLANG ]]; then
     [[ -z $CLANG_VERSION && -n $STOCK ]] && die "Please specify AOSP Clang version to use."
     # We're not going to assume Clang version for non-AOSP one
     if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
-        warn "Assigning Clang version is only meant for AOSP Clang, disabling."
+        prWarn "Assigning Clang version is only meant for AOSP Clang, disabling."
         unset CLANG_VERSION
     fi
 fi
@@ -318,7 +318,7 @@ fi
 LINKER=$(${CROSS_COMPILE}ld --version | head -1)
 
 # Script beginning
-info "Starting build script..."
+prInfo "Starting build script..."
 tg_post "$MSG has been started on \`$(hostname)\`." \
     "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
 # Explicitly declare build script startup
@@ -337,7 +337,7 @@ fi
 
 # Clean build directory
 if [[ -z $DIRTY && -d $OUT ]]; then
-    info "Cleaning build directory..."
+    prInfo "Cleaning build directory..."
     if [[ -z $FULL_CLEAN ]]; then
         make -s ARCH=$ARCH O="$OUT" clean 2>/dev/null
         # Delete earlier dt{,bo}.img created by this build script
@@ -354,11 +354,11 @@ fi
 
 # Regenerate config for source changes when required
 if [[ -f $OUT/.config ]]; then
-    info "Regenerating config for source changes..."
+    prInfo "Regenerating config for source changes..."
     make -s ARCH=$ARCH O="$OUT" oldconfig
 # However, if config file doesn't exist, generate a fresh config
 else
-    info "Generating a new config..."
+    prInfo "Generating a new config..."
     read -rp "  Input a defconfig name (without '_defconfig'): " DEFCONFIG
     # If defconfig name is empty, assume device name as defconfig name instead
     [[ -z $DEFCONFIG ]] && DEFCONFIG=$DEVICE
@@ -378,7 +378,7 @@ grep -q '=m' "$OUT"/.config && HAS_MODULES=true
 grep -q 'BUILD_ARM64_DT_OVERLAY=y' "$OUT"/.config && NEEDS_DTBO=true
 
 # Let's build the kernel!
-info "Building kernel${HAS_MODULES:+ and modules}..."
+prInfo "Building kernel${HAS_MODULES:+ and modules}..."
 # Export timestamp earlier before build
 KBUILD_BUILD_TIMESTAMP="$(date)"
 export KBUILD_BUILD_TIMESTAMP
@@ -390,19 +390,19 @@ PATH=$PATH \
 
 # Build dt.img and/or dtbo.img if needed
 if [[ -n $NEEDS_DT_IMG ]]; then
-    info "Creating dt.img..."
+    prInfo "Creating dt.img..."
     "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
         -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ >/dev/null
 fi
 if [[ -n $NEEDS_DTBO ]]; then
-    info "Creating dtbo.img..."
+    prInfo "Creating dtbo.img..."
     python2 "$SCRIPTDIR"/modules/libufdt/utils/src/mkdtboimg.py create \
         "$OUT_KERNEL"/dts/dtbo.img --page_size=$PAGE_SIZE \
         "$OUT_KERNEL"/dts/**/*.dtbo
 fi
 
 if [[ -z $BUILD_ONLY ]]; then
-    info "Cleaning and copying required file(s) to AnyKernel folder..."
+    prInfo "Cleaning and copying required file(s) to AnyKernel folder..."
     # Clean everything except zip files
     git -C "$AK" clean -qdfx -e '*.zip'
     # ARM64: Compress resulting kernel image with fastest compression
@@ -430,7 +430,7 @@ if [[ -z $BUILD_ONLY ]]; then
     [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
-    info "Creating $ZIP..."
+    prInfo "Creating $ZIP..."
     (
         # Unlikely to fail; but we have to define this way to satisfy shellcheck
         cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
@@ -459,11 +459,11 @@ unset STARTED
 if [[ -n $UPLOAD ]]; then
     if [[ -z $RELEASE ]]; then
         # To Telegram
-        info "Uploading $ZIP to Telegram..."
+        prInfo "Uploading $ZIP to Telegram..."
         tg_post "*[BuildCI]* Uploading test build..." &
         if ! "$TELEGRAM" -f "$AK/$ZIP" -c "-1001494373196" \
             "New #$DEVICE test build ($KERNEL) with branch $BRANCH at commit $(git_pretty)."; then
-            warn "Failed to upload $ZIP."
+            prWarn "Failed to upload $ZIP."
             tg_post "*[BuildCI]* Unable to upload the build." &
         fi
     else
@@ -472,12 +472,12 @@ if [[ -n $UPLOAD ]]; then
             # Unlikely to fail; but we have to define this way to satisfy shellcheck
             cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 
-            info "Uploading $RELEASE_ZIP..."
+            prInfo "Uploading $RELEASE_ZIP..."
             if {
                 rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/
                 rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/
             }; then
-                info "$RELEASE_ZIP uploaded successfully." \
+                prInfo "$RELEASE_ZIP uploaded successfully." \
                     "GitHub releases upload requires manual intervention, though."
                 TELEGRAM_CHAT="-1001368407111 -1001181003922" \
                     tg_post "*New MoeSyndrome Kernel build is available!*" \
@@ -485,12 +485,12 @@ if [[ -n $UPLOAD ]]; then
                     "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
                     "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
             else
-                warn "Failed to upload $RELEASE_ZIP."
+                prWarn "Failed to upload $RELEASE_ZIP."
             fi
         )
     fi
 fi
 
 # Script ending
-info "That's it. Job well done!"
+prInfo "That's it. Job well done!"
 echo -ne '\a'

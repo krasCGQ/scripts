@@ -36,14 +36,14 @@ get_clang-ver() {
         CLANG_VERSION=qti
         ;;
     *)
-        warn "Invalid version specified!"
+        prWarn "Invalid version specified!"
         exit 1
         ;;
     esac
 
     [[ -z $CLANG_PATH ]] && CLANG_PATH=$ROOT_DIR/clang-$CLANG_VERSION
     if [[ ! -x $CLANG_PATH/bin/clang ]]; then
-        warn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path nor executable."
+        prWarn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path nor executable."
         return 1
     fi
     export CLANG_PATH
@@ -51,7 +51,7 @@ get_clang-ver() {
 
 # Run this inside kernel source
 if ! [[ -f Makefile && -d kernel ]]; then
-    warn "Please run this script inside kernel source folder!"
+    prWarn "Please run this script inside kernel source folder!"
     exit 1
 fi
 
@@ -59,6 +59,6 @@ fi
 # shellcheck disable=SC1090
 source <(grep -E '^(VERSION|PATCHLEVEL)' Makefile | sed -e s/[[:space:]]//g)
 if ! [[ -n $VERSION && -n $PATCHLEVEL ]]; then
-    warn "Unable to get kernel version from Makefile!"
+    prWarn "Unable to get kernel version from Makefile!"
     exit 1
 fi
