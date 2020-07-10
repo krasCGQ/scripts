@@ -208,17 +208,12 @@ sysUpdate() {
     arch | manjaro)
         # AUR, please fuck yourself
         [[ -n $(command -v powerpill) ]] && UPD=powerpill || UPD=pacman
-        pacman -Sy
-        $UPD -Su --noconfirm
+        pacman -Sy && $UPD -Su --noconfirm
         ;;
     debian | ubuntu)
-        apt update
-        apt dist-upgrade -y
+        apt update && apt dist-upgrade -y
         ;;
-    *)
-        prWarn "This distribution ($ID) is currently not supported."
-        exit
-        ;;
+    *) prWarn "This distribution ($ID) is currently not supported." ;;
     esac
 }
 alias sysUpdate='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
