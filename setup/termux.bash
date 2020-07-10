@@ -20,12 +20,12 @@ pkg install --no-install-recommends -y antibody git nano zsh
 # dotfiles
 prInfo "Setting up dotfiles..."
 git clone --depth=1 git://github.com/krasCGQ/dotfiles .files
-mkdir -p .config
+mkdir -p .config/nano
 # .zshrc
 ln -sf "$HOME"/.files/.zshrc-android "$HOME"/.zshrc
 # nanorc
-cp -r "$HOME"/.files/.config/nano "$HOME"/.config
-sed -i "s|/usr|$PREFIX|" "$HOME"/.config/nano/nanorc
+<"$HOME"/.files/.config/nano/nanorc |
+    sed -e "s|/usr|$PREFIX|" >"$HOME"/.config/nano/nanorc
 
 # Move to zsh
 prInfo "Moving to Zsh..."
