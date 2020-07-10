@@ -203,7 +203,11 @@ alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f u
 
 # Shortcut to do system update; completely depends on distribution
 sysUpdate() {
-    . /etc/os-release
+    # Try inheriting Distro's /etc/os-release first
+    . /etc/os-release 2>/dev/null
+    # If $ID returns empty, check possibility of running Termux on Android
+    # This shouldn't interfere with (ch|pr)oot-ed environment
+    [[ -z $ID ]] && [[ -n $PREFIX && $PREFIX =~ com.termux ]] && ID=termux
     case $ID in
     alpine)
         apk update && apk upgrade
@@ -216,7 +220,11 @@ sysUpdate() {
     debian | ubuntu)
         apt update && apt dist-upgrade -y
         ;;
-    *) prWarn "This distribution ($ID) is currently not supported." ;;
+    termux)
+        # Equivalent to `apt update && apt upgrade`
+        pkg update -y
+        ;;
+    *) prWarn "This distribution (${ID:-unknown}) is currently not supported." ;;
     esac
 }
 alias sysUpdate='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
