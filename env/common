@@ -205,6 +205,9 @@ alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f u
 sysUpdate() {
     . /etc/os-release
     case $ID in
+    alpine)
+        apk update && apk upgrade
+        ;;
     arch | manjaro)
         # AUR, please fuck yourself
         [[ -n $(command -v powerpill) ]] && UPD=powerpill || UPD=pacman
