@@ -4,10 +4,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Text styles
-BLD=$(tput bold)
-RST=$(tput sgr0)
+if [[ -n $(command -v tput) ]]; then
+    BLD=$(tput bold)
+    RST=$(tput sgr0)
+else
+    BLD='\033[1m'
+    RST='\033[0m'
+fi
 # Export variables to satisfy shellcheck requirements
 export BLD RST
+
+# Enable escape sequences on Bash
+[[ -n $BASH ]] && alias echo='echo -e'
 
 # Prints a message with a dash
 prInfo() {
