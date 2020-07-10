@@ -13,9 +13,18 @@ cd "$HOME" || exit 1
 prInfo "Executing system update..."
 pkg update -o Dpkg::Options::="--force-confnew" -y
 
-# Install a number of basic packages
+## Install a number of basic packages
+# Explainer:
+# - antibody: Zsh plugin manager
+# - git: version control system
+# - nano: CLI text editor
+# - zsh: Unix shell
 prInfo "Installing basic packages..."
-pkg install --no-install-recommends -y antibody git nano zsh
+pkg install --no-install-recommends -y \
+    antibody \
+    git \
+    nano \
+    zsh
 
 # dotfiles
 prInfo "Setting up dotfiles..."
