@@ -11,17 +11,22 @@ source "$SCRIPTDIR"/env/global
 alias nano='nano -au'
 alias wget='wget -c -t 0 --retry-connrefused'
 
-# Export HOME as USER_DIR for use with sudo commands when required
-USER_DIR=$HOME
 # Required for GPG signing
 GPG_TTY=$(tty)
-# GNU nano for text editor
-EDITOR=nano
 # My kernel identity in nutshell
 KBUILD_BUILD_USER=krasCGQ
 KBUILD_BUILD_HOST=KudProject
-# Export some variables to satisfy shellcheck requirements
-export USER_DIR GPG_TTY EDITOR KBUILD_BUILD_USER KBUILD_BUILD_HOST
+# Export variables to satisfy shellcheck requirements
+export GPG_TTY KBUILD_BUILD_USER KBUILD_BUILD_HOST
+
+if [[ -z $IS_TERMUX ]]; then
+    # Export HOME as USER_DIR for use with sudo commands when required
+    USER_DIR=$HOME
+    # GNU nano for text editor
+    EDITOR=nano
+    # Export variables to satisfy shellcheck requirements
+    export USER_DIR EDITOR
+fi
 
 # Source Telegram-specific script if exists
 [[ -f $SCRIPTDIR/env/telegram ]] && source "$SCRIPTDIR"/env/telegram
@@ -88,6 +93,8 @@ zipsigner() {
 
 # Get latest Proton clang from GitHub releases
 get_proton-clang() {
+    chkArch x86_64 || return 1
+
     local INSTALL_DIR LATEST NAME REPO URL VERSION
     INSTALL_DIR=/opt/kud/proton-clang
     REPO=kdrag0n/proton-clang
@@ -130,6 +137,8 @@ get_proton-clang() {
 
 # Fix Snapdragon LLVM permissions and symlinks; prebuilts extracted from BSP
 fix_sdllvm() {
+    chkArch x86_64 || return 1
+
     cd "$1" || {
         prWarn "$BLD$(basename "$1")$RST doesn't exist in defined path"
         return 1
@@ -180,11 +189,16 @@ fix_sdllvm() {
     cd - || true
 }
 
-# Update Arch Linux (CN) mirrorlist, sorted by the fastest
+# sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 updMirrorlist() {
+    chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
+
     # Prevent executing on non-Arch
-    . /etc/os-release
-    [[ $ID != arch ]] && { prWarn "This function is only available for Arch Linux." && exit 1; }
+    . /etc/os-release 2>/dev/null
+    [[ $ID != arch ]] && {
+        prWarn "This function is only available for Arch Linux."
+        { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
+    }
 
     # Arch Linux official repositories can just use reflector
     prInfo "Updating Arch Linux mirrorlist..."
@@ -199,15 +213,14 @@ updMirrorlist() {
 
     prInfo "Done."
 }
-alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'
 
-# Shortcut to do system update; completely depends on distribution
+# sudo: Shortcut to do system update; completely depends on distribution
 sysUpdate() {
     # Try inheriting Distro's /etc/os-release first
     . /etc/os-release 2>/dev/null
     # If $ID returns empty, check possibility of running Termux on Android
     # This shouldn't interfere with (ch|pr)oot-ed environment
-    [[ -z $ID ]] && [[ -n $PREFIX && $PREFIX =~ com.termux ]] && ID=termux
+    [[ -z $ID ]] && [[ -n $IS_TERMUX ]] && ID=termux
     case $ID in
     alpine)
         apk update && apk upgrade
@@ -227,4 +240,9 @@ sysUpdate() {
     *) prWarn "This distribution (${ID:-unknown}) is currently not supported." ;;
     esac
 }
-alias sysUpdate='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
+
+if [[ -z $IS_TERMUX ]]; then
+    # Wrap around sudo
+    alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'
+    alias sysUpdate='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
+fi

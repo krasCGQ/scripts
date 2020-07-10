@@ -1,0 +1,26 @@
+# shellcheck shell=bash
+# Android (Termux) environment setup
+# Copyright (C) 2020 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Do we run on Termux?
+[[ -n $PREFIX && $PREFIX =~ com.termux ]] && export IS_TERMUX=true
+
+# Set path to script directory depending on which shell we use
+if [[ -n $BASH ]]; then
+    # Bash
+    SCRIPTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/..
+elif [[ -n $ZSH_VERSION ]]; then
+    # Zsh
+    # shellcheck disable=SC2154
+    SCRIPTDIR=$(dirname "${(%):-%x}")/..
+else
+    echo "! Unsupported shell. Exiting." >&2
+    return 1
+fi
+
+# Import common environment script
+# shellcheck source=/dev/null
+source "$SCRIPTDIR"/env/common
+
+## Android-specific functions aren't available yet. Check back later.

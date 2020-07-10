@@ -7,7 +7,7 @@
 BLD=$(tput bold)
 RST=$(tput sgr0)
 # Export variables to satisfy shellcheck requirements
-export SCRIPTDIR BLD RST
+export BLD RST
 
 # Prints a message with a dash
 prInfo() {
@@ -29,6 +29,8 @@ prWarn() {
 
 # Making sure user has sudo before executing command
 check_sudo() {
+    [[ -n $IS_TERMUX ]] && { prInfo "This function is unnecessary on Termux; go ahead." && return; }
+
     prInfo "Checking for sudo; please enter password if prompted."
     if ! sudo -v 2>/dev/null; then
         prWarn "Current user isn't a sudoer!"
@@ -37,4 +39,13 @@ check_sudo() {
 
     # Prevent falsely returning non-zero status
     if [[ $# != 0 ]]; then sudo "$@"; fi
+}
+
+# Check for system architecture support
+chkArch() {
+    ARCH=$(uname -m)
+    for TARGET in "$@"; do
+        [[ $ARCH == "$TARGET" ]] && return
+    done
+    return 1
 }
