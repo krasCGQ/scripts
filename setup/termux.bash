@@ -1,33 +1,35 @@
-# shellcheck shell=bash
+#!/data/data/com.termux/files/usr/bin/bash -e
 # Termux environment setup
-# Copyright (C) 2019 Albert I (krasCGQ)
+# Copyright (C) 2019-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Exit setup if encountering any errors
-trap 'exit $?' ERR
+# Modified styled message print from my scripts
+prInfo() { echo "[-] $*"; }
 
-# Move to HOME if it isn't
-[[ $(pwd) != "$HOME" ]] && cd "$HOME" || exit 1
+# Move to home directory just in case
+cd "$HOME" || exit 1
 
-# Variables here are basically to define upstream file names
-ANTIBODY=antibody_Linux_arm64.tar.gz
+# Initiate system update
+prInfo "Executing system update..."
+pkg update -o Dpkg::Options::="--force-confnew" -y
 
-# Basic packages
-pkg install git nano zsh -y
+# Install a number of basic packages
+prInfo "Installing basic packages..."
+pkg install --no-install-recommends -y antibody git nano zsh
 
 # dotfiles
-git clone https://gitlab.com/krasCGQ/dotfiles .files --single-branch
+prInfo "Setting up dotfiles..."
+git clone --depth=1 git://github.com/krasCGQ/dotfiles .files
 mkdir -p .config
-for i in .config/nano .gitconfig; do
-    ln -sf "$HOME"/.files/$i "$HOME"/$i
-done
+# .zshrc
 ln -sf "$HOME"/.files/.zshrc-android "$HOME"/.zshrc
-
-# antibody
-curl -LO https://github.com/getantibody/antibody/releases/latest/download/$ANTIBODY
-tar -xf $ANTIBODY antibody
-mkdir -p ../usr/local/bin
-mv -f antibody ../usr/local/bin
+# nanorc
+cp -r "$HOME"/.files/.config/nano "$HOME"/.config
+sed -i "s|/usr|$PREFIX|" "$HOME"/.config/nano/nanorc
 
 # Move to zsh
+prInfo "Moving to Zsh..."
 chsh -s zsh
+
+# Done!
+prInfo "Done."
