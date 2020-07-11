@@ -40,7 +40,8 @@ python3 -m pip install --upgrade \
 
 # dotfiles
 prInfo "Setting up dotfiles..."
-git clone --depth=1 git://github.com/krasCGQ/dotfiles .files
+git clone git://github.com/krasCGQ/dotfiles .files
+git -C "$HOME"/.files submodule update --init scripts
 mkdir -p .config/nano
 # .zshrc
 ln -sf "$HOME"/.files/.zshrc-android "$HOME"/.zshrc
