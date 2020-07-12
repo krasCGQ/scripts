@@ -6,15 +6,16 @@
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
     # Bash
-    SCRIPTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/..
+    SCRIPTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 elif [[ -n $ZSH_VERSION ]]; then
     # Zsh
     # shellcheck disable=SC2154
-    SCRIPTDIR=$(dirname "${(%):-%x}")/..
+    SCRIPTDIR=$(dirname "${(%):-%x}")
 else
     echo "! Unsupported shell. Exiting." >&2
     return 1
 fi
+SCRIPTDIR=$(dirname "$SCRIPTDIR")
 export SCRIPTDIR
 
 # Initialize GNOME Keyring for non-GTK environments
