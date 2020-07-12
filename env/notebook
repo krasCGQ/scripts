@@ -3,9 +3,6 @@
 # Copyright (C) 2017-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Don't setup if not in correct environment
-[[ $(hostname) == harutsuki || $(hostname) == strelka ]] || return 1
-
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
     # Bash
