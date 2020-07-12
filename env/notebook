@@ -18,6 +18,7 @@ else
     echo "! Unsupported shell. Exiting." >&2
     return 1
 fi
+export SCRIPTDIR
 
 # Initialize GNOME Keyring for non-GTK environments
 [[ -n $DESKTOP_SESSION ]] && { eval "$(gnome-keyring-daemon --start)" && export SSH_AUTH_SOCK; }
