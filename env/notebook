@@ -6,27 +6,27 @@
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
     # Bash
-    SCRIPTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+    SCRIPT_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 elif [[ -n $ZSH_VERSION ]]; then
     # Zsh
     # shellcheck disable=SC2154
-    SCRIPTDIR=$(dirname "${(%):-%x}")
+    SCRIPT_DIR=$(dirname "${(%):-%x}")
 else
     echo "! Unsupported shell. Exiting." >&2
     return 1
 fi
-SCRIPTDIR=$(dirname "$SCRIPTDIR")
-export SCRIPTDIR
+SCRIPT_DIR=$(dirname "$SCRIPT_DIR")
+export SCRIPT_DIR
 
 # Initialize GNOME Keyring for non-GTK environments
 [[ -n $DESKTOP_SESSION ]] && { eval "$(gnome-keyring-daemon --start)" && export SSH_AUTH_SOCK; }
 
 # Import common environment script
 # shellcheck source=/dev/null
-source "$SCRIPTDIR"/env/common
+source "$SCRIPT_DIR"/env/common
 
 # Aliases
-alias ak-build='$SCRIPTDIR/tasks/kernel.bash'
+alias ak-build='$SCRIPT_DIR/tasks/kernel.bash'
 alias neofetch='neofetch --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --color_blocks off'
 alias sys2sbin='sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
@@ -35,12 +35,9 @@ alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 [[ -z $TMUX ]] && export PATH=$HOME/.files/bin:$PATH
 
 # Convert all FLAC, WAV, and/or AIFF files to Opus
-opus_convert() {
+opusConvert() {
     # Ask to install opus-tools package if opusenc doesn't exist
-    [[ -z $(command -v opusenc) ]] && {
-        prWarn "Please install opus-tools package before continuing."
-        return 1
-    }
+    [[ -z $(command -v opusenc) ]] && { prWarn "Please install opus-tools package before continuing." && return 1; }
 
     for SONG in ./*; do
         case "$SONG" in
@@ -54,18 +51,12 @@ opus_convert() {
     done
 
     # Return non-zero status if nothing to do
-    [[ -z $SUPPORTED ]] && {
-        prWarn "There's nothing to do."
-        return 1
-    }
-
-    return 0
+    if [[ -z $SUPPORTED ]]; then prWarn "There's nothing to do." && return 1; fi
 }
 
 # Setup zRAM to take the whole RAM size
-function zram_init() { (
+function zramInit() { (
     [[ $(whoami) != root ]] && return 1
-
     local MEMSIZE
     # Get amount of physical memory (in kB)
     MEMSIZE=$(grep MemTotal /proc/meminfo | awk '{print $2$3}')
@@ -83,10 +74,10 @@ function zram_init() { (
     # Set swappiness to 100
     sysctl vm.swappiness=100
 ) || return 1; }
-alias zram_init='check_sudo su -c "$(declare -f zram_init) && zram_init &> /dev/null"'
+alias zramInit='chkSudo su -c "$(declare -f zramInit) && zramInit &> /dev/null"'
 
 # De-init zRAM configuration set before
-zram_deinit() { (
+zramDeinit() { (
     [[ $(whoami) != root ]] && return 1
 
     # Turn off zRAM
@@ -99,16 +90,16 @@ zram_deinit() { (
     # Set swappiness to 1
     sysctl vm.swappiness=1
 ) || return 0; } # suppress non-zero exit status
-alias zram_deinit='check_sudo su -c "$(declare -f zram_deinit) && zram_deinit &> /dev/null"'
+alias zramDeinit='chkSudo su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/null"'
 
 # Quick way to install MoeSyndrome Kernel packages
-_vk_install() {
+_vkInstall() {
     [[ $(whoami) != root ]] && return 1
 
     pacman -U /mnt/ssd/aur/linux-moesyndrome*"$1"-"$(uname -m)".pkg.tar*
     "$USER_DIR"/KudProject/aur-src/linux-vk/sign_modules.sh
 }
-vk_install() { check_sudo --preserve-env=SCRIPTDIR,USER_DIR su -c "$(declare -f _vk_install) && _vk_install $1"; }
+vkInstall() { chkSudo --preserve-env=SCRIPT_DIR,USER_DIR su -c "$(declare -f _vkInstall) && _vkInstall $1"; }
 
 # Last, but my most convenient part; only apply with Bash
-[[ -n $BASH ]] && export PS1='\[\e[1;36m\]\W\[\e[1;34m\]$(parse_git_branch)\[\e[0m\] 〉'
+[[ -n $BASH ]] && export PS1='\[\e[1;36m\]\W\[\e[1;34m\]$(parseGitBranch)\[\e[0m\] 〉'

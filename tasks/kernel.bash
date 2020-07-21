@@ -14,29 +14,29 @@ git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
 
 # In case of signal interrupt, post interruption notification and exit script
 trap '{
-    [[ -n $STARTED ]] && tg_post "$MSG interrupted in $(show_duration)."
+    [[ -n $STARTED ]] && tgPost "$MSG interrupted in $(show_duration)."
     exit 130
 }' INT
 
 # For any errors, no matter what, post error notification and exit script
-tg_error() {
+tgError() {
     # make SIGINT no-op to avoid double-posting
     trap ' ' INT
-    tg_post "$MSG failed in $(show_duration)."
+    tgPost "$MSG failed in $(show_duration)."
     [[ -n $STATUS ]] && exit "$STATUS" || exit 1
 }
 
-# Prints message to stderr and exit script, OR call tg_error function
+# Prints message to stderr and exit script, OR call tgError function
 die() {
     [[ -z $STATUS && -n $STARTED ]] && STATUS=$?
     prWarn "$1"
-    [[ -n $STARTED ]] && tg_error || exit 1
+    [[ -n $STARTED ]] && tgError || exit 1
 }
 
-# Whenever script fails, save exit status and run tg_error
+# Whenever script fails, save exit status and run tgError
 trap '{
     [[ -n $STARTED ]] && STATUS=$?
-    tg_error
+    tgError
 }' ERR
 
 # Wait every process before exit
@@ -44,7 +44,7 @@ trap 'wait' EXIT
 
 ## Parse parameters
 
-parse_params() {
+parseParams() {
     [[ $# -eq 0 ]] && die "No parameter specified!"
     while [[ $# -ge 1 ]]; do
         case $1 in
@@ -148,14 +148,14 @@ parse_params() {
 
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
-parse_params "$@"
+parseParams "$@"
 
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
 if [[ -z $NO_ANNOUNCE ]]; then
-    tg_post() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
+    tgPost() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
 else
     # Allow bypassing announcement altogether
-    tg_post() { return 0; }
+    tgPost() { return 0; }
 fi
 
 # Make '**' recursive
@@ -167,7 +167,7 @@ shopt -s globstar
 KERNEL=$VERSION.$PATCHLEVEL
 
 # Telegram-specific environment setup
-TELEGRAM=$SCRIPTDIR/modules/telegram/telegram
+TELEGRAM=$SCRIPT_DIR/modules/telegram/telegram
 # Default message for posting to Telegram
 MSG="*[BuildCI]* Kernel build job for #$DEVICE ($KERNEL)"
 tg_getid kp-on
@@ -319,7 +319,7 @@ LINKER=$(${CROSS_COMPILE}ld --version | head -1)
 
 # Script beginning
 prInfo "Starting build script..."
-tg_post "$MSG has been started on \`$(hostname)\`." \
+tgPost "$MSG has been started on \`$(hostname)\`." \
     "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
 # Explicitly declare build script startup
 STARTED=true
@@ -367,7 +367,7 @@ fi
 
 # Announce build information; only pass as minimum as possible make variables
 VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2>/dev/null | tail -1)
-tg_post "*[BuildCI]* Build information:" "" \
+tgPost "*[BuildCI]* Build information:" "" \
     "*Kernel version:* \`$VERSION\`" \
     "*Compiler:* $COMPILER" \
     "*Linker:* $LINKER" &
@@ -391,12 +391,12 @@ PATH=$PATH \
 # Build dt.img and/or dtbo.img if needed
 if [[ -n $NEEDS_DT_IMG ]]; then
     prInfo "Creating dt.img..."
-    "$SCRIPTDIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
+    "$SCRIPT_DIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
         -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ >/dev/null
 fi
 if [[ -n $NEEDS_DTBO ]]; then
     prInfo "Creating dtbo.img..."
-    python2 "$SCRIPTDIR"/modules/libufdt/utils/src/mkdtboimg.py create \
+    python2 "$SCRIPT_DIR"/modules/libufdt/utils/src/mkdtboimg.py create \
         "$OUT_KERNEL"/dts/dtbo.img --page_size=$PAGE_SIZE \
         "$OUT_KERNEL"/dts/**/*.dtbo
 fi
@@ -452,7 +452,7 @@ if [[ -z $BUILD_ONLY ]]; then
 fi
 
 # Notify successful build
-tg_post "$MSG completed in $(show_duration)." &
+tgPost "$MSG completed in $(show_duration)." &
 unset STARTED
 
 # Upload kernel zip if requested, else the end
@@ -460,11 +460,11 @@ if [[ -n $UPLOAD ]]; then
     if [[ -z $RELEASE ]]; then
         # To Telegram
         prInfo "Uploading $ZIP to Telegram..."
-        tg_post "*[BuildCI]* Uploading test build..." &
+        tgPost "*[BuildCI]* Uploading test build..." &
         if ! "$TELEGRAM" -f "$AK/$ZIP" -c "-1001494373196" \
             "New #$DEVICE test build ($KERNEL) with branch $BRANCH at commit $(git_pretty)."; then
             prWarn "Failed to upload $ZIP."
-            tg_post "*[BuildCI]* Unable to upload the build." &
+            tgPost "*[BuildCI]* Unable to upload the build." &
         fi
     else
         # or to webserver for release zip
@@ -480,7 +480,7 @@ if [[ -n $UPLOAD ]]; then
                 prInfo "$RELEASE_ZIP uploaded successfully." \
                     "GitHub releases upload requires manual intervention, though."
                 TELEGRAM_CHAT="-1001368407111 -1001181003922" \
-                    tg_post "*New MoeSyndrome Kernel build is available!*" \
+                    tgPost "*New MoeSyndrome Kernel build is available!*" \
                     "*Name:* \`$RELEASE_ZIP\`" \
                     "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
                     "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &

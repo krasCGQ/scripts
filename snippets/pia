@@ -4,10 +4,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Setup Private Internet Access configuration files for OpenVPN
-pia_ovpnsetup() {
-    # Local variables
+piaOvpnSetup() {
     local AUTH_FILE CONFIG EXTRA_ARGS MODE PASS TMP_DIR USER
-
     # Temporary directory to fetch and manage configuration files
     TMP_DIR=/tmp/pia_openvpn
     # Path to auth-user-pass file
@@ -23,10 +21,7 @@ pia_ovpnsetup() {
     }' ERR INT TERM
 
     # Make sure OpenVPN is installed
-    [[ -z $(command -v openvpn) ]] && {
-        prWarn "Please install openvpn package before continuing."
-        return 1
-    }
+    [[ -z $(command -v openvpn) ]] && { prWarn "Please install openvpn package before continuing." && return 1; }
 
     # Parse parameters
     # Only one type at a time, latter function will override already assigned
@@ -66,7 +61,7 @@ pia_ovpnsetup() {
     if [[ -n $AEAD ]]; then
         EXTRA_ARGS+=-aead
         # This is hosted on my VPS since PIA doesn't provide it by default
-        curl -sO https://dl.kudnet.id/.files/openvpn$EXTRA_ARGS.zip
+        curl -sO https://kudnet.id/downloads/.files/openvpn$EXTRA_ARGS.zip
     else
         curl -sO https://www.privateinternetaccess.com/openvpn/openvpn$EXTRA_ARGS.zip
     fi
@@ -85,11 +80,11 @@ pia_ovpnsetup() {
 
     # Remove existing configuration files if any
     prInfo "Removing existing configuration files..."
-    check_sudo rm -rf /etc/openvpn/client/*
+    chkSudo rm -rf /etc/openvpn/client/*
 
     # Move everything to /etc/openvpn/client and set correct permissions
     prInfo "Moving configuration files to /etc/openvpn..."
-    check_sudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
+    chkSudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
 
     # Go back to previous directory and remove temporary directory
     cd - >/dev/null || return 1
@@ -104,8 +99,8 @@ pia_ovpnsetup() {
 
         # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
         prInfo "Saving credientials to $AUTH_FILE..."
-        echo -e "$USER\n$PASS" | check_sudo tee $AUTH_FILE >/dev/null
-        check_sudo su -c "chown root:network $AUTH_FILE && chmod 600 $AUTH_FILE"
+        echo -e "$USER\n$PASS" | chkSudo tee $AUTH_FILE >/dev/null
+        chkSudo su -c "chown root:network $AUTH_FILE && chmod 600 $AUTH_FILE"
     fi
 
     # And... it's done.
@@ -114,12 +109,9 @@ pia_ovpnsetup() {
 
 # Wrapper to connect to Private Internet Access with OpenVPN
 # TODO: Country shortcode
-_pia_ovpnconnect() {
-    # Local variables
-    local CONFIG PORT PROTOCOL
-
-    # Don't run function if not as root
+_piaOvpnConnect() {
     [[ $(whoami) != root ]] && return 1
+    local CONFIG PORT PROTOCOL
 
     # Make sure OpenVPN is installed
     if [[ -z $(command -v openvpn) ]]; then
@@ -150,9 +142,9 @@ _pia_ovpnconnect() {
     PROTOCOL=$(grep proto "$CONFIG" | cut -d ' ' -f 2)
 
     # If .ip-address.saved is exist, probably it wasn't disconnected properly
-    if [[ -f $SCRIPTDIR/.ip-address.saved ]]; then
+    if [[ -f $SCRIPT_DIR/.ip-address.saved ]]; then
         prWarn "Redundant rules detected! Disabling VPN kill switch..."
-        "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
+        "$SCRIPT_DIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
     fi
 
     # Use PIA DNS servers in resolv.conf
@@ -163,12 +155,11 @@ _pia_ovpnconnect() {
 
     # Enable VPN kill switch
     prInfo "Enabling VPN kill switch..."
-    "$SCRIPTDIR"/utils/killswitch.bash on "$SERVER" "$PORT/$PROTOCOL" >/dev/null
+    "$SCRIPT_DIR"/utils/killswitch.bash on "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Restart name server cache daemon
     # TODO: For other distros?
-    nscd -K
-    nscd
+    nscd -K && nscd
 
     # Let's put some common senses before starting VPN, as OpenVPN always
     # returns 0 exit status regardless of any error during connection
@@ -189,12 +180,12 @@ _pia_ovpnconnect() {
 
     # Disable VPN kill switch
     prInfo "Disabling VPN kill switch..."
-    "$SCRIPTDIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
+    "$SCRIPT_DIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Make resolv.conf read/write
     chattr -i /etc/resolv.conf
 }
-pia_ovpnconnect() { check_sudo su -c "export SCRIPTDIR=$SCRIPTDIR && . $SCRIPTDIR/env/global && $(declare -f _pia_ovpnconnect) && _pia_ovpnconnect ${*}"; }
+piaOvpnConnect() { chkSudo --preserve-env=SCRIPT_DIR su -c ". $SCRIPT_DIR/env/global && $(declare -f _piaOvpnConnect) && _piaOvpnConnect $*"; }
 
 # Get latest Private Internet Access client installer
 # Currently doesn't verify against checksum provided

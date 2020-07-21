@@ -66,7 +66,7 @@ if [[ $# -ge 1 && $# -le 3 ]]; then
     -d | --disable | off)
         # Load list of IP addresses is exist then delete it
         if [[ -f $IP_LIST ]]; then
-            IP_ADDRESS="$(cat "$IP_LIST")"
+            IP_ADDRESS="$(<"$IP_LIST")"
             rm -f "$IP_LIST"
         fi
 

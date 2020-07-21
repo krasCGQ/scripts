@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import treewide environment script
-source "$SCRIPTDIR"/env/global
+source "$SCRIPT_DIR"/env/global
 
 # Aliases
 alias nano='nano -au'
@@ -29,15 +29,15 @@ if [[ -z $IS_TERMUX ]]; then
 fi
 
 # Source Telegram-specific script if exists
-[[ -f $SCRIPTDIR/env/telegram ]] && source "$SCRIPTDIR"/env/telegram
+[[ -f $SCRIPT_DIR/env/telegram ]] && source "$SCRIPT_DIR"/env/telegram
 
 # Wrapper to automatically merge latest Linux stable revision to working branch
 # Usage: korg_merge <revision-to-merge>
-korg_merge() { git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux v"$1" --signoff; }
+korgMerge() { git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux v"$1" --signoff; }
 
 # Bash: Parse current branch in git repository
 if [[ -n $BASH ]]; then
-    parse_git_branch() {
+    parseGitBranch() {
         local BRANCH
         BRANCH=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/^* //')
 
@@ -92,16 +92,15 @@ zipsigner() {
 }
 
 # Get latest Proton clang from GitHub releases
-get_proton-clang() {
+getProtonClang() {
     chkArch x86_64 || return 1
-
     local INSTALL_DIR LATEST NAME REPO URL VERSION
     INSTALL_DIR=/opt/kud/proton-clang
     REPO=kdrag0n/proton-clang
 
     prInfo "Obtaining latest version info..."
     LATEST=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -w tag_name | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
-    if [[ $(cat $INSTALL_DIR/ClangVersion.txt 2>/dev/null) -eq $LATEST ]]; then
+    if [[ $(<$INSTALL_DIR/ClangVersion.txt 2>/dev/null) -eq $LATEST ]]; then
         # we're up to date, skip.
         prInfo "Clang build $LATEST is up to date."
         rm /tmp/latest.json
@@ -136,13 +135,9 @@ get_proton-clang() {
 }
 
 # Fix Snapdragon LLVM permissions and symlinks; prebuilts extracted from BSP
-fix_sdllvm() {
+fixSdllvm() {
     chkArch x86_64 || return 1
-
-    cd "$1" || {
-        prWarn "$BLD$(basename "$1")$RST doesn't exist in defined path"
-        return 1
-    }
+    cd "$1" || { prWarn "$BLD$(basename "$1")$RST doesn't exist in defined path" && return 1; }
 
     # try to get Clang major version
     chmod +x bin/clang
@@ -243,6 +238,6 @@ sysUpdate() {
 
 if [[ -z $IS_TERMUX ]]; then
     # Wrap around sudo
-    alias updMirrorlist='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'
-    alias sysUpdate='check_sudo su -c ". $SCRIPTDIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
+    alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'
+    alias sysUpdate='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
 fi

@@ -1,12 +1,11 @@
 # shellcheck shell=bash
 # Wrapper for sending Telegram posts with inline buttons
-# Copyright (C) 2018-2019 Albert I (krasCGQ)
+# Copyright (C) 2018-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Based and expanded from https://stackoverflow.com/a/49063573.
 
-tg_sendinline() {
-    # Local variables
+tgSendInline() {
     local COUNT INLINE INLINE_TEXT INLINE_URL ON_SAME_ROW REQUEST ROW_COUNT TEXT
 
     # Parse parameters
@@ -44,10 +43,7 @@ tg_sendinline() {
 
         -t | --token)
             shift
-            [[ $1 != *:* ]] && {
-                prWarn "Invalid value specified!"
-                return 1
-            }
+            [[ $1 != *:* ]] && { prWarn "Invalid value specified!" && return 1; }
             local TELEGRAM_TOKEN
             TELEGRAM_TOKEN=$1
             ;;

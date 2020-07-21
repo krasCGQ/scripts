@@ -9,20 +9,20 @@
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
     # Bash
-    SCRIPTDIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+    SCRIPT_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 elif [[ -n $ZSH_VERSION ]]; then
     # Zsh
     # shellcheck disable=SC2154
-    SCRIPTDIR=$(dirname "${(%):-%x}")
+    SCRIPT_DIR=$(dirname "${(%):-%x}")
 else
     echo "! Unsupported shell. Exiting." >&2
     return 1
 fi
-SCRIPTDIR=$(dirname "$SCRIPTDIR")
-export SCRIPTDIR
+SCRIPT_DIR=$(dirname "$SCRIPT_DIR")
+export SCRIPT_DIR
 
 # Import common environment script
 # shellcheck source=/dev/null
-source "$SCRIPTDIR"/env/common
+source "$SCRIPT_DIR"/env/common
 
 ## Android-specific functions aren't available yet. Check back later.
