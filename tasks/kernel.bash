@@ -77,7 +77,8 @@ parseParams() {
 
         # OPTIONAL
         -b | --build-only)
-            BUILD_ONLY=true
+            # Overrides incompatible `-u | --upload`
+            TASK_TYPE=build-only
             ;;
 
         -c | --clang)
@@ -85,9 +86,8 @@ parseParams() {
             ;;
 
         --clean)
-            FULL_CLEAN=true
-            # This can't co-exist
-            unset DIRTY
+            # Overrides incompatible `--dirty`
+            BUILD_TYPE=clean
             ;;
 
         -cv | --clang-version)
@@ -102,9 +102,8 @@ parseParams() {
             ;;
 
         --dirty)
-            DIRTY=true
-            # This can't co-exist
-            unset FULL_CLEAN
+            # Overrides incompatible `--clean`
+            BUILD_TYPE=dirty
             ;;
 
         --external-dtc)
@@ -133,8 +132,8 @@ parseParams() {
             ;;
 
         -u | --upload)
-            # Will be ignored if BUILD_ONLY=true
-            UPLOAD=true
+            # Overrides incompatible `-b | --build-only`
+            TASK_TYPE=upload
             ;;
 
         # Unsupported parameter, skip
@@ -281,18 +280,13 @@ sleep 1
 
 # Missing device choice
 [[ -z $DEVICE ]] && die "Please specify target device."
-# Requested to only build; upload option is practically doing nothing
-if [[ -n $UPLOAD && -n $BUILD_ONLY ]]; then
-    prWarn "Requested to only build but upload was assigned, disabling."
-    unset UPLOAD
-fi
 # Clang-specific checks
 if [[ -n $CLANG ]]; then
-    # Requested to use AOSP Clang, but desired version isn't specified
-    [[ -z $CLANG_VERSION && -n $STOCK ]] && die "Please specify AOSP Clang version to use."
-    # We're not going to assume Clang version for non-AOSP one
+    # Requested to use non-custom Clang, but desired version isn't specified
+    [[ -z $CLANG_VERSION && -n $STOCK ]] && die "Please specify non-custom Clang version to use."
+    # We're not going to assume Clang version for custom one
     if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
-        prWarn "Assigning Clang version is only meant for AOSP Clang, disabling."
+        prWarn "Assigning Clang version is only meant for non-custom Clang, disabling."
         unset CLANG_VERSION
     fi
 fi
@@ -301,8 +295,8 @@ for BIN in ${CROSS_COMPILE}elfedit ${CROSS_COMPILE_ARM32:+${CROSS_COMPILE_ARM32}
     PATH="${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs:}/dev/null" \
         command -v "$BIN" >/dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
 done
-# Build-only isn't requested, but missing device's AnyKernel resource
-[[ -z $BUILD_ONLY && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
+# It's not a build-only task, but missing device's AnyKernel resource
+[[ $TASK_TYPE != build-only && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 # CAF's gcc-wrapper.py is written in Python 2, but MSM kernels <= 3.10 doesn't
 # call python2 directly without a patch from newer kernels; we have to utilize
 # virtualenv2 neverthless.
@@ -336,9 +330,9 @@ if [[ -n $CLANG ]]; then
 fi
 
 # Clean build directory
-if [[ -z $DIRTY && -d $OUT ]]; then
+if [[ $BUILD_TYPE != dirty && -d $OUT ]]; then
     prInfo "Cleaning build directory..."
-    if [[ -z $FULL_CLEAN ]]; then
+    if [[ $BUILD_TYPE != clean ]]; then
         make -s ARCH=$ARCH O="$OUT" clean 2>/dev/null
         # Delete earlier dt{,bo}.img created by this build script
         rm -f "$OUT_KERNEL"/dts/dt{,bo}.img
@@ -401,7 +395,7 @@ if [[ -n $NEEDS_DTBO ]]; then
         "$OUT_KERNEL"/dts/**/*.dtbo
 fi
 
-if [[ -z $BUILD_ONLY ]]; then
+if [[ $TASK_TYPE != build-only ]]; then
     prInfo "Cleaning and copying required file(s) to AnyKernel folder..."
     # Clean everything except zip files
     git -C "$AK" clean -qdfx -e '*.zip'
@@ -456,7 +450,7 @@ tgPost "$MSG completed in $(show_duration)." &
 unset STARTED
 
 # Upload kernel zip if requested, else the end
-if [[ -n $UPLOAD ]]; then
+if [[ $TASK_TYPE == upload ]]; then
     if [[ -z $RELEASE ]]; then
         # To Telegram
         prInfo "Uploading $ZIP to Telegram..."
