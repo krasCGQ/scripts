@@ -1,6 +1,6 @@
 # shellcheck shell=bash
-# Collection of OpenVPN-related snippets for dealing with Private Internet Access
-# Copyright (C) 2019 Albert I (krasCGQ)
+# Collection of Private Internet Access-related commands
+# Copyright (C) 2019-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Setup Private Internet Access configuration files for OpenVPN
@@ -195,3 +195,35 @@ _pia_ovpnconnect() {
     chattr -i /etc/resolv.conf
 }
 pia_ovpnconnect() { check_sudo su -c "export SCRIPTDIR=$SCRIPTDIR && . $SCRIPTDIR/env/global && $(declare -f _pia_ovpnconnect) && _pia_ovpnconnect ${*}"; }
+
+# Get latest Private Internet Access client installer
+# Currently doesn't verify against checksum provided
+piaGetInstaller() {
+    local BASE_URL NAME OS PASS URL
+    BASE_URL=https://www.privateinternetaccess.com/installer/x/download_installer_
+    # Make it not case-sensitive by lowercasing everything
+    OS=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
+    # Take only first argument for OS version
+    # Android version downloaded this way has MACE, Play Store doesn't
+    # iOS/iPad version must be downloaded from App Store
+    for i in android linux osx win32 win64; do
+        [[ $OS == "$i" ]] && { PASS=true && break; }
+    done
+    [[ -z $PASS ]] && { prWarn "Invalid OS selected!" && return 1; }
+    unset PASS
+
+    # PIA uses different structure for Windows installers
+    [[ $OS == win32 || $OS == win64 ]] && OS=${OS/n/n\/}
+    # PIA uses different base URL for Android APK
+    [[ $OS == android ]] && BASE_URL=${BASE_URL/\/x/}
+    # Get installer URL
+    prInfo "Fetching download URL..."
+    URL=$(curl -s $BASE_URL"$OS" | grep refresh | cut -d'=' -f4 | sed -e 's/">//')
+    [[ -z $URL ]] && { prWarn "Unable to retrieve download URL." && return 1; }
+
+    # Download installer using Axel
+    NAME=$(basename "$URL")
+    prInfo "Downloading $NAME..."
+    axel -n16 -o "$HOME"/Downloads/"$NAME" "$URL"
+}
