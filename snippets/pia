@@ -205,7 +205,7 @@ piaGetInstaller() {
     unset PASS
 
     # PIA uses different structure for Windows installers
-    [[ $OS == win32 || $OS == win64 ]] && OS=${OS/n/n\/}
+    [[ $OS =~ win ]] && OS=${OS/n/n\/}
     # PIA uses different base URL for Android APK
     [[ $OS == android ]] && BASE_URL=${BASE_URL/\/x/}
     # Get installer URL
