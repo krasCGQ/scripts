@@ -114,6 +114,10 @@ parseParams() {
             TARGETS+=("DTC_EXT=/usr/bin/dtc")
             ;;
 
+        -j | --json)
+            GENERATE_JSON=true
+            ;;
+
         --no-announce)
             NO_ANNOUNCE=true
             ;;
@@ -444,6 +448,7 @@ fi
 tgPost "$MSG completed in $(show_duration)." &
 unset STARTED
 
+[[ $TASK_TYPE != build-only && -n $GENERATE_JSON ]] && genFkmJson
 # Upload kernel zip if requested, else the end
 [[ $TASK_TYPE == upload ]] && kernUpload
 
