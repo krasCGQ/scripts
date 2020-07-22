@@ -4,8 +4,11 @@
 # Copyright (C) 2018-2020 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-## Import common kernel script
-. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
+TASKS_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+# Import common kernel script
+. "$TASKS_DIR"/kernel-common
+# Import MoeSyndrome-specific tasks
+. "$TASKS_DIR"/kernel-release
 
 ## Functions
 
@@ -174,8 +177,6 @@ tg_getid kp-on
 # Paths
 ROOT_DIR=$HOME/KudProject
 OPT_DIR=/opt/kud
-# Kernel path on server and OSDN File Storage
-KERNEL_DIR=kernels/$DEVICE
 # Number of threads used
 THREADS=$(nproc --all)
 
@@ -246,14 +247,8 @@ export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 # Kernel build variables
 AK=$ROOT_DIR/AnyKernel/$DEVICE
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-# MoeSyndrome Kernel is only available for mido; use branch name for others
-if [[ $DEVICE == mido ]]; then
-    NAME=MoeSyndrome
-    # Define which variant we're building
-    [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
-else
-    NAME=$BRANCH
-fi
+# Kernel branding: Use branch name if returned undefined
+setBranding || NAME=$BRANCH
 # Set required ARCH, kernel name
 if [[ -z $IS_32BIT ]]; then
     ARCH=arm64
@@ -450,40 +445,7 @@ tgPost "$MSG completed in $(show_duration)." &
 unset STARTED
 
 # Upload kernel zip if requested, else the end
-if [[ $TASK_TYPE == upload ]]; then
-    if [[ -z $RELEASE ]]; then
-        # To Telegram
-        prInfo "Uploading $ZIP to Telegram..."
-        tgPost "*[BuildCI]* Uploading test build..." &
-        if ! "$TELEGRAM" -f "$AK/$ZIP" -c "-1001494373196" \
-            "New #$DEVICE test build ($KERNEL) with branch $BRANCH at commit $(git_pretty)."; then
-            prWarn "Failed to upload $ZIP."
-            tgPost "*[BuildCI]* Unable to upload the build." &
-        fi
-    else
-        # or to webserver for release zip
-        (
-            # Unlikely to fail; but we have to define this way to satisfy shellcheck
-            cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
-
-            prInfo "Uploading $RELEASE_ZIP..."
-            if {
-                rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/"$KERNEL_DIR"/
-                rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/"$KERNEL_DIR"/
-            }; then
-                prInfo "$RELEASE_ZIP uploaded successfully." \
-                    "GitHub releases upload requires manual intervention, though."
-                TELEGRAM_CHAT="-1001368407111 -1001181003922" \
-                    tgPost "*New MoeSyndrome Kernel build is available!*" \
-                    "*Name:* \`$RELEASE_ZIP\`" \
-                    "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
-                    "*Downloads:* [Webserver](https://dl.kudnet.id/$KERNEL_DIR/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
-            else
-                prWarn "Failed to upload $RELEASE_ZIP."
-            fi
-        )
-    fi
-fi
+[[ $TASK_TYPE == upload ]] && kernUpload
 
 # Script ending
 prInfo "That's it. Job well done!"

@@ -1,0 +1,57 @@
+# shellcheck shell=bash
+# Kernel versioning (branding)
+# Copyright (C) 2020 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Exit if it's being executed
+if ! (return 2>/dev/null); then
+    echo "! Please source this script instead of running directly." >&2
+    exit 126
+fi
+
+# Kernel branding
+setBranding() {
+    # MoeSyndrome Kernel is only available for the following devices
+    if [[ $DEVICE == mido ]]; then
+        NAME=MoeSyndrome
+        # Define which variant we're building
+        [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
+    fi
+    [[ -n $NAME ]] && return
+}
+
+# Kernel upload
+kernUpload() {
+    if [[ -z $RELEASE ]]; then
+        # To Telegram
+        prInfo "Uploading $ZIP to Telegram..."
+        tgPost "*[BuildCI]* Uploading test build..." &
+        if ! "$TELEGRAM" -f "$AK/$ZIP" -c "-1001494373196" \
+            "New #$DEVICE test build ($KERNEL) with branch $BRANCH at commit $(git_pretty)."; then
+            prWarn "Failed to upload $ZIP."
+            tgPost "*[BuildCI]* Unable to upload the build." &
+        fi
+    else
+        # or to webserver for release zip
+        (
+            # Unlikely to fail; but we have to define this way to satisfy shellcheck
+            cd "$AK" || die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
+
+            prInfo "Uploading $RELEASE_ZIP..."
+            if {
+                rsync -qP --relative "$RELEASE_ZIP" krascgq@dl.kudnet.id:/var/www/dl.kudnet.id/kernels/"$DEVICE"/
+                rsync -qP --relative "$RELEASE_ZIP" krascgq@storage.osdn.net:/storage/groups/k/ku/kudproject/kernels/"$DEVICE"/
+            }; then
+                prInfo "$RELEASE_ZIP uploaded successfully." \
+                    "GitHub releases upload requires manual intervention, though."
+                TELEGRAM_CHAT="-1001368407111 -1001181003922" \
+                    tgPost "*New MoeSyndrome Kernel build is available!*" \
+                    "*Name:* \`$RELEASE_ZIP\`" \
+                    "*Build Date:* \`$(sed '4q;d' "$OUT"/include/generated/compile.h | cut -d ' ' -f 6-11 | sed -e s/\"//)\`" \
+                    "*Downloads:* [Webserver](https://dl.kudnet.id/kernels/$DEVICE/$RELEASE_ZIP) | [OSDN](https://osdn.net/dl/kudproject/$RELEASE_ZIP)" &
+            else
+                prWarn "Failed to upload $RELEASE_ZIP."
+            fi
+        )
+    fi
+}
