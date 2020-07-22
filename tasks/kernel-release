@@ -15,7 +15,12 @@ setBranding() {
     if [[ $DEVICE == mido ]]; then
         NAME=MoeSyndrome
         # Define which variant we're building
-        [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
+        if [[ $KERNEL == 4.9 ]]; then
+            [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
+        else
+            # Legacy kernel; maintenance support only
+            NAME+=-legacy
+        fi
     fi
     [[ -n $NAME ]] && return
 }

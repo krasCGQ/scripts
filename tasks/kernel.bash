@@ -415,7 +415,7 @@ if [[ $TASK_TYPE != build-only ]]; then
     fi
 
     # Export zip name here to be picked later
-    ZIP=$NAME-$DEVICE-$KERNEL-$(date +%Y%m%d-%H%M).zip
+    ZIP=$NAME-$DEVICE-$(date +%Y%m%d-%H%M).zip
     [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
 
     # Make flashable kernel zip
