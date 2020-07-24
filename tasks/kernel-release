@@ -18,6 +18,8 @@ RELEASE_SOURCED=true
 BASE_URL=https://kudnet.id
 # Key pair used to sign resulting kernel zip; fallback to AOSP test-keys if left empty
 KEY_PAIR=/mnt/ssd/android/aimrom-q/vendor/kud/build/target/product/security/releasekey
+# Export variables to satisfy shellcheck requirements
+export RELEASE_SOURCED KEY_PAIR
 
 # Kernel branding
 setBranding() {
