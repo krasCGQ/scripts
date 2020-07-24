@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 zipsigner() {
-    local SIGNATURE SIGNED UNSIGNED
+    local CERT PRIV_KEY SIGNED UNSIGNED
 
     if [[ -z $(command -v java) ]]; then
         prWarn "Please install any of OpenJDK version before continuing."
@@ -22,13 +22,13 @@ zipsigner() {
         case $1 in
         -s | --signing-key)
             shift
-            SIGNATURE=$1
+            CERT=$1.x509.pem
+            PRIV_KEY=$1.pk8
             ;;
 
         *)
             UNSIGNED=$1
-            shift
-            [[ -n $1 ]] && SIGNED=$1 || SIGNED=${UNSIGNED/.zip/-signed.zip}
+            [[ $# -gt 1 ]] && { shift && SIGNED=$1; } || SIGNED=${UNSIGNED/.zip/-signed.zip}
             ;;
         esac
         shift
@@ -38,6 +38,6 @@ zipsigner() {
     [[ ! -d $(dirname "$SIGNED") ]] && mkdir -p "$(dirname "$SIGNED")"
 
     prInfo "Signing $(basename "$UNSIGNED") as $(basename "$SIGNED")..."
-    # TODO: Something better than this?
-    java -jar "$ZIPSIGNER" "$SIGNATURE"{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "$UNSIGNED" "$SIGNED"
+    # Make it like this to workaround a weird bug
+    java -jar "$ZIPSIGNER" ${CERT:+"$CERT"} ${PRIV_KEY:+"$PRIV_KEY"} "$UNSIGNED" "$SIGNED"
 }
