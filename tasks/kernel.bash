@@ -249,7 +249,7 @@ export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 AK=$ROOT_DIR/AnyKernel/$DEVICE
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # Kernel branding: Use branch name if returned undefined
-setBranding || NAME=$BRANCH
+setBranding 2>/dev/null || NAME=$BRANCH
 # Set required ARCH, kernel name
 if [[ -z $IS_32BIT ]]; then
     ARCH=arm64
@@ -334,7 +334,7 @@ if [[ $BUILD_TYPE != dirty && -d $OUT ]]; then
         rm -f "$OUT_KERNEL"/dts/dt{,bo}.img
     else
         # Remove out folder instead of doing mrproper/distclean
-        rm -rf "$OUT"
+        rm -r "$OUT"
     fi
 fi
 
@@ -399,19 +399,19 @@ if [[ $TASK_TYPE != build-only ]]; then
     [[ -z $IS_32BIT ]] && gzip -f9 "$OUT_KERNEL"/Image
     if [[ -n $NEEDS_DT_IMG ]]; then
         # Copy compressed kernel image and dt.img
-        cp -f "$OUT_KERNEL"/$KERNEL_NAME "$AK"
-        cp -f "$OUT_KERNEL"/dts/dt.img "$AK"
+        cp "$OUT_KERNEL"/$KERNEL_NAME "$AK"
+        cp "$OUT_KERNEL"/dts/dt.img "$AK"
     else
         # Append dtbs to compressed kernel image and copy
         cat "$OUT_KERNEL"/$KERNEL_NAME "$OUT_KERNEL"/dts/**/*.dtb >"$AK"/$KERNEL_NAME-dtb
     fi
     # Copy dtbo.img for supported devices
-    [[ -n $NEEDS_DTBO ]] && cp -f "$OUT_KERNEL"/dts/dtbo.img "$AK"
+    [[ -n $NEEDS_DTBO ]] && cp "$OUT_KERNEL"/dts/dtbo.img "$AK"
     # Copy kernel modules if target device has them
     if [[ -n $HAS_MODULES ]]; then
         mkdir -p "$AK"/modules/vendor/lib/modules
         for MODULE in "$OUT"/**/*.ko; do
-            cp -f "$MODULE" "$AK"/modules/vendor/lib/modules
+            cp "$MODULE" "$AK"/modules/vendor/lib/modules
         done
     fi
 
@@ -434,7 +434,7 @@ if [[ $TASK_TYPE != build-only ]]; then
             . "$SCRIPT_DIR"/snippets/zipsigner
             zipsigner ${KEY_PAIR:+-s "$KEY_PAIR"} "$ZIP" "${RELEASE_ZIP:-${ZIP/-unsigned/}}"
             # Delete 'unsigned' zip
-            rm -f "$ZIP"
+            rm "$ZIP"
         fi
     )
 fi
@@ -444,7 +444,6 @@ tgPost "$MSG completed in $(show_duration)." &
 unset STARTED
 
 [[ $TASK_TYPE != build-only && -n $GENERATE_JSON ]] && genFkmJson
-# Upload kernel zip if requested, else the end
 [[ $TASK_TYPE == upload ]] && kernUpload
 
 # Script ending
