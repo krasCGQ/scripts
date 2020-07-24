@@ -83,64 +83,57 @@ parseParams() {
             # Overrides incompatible `-u | --upload`
             TASK_TYPE=build-only
             ;;
-
         -c | --clang)
             CLANG=true
             ;;
-
         --clean)
             # Overrides incompatible `--dirty`
             BUILD_TYPE=clean
             ;;
-
         -cv | --clang-version)
             shift
             # Supported Clang corresponding to function in kernel-common
             get_clang-ver "$1"
             ;;
-
         --debug)
             # Assume section mismatch(es) debugging as a target
             TARGETS+=("CONFIG_DEBUG_SECTION_MISMATCH=y")
             ;;
-
         --dirty)
             # Overrides incompatible `--clean`
             BUILD_TYPE=dirty
             ;;
-
         --external-dtc)
             # This has no effect on sources without or has DTC_EXT removed
             TARGETS+=("DTC_EXT=/usr/bin/dtc")
             ;;
-
-        -j | --json)
-            GENERATE_JSON=true
-            ;;
-
         --no-announce)
             NO_ANNOUNCE=true
             ;;
-
-        -r | --release)
-            shift
-            # Only integers are accepted
-            RELEASE=$1
-            [[ -n ${RELEASE//[0-9]/} ]] && die "Invalid version specified!"
-            ;;
-
         -s | --stock)
             STOCK=true
             ;;
-
         -sd | --sdclang)
             # This is now aliased to `-cv qti` or `--clang-version qti`
             get_clang-ver qti
             ;;
 
+        # OPTIONAL, REQUIRES RELEASE SCRIPT SOURCED
+        -j | --json)
+            # Ignored if we're not releasing build
+            [[ -n $RELEASE_SOURCED ]] && GENERATE_JSON=true
+            ;;
+        -r | --release)
+            shift
+            if [[ -n $RELEASE_SOURCED ]]; then
+                # Only integers are accepted
+                RELEASE=$1
+                [[ -n ${RELEASE//[0-9]/} ]] && die "Invalid version specified!"
+            fi
+            ;;
         -u | --upload)
             # Overrides incompatible `-b | --build-only`
-            TASK_TYPE=upload
+            [[ -n $RELEASE_SOURCED ]] && TASK_TYPE=upload
             ;;
 
         # Unsupported parameter, skip

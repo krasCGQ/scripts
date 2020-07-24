@@ -9,6 +9,11 @@ if ! (return 2>/dev/null); then
     exit 126
 fi
 
+# I endorse you to change variables here before even sourcing this script
+[[ $KBUILD_BUILD_USER == krasCGQ && $KBUILD_BUILD_HOST == KudProject ]] || return
+
+# Flag that this script is sourced
+RELEASE_SOURCED=true
 # Base download site URL, for saving space
 BASE_URL=https://kudnet.id
 
