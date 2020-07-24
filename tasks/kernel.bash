@@ -427,6 +427,7 @@ if [[ $TASK_TYPE != build-only ]]; then
             # Remove existing release zip
             rm -f "$RELEASE_ZIP"
             # Sign zip for release
+            . "$SCRIPT_DIR"/snippets/zipsigner
             zipsigner -s "$HOME"/.android-certs/releasekey "$ZIP" "$RELEASE_ZIP"
             # Delete 'unsigned' zip
             rm -f "$ZIP"

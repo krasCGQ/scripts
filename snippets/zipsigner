@@ -1,0 +1,43 @@
+# shellcheck shell=bash
+# ZipSigner Java wrapper: sign flashable zip with zipsigner
+# Copyright (C) 2019-2020 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+zipsigner() {
+    local SIGNATURE SIGNED UNSIGNED
+
+    if [[ -z $(command -v java) ]]; then
+        prWarn "Please install any of OpenJDK version before continuing."
+        return 1
+    elif [[ -z $ZIPSIGNER || ! -f $ZIPSIGNER ]]; then
+        prWarn "${BLD}ZIPSIGNER$RST is empty or doesn't exist. Refusing to continue."
+        return 1
+    elif [[ $# -lt 1 ]]; then
+        prWarn "${BLD}Usage:$RST zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
+            "If signed-zip is undefined, it'll default to zip name + signed."
+        return 1
+    fi
+
+    while [[ $# -ge 1 ]]; do
+        case $1 in
+        -s | --signing-key)
+            shift
+            SIGNATURE=$1
+            ;;
+
+        *)
+            UNSIGNED=$1
+            shift
+            [[ -n $1 ]] && SIGNED=$1 || SIGNED=${UNSIGNED/.zip/-signed.zip}
+            ;;
+        esac
+        shift
+    done
+
+    # Create target folder if it doesn't exist
+    [[ ! -d $(dirname "$SIGNED") ]] && mkdir -p "$(dirname "$SIGNED")"
+
+    prInfo "Signing $(basename "$UNSIGNED") as $(basename "$SIGNED")..."
+    # TODO: Something better than this?
+    java -jar "$ZIPSIGNER" "$SIGNATURE"{${SIGNATURE:+.x509.pem},${SIGNATURE:+.pk8}} "$UNSIGNED" "$SIGNED"
+}
