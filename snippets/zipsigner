@@ -9,9 +9,6 @@ zipsigner() {
     if [[ -z $(command -v java) ]]; then
         prWarn "Please install any of OpenJDK version before continuing."
         return 1
-    elif [[ -z $ZIPSIGNER || ! -f $ZIPSIGNER ]]; then
-        prWarn "${BLD}ZIPSIGNER$RST is empty or doesn't exist. Refusing to continue."
-        return 1
     elif [[ $# -lt 1 ]]; then
         prWarn "${BLD}Usage:$RST zipsigner [-s signing key] <unsigned-zip> [signed-zip]" \
             "If signed-zip is undefined, it'll default to zip name + signed."
@@ -39,5 +36,6 @@ zipsigner() {
 
     prInfo "Signing $(basename "$UNSIGNED") as $(basename "$SIGNED")..."
     # Make it like this to workaround a weird bug
-    java -jar "$ZIPSIGNER" ${CERT:+"$CERT"} ${PRIV_KEY:+"$PRIV_KEY"} "$UNSIGNED" "$SIGNED"
+    java -jar "$SCRIPT_DIR"/prebuilts/bin/zipsigner-3.0-dexed.jar \
+        ${CERT:+"$CERT"} ${PRIV_KEY:+"$PRIV_KEY"} "$UNSIGNED" "$SIGNED"
 }
