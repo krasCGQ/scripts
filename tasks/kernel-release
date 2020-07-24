@@ -24,6 +24,8 @@ setBranding() {
             # Legacy kernel; maintenance support only
             NAME+=-legacy
         fi
+        # Release zip name
+        [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
     fi
     [[ -n $NAME ]] && return
 }
