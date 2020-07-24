@@ -117,6 +117,10 @@ parseParams() {
             # This is now aliased to `-cv qti` or `--clang-version qti`
             get_clang-ver qti
             ;;
+        --sign)
+            # Automatically done with release build
+            SIGN_BUILD=true
+            ;;
 
         # OPTIONAL, REQUIRES RELEASE SCRIPT SOURCED
         -j | --json)
@@ -412,7 +416,7 @@ if [[ $TASK_TYPE != build-only ]]; then
     fi
 
     # Make flashable kernel zip
-    ZIP=$NAME-$DEVICE-$(date +%Y%m%d-%H%M).zip
+    ZIP=$NAME-$DEVICE-$(date +%Y%m%d-%H%M)${SIGN_BUILD:+-unsigned}.zip
     prInfo "Creating $ZIP..."
     (
         # Unlikely to fail; but we have to define this way to satisfy shellcheck
@@ -423,12 +427,12 @@ if [[ $TASK_TYPE != build-only ]]; then
         7za a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" ./* -x'!'README.md -xr'!'*Image* -xr'!'*.zip
         zip -q0 "$ZIP" ./*Image*
 
-        if [[ -n $RELEASE ]]; then
-            # Remove existing release zip
-            rm -f "$RELEASE_ZIP"
+        if [[ -n $RELEASE || -n $SIGN_BUILD ]]; then
+            # Remove existing (release) zip
+            rm -f "${RELEASE_ZIP:-${ZIP/-unsigned/}}"
             # Sign zip for release
             . "$SCRIPT_DIR"/snippets/zipsigner
-            zipsigner -s "$HOME"/.android-certs/releasekey "$ZIP" "$RELEASE_ZIP"
+            zipsigner ${KEY_PAIR:+-s "$KEY_PAIR"} "$ZIP" "${RELEASE_ZIP:-${ZIP/-unsigned/}}"
             # Delete 'unsigned' zip
             rm -f "$ZIP"
         fi
