@@ -301,11 +301,13 @@ if [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
 fi
 
 # Set compiler version here to avoid being included in total build time
-[[ -z $CLANG_CUSTOM && $CLANG_VERSION != qti ]] && CUT=,2
-[[ $CLANG_VERSION == qti ]] && LINE=2 || LINE=1
-[[ -n $CLANG ]] && COMPILER=$(clang --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
-    COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
-LINKER=$(${CROSS_COMPILE}ld --version | head -1)
+if [[ -z $NO_ANNOUNCE ]]; then
+    [[ -z $CLANG_CUSTOM && $CLANG_VERSION != qti ]] && CUT=,2
+    [[ $CLANG_VERSION == qti ]] && LINE=2 || LINE=1
+    [[ -n $CLANG ]] && COMPILER=$(clang --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
+        COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
+    LINKER=$(${CROSS_COMPILE}ld --version | head -1)
+fi
 
 # Script beginning
 prInfo "Starting build script..."
@@ -356,7 +358,7 @@ else
 fi
 
 # Announce build information; only pass as minimum as possible make variables
-VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2>/dev/null | tail -1)
+[[ -z $NO_ANNOUNCE || -n $GENERATE_JSON ]] && VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2>/dev/null | tail -1)
 tgPost "*[BuildCI]* Build information:" "" \
     "*Kernel version:* \`$VERSION\`" \
     "*Compiler:* $COMPILER" \
