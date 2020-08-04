@@ -14,6 +14,9 @@ fi
 # Export variables to satisfy shellcheck requirements
 export BLD RST
 
+# Crypto addresses - feel free if anyone want to donate some
+export GRLC=GWH54YJD3DuBVVriGyX1abdk6Ah8gynVZt
+
 # Enable escape sequences on Bash
 [[ -n $BASH ]] && alias echo='echo -e'
 
