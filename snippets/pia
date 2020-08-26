@@ -218,3 +218,37 @@ piaGetInstaller() {
     prInfo "Downloading $NAME..."
     axel -n16 -o "$HOME"/Downloads/"$NAME" "$URL"
 }
+
+# Port forwarding setup
+# Only handles Deluge in client mode and UFW (whitelisting) at the moment
+piaSetForward() {
+    local DELUGE_CONF PORT
+    # Location of config files to write into
+    DELUGE_CONF=$HOME/.config/deluge/core.conf
+
+    # Forwarded port...or something else
+    PORT=$(piactl get portforward)
+    [[ -n ${PORT//[0-9]/} ]] && { prWarn "Unable to retrieve forwarded port info. PIA says: $PORT" && return 1; }
+
+    # UFW (whitelisting)
+    # On some distros root user is required to even see ufw in PATH
+    if [[ -n $(command -v ufw || chkSudo command -v ufw) ]]; then
+        ! chkSudo su -c "ufw allow $PORT && ufw reload" && prWarn "Unable to configure UFW, skipping..."
+    else
+        prWarn "Skip configuring non-existing UFW."
+    fi
+
+    # Deluge in client mode
+    if [[ -f $DELUGE_CONF ]]; then
+        # Supply to both ranges in both outgoing and listen ports
+        sed -i -e '/"outgoing_ports"/{' -e "n;s/.*/    $PORT,/;n;s/.*/    $PORT/" -e '}' \
+            -e '/"listen_ports"/{' -e "n;s/.*/    $PORT,/;n;s/.*/    $PORT/" -e '}'  \
+            "$DELUGE_CONF"
+        # Restart existing Deluge process if any
+        pkill -15 deluge && deluge &>/dev/null &
+    else
+        prWarn "Skip configuring non-existing Deluge configuration."
+    fi
+
+    return 0
+}
