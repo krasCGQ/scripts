@@ -240,12 +240,14 @@ piaSetForward() {
 
     # Deluge in client mode
     if [[ -f $DELUGE_CONF ]]; then
+        # Terminate existing Deluge process if any
+        pkill -15 deluge && sync && DELUGE_RESTART=true
         # Supply to both ranges in both outgoing and listen ports
         sed -i -e '/"outgoing_ports"/{' -e "n;s/.*/    $PORT,/;n;s/.*/    $PORT/" -e '}' \
             -e '/"listen_ports"/{' -e "n;s/.*/    $PORT,/;n;s/.*/    $PORT/" -e '}'  \
             "$DELUGE_CONF"
-        # Restart existing Deluge process if any
-        pkill -15 deluge && deluge &>/dev/null &
+        # Restart Deluge if previously terminated
+        [[ -n $DELUGE_RESTART ]] && nohup deluge-gtk &>/dev/null &
     else
         prWarn "Skip configuring non-existing Deluge configuration."
     fi
