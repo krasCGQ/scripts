@@ -144,6 +144,34 @@ fixSdllvm() {
     cd - || true
 }
 
+# A wannabe rankmirrors that doesn't expect repository name being exist on URI
+# Usage: rankMirrors <repo name> <mirrorlist or stdin>
+rankMirrors() {
+    local ARCH REPO RESULT URL
+    ARCH=$(uname -m)
+
+    # Bail out early if no repo name
+    [[ -z $1 ]] && { prWarn "Incorrect usage!" && return 1; }
+
+    # Parse every URL in the mirrorlist
+    while read -r URL; do
+        # Convert to base repository URL
+        REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$1/" -e "s/\$arch/$ARCH/")
+        # Track status code and time required to download database
+        RESULT=$(curl -s -w '%{time_total} %{http_code}' "$REPO_URL"/"$1".db -o /dev/null)
+        # Only save to temporary file if it can be downloaded
+        [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $REPO_URL" >>/tmp/"$0"
+    done < <(cut -d' ' -f3 "$2" 2>/dev/null)
+    [[ ! -f /tmp/$0 ]] && { prWarn "Nothing to rank?" && return 1; }
+
+    # Convert back and rank mirrors by fastest download time
+    while read -r URL; do
+        echo "Server = $URL"
+    done < <(sort -n /tmp/"$0" | sed -e "s/$1/\$repo/" -e "s/$ARCH/\$arch/" | cut -d' ' -f3)
+    # Delete temporary file afterwards
+    rm /tmp/"$0"
+}
+
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 updMirrorlist() {
     chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
@@ -161,17 +189,14 @@ updMirrorlist() {
 
     # Chaotic-AUR
     prInfo "Updating Chaotic-AUR mirrorlist..."
-    # LordKitsuna and VarBhat mirrors will fail with rankmirrors and so are omitted
     curl -s https://lonewolf.pedrohlc.com/chaotic-aur/mirrorlist |
-        sed -e s/\$repo/chaotic-aur/g -e /#/d -e /kitsuna/d -e /dedyn/d |
-        rankmirrors - >/etc/pacman.d/chaotic-mirrorlist
+        sed -e /#/d | rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
 
     # Arch Linux CN
     prInfo "Updating Arch Linux CN mirrorlist..."
-    # repo.archlinuxcn.org will fail with rankmirrors and so is omitted
     curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
-        sed -e s/#Server/Server/g -e /##/d -e /archlinuxcn.org/d |
-        rankmirrors - >/etc/pacman.d/archlinuxcn-mirrorlist
+        sed -e s/#Server/Server/g -e /##/d |
+        rankMirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
 
     prInfo "Done."
 }
@@ -205,6 +230,6 @@ sysUpdate() {
 
 if [[ -z $IS_TERMUX ]]; then
     # Wrap around sudo
-    alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f updMirrorlist) && updMirrorlist"'
+    alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors updMirrorlist) && updMirrorlist"'
     alias sysUpdate='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
 fi
