@@ -159,6 +159,13 @@ updMirrorlist() {
     prInfo "Updating Arch Linux mirrorlist..."
     reflector --save /etc/pacman.d/mirrorlist --sort rate --threads "$(nproc --all)"
 
+    # Chaotic-AUR
+    prInfo "Updating Chaotic-AUR mirrorlist..."
+    # LordKitsuna and VarBhat mirrors will fail with rankmirrors and so are omitted
+    curl -s https://lonewolf.pedrohlc.com/chaotic-aur/mirrorlist |
+        sed -e s/\$repo/chaotic-aur/g -e /#/d -e /kitsuna/d -e /dedyn/d |
+        rankmirrors - >/etc/pacman.d/chaotic-mirrorlist
+
     # Arch Linux CN
     prInfo "Updating Arch Linux CN mirrorlist..."
     # repo.archlinuxcn.org will fail with rankmirrors and so is omitted
