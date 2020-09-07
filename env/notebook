@@ -31,8 +31,16 @@ alias neofetch='neofetch --os_arch off --speed_shorthand on --cpu_temp C --cpu_c
 alias sys2sbin='sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
-# Export new PATH containing local binaries
-[[ -z $TMUX ]] && export PATH=$HOME/.files/bin:$PATH
+if [[ -z $TMUX ]]; then
+    # Export new PATH containing local binaries
+    [[ -d $HOME/.files ]] && PATH=$HOME/.files/bin:$PATH
+    # Export new PATH containing Android SDK binaries
+    ANDROID_SDK=/opt/android-sdk
+    [[ -d $ANDROID_SDK/build-tools/30.0.2 ]] && PATH=$PATH:$ANDROID_SDK/build-tools/30.0.2
+    [[ -d $ANDROID_SDK/platform-tools ]] && PATH=$PATH:$ANDROID_SDK/platform-tools
+    unset ANDROID_SDK
+    export PATH
+fi
 
 # Convert all FLAC, WAV, and/or AIFF files to Opus
 opusConvert() {
