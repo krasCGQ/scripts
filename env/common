@@ -100,17 +100,19 @@ fixSdllvm() {
     cd "$1" || { prWarn "$BLD$(basename "$1")$RST doesn't exist in defined path" && return 1; }
 
     # try to get Clang major version
-    chmod +x bin/clang
+    [[ ! -x bin/clang ]] && chmod +x bin/clang
     VERSION=$(bin/clang --version | head -1 | cut -d' ' -f3 | cut -d. -f1)
 
     prInfo "Fixing permissions and symlinks..."
     (
         cd bin || return 1
-        for i in {aarch64,arm}-link; do
-            rm -f $i
-            ln -s ld.qcld $i
-        done
-        for i in clang{++,c{l,pp}}; do
+        [[ -f ld.qcld ]] && {
+            for i in a{arch64,rm}-link; do
+                rm -f $i
+                ln -s ld.qcld $i
+            done
+        }
+        for i in clang{++,-c{l,pp}}; do
             rm -f $i
             ln -s clang $i
         done
@@ -118,7 +120,7 @@ fixSdllvm() {
             rm -f $i
             ln -s lld $i
         done
-        for i in llvm-{dlltool,lib,ranlib}; do
+        for i in llvm-{dlltool,{,ran}lib}; do
             rm -f $i
             ln -s llvm-ar $i
         done
@@ -137,11 +139,11 @@ fixSdllvm() {
         ln -s libc++abi.so{.1,}
         ln -s libc++abi.so.1{.0,}
     )
-    find ./**/bin -type f -exec chmod +x {} \;
-    find libexec -type f -exec chmod +x {} \;
+    find ./**/bin -type f -exec test ! -x {} \; -exec chmod +x {} \;
+    find libexec -type f -exec test ! -x {} \; -exec chmod +x {} \;
 
     prInfo "Done."
-    cd - || true
+    cd - >/dev/null || true
 }
 
 # A wannabe rankmirrors that doesn't expect repository name being exist on URI
