@@ -114,8 +114,8 @@ parseParams() {
             STOCK=true
             ;;
         -sd | --sdclang)
-            # This is now aliased to `-cv qti` or `--clang-version qti`
-            get_clang-ver qti
+            # Deprecated
+            die "Parameter \`$1\` is deprecated. Use \`-cv qti-<major>\` or \`--clang-version <major>\` instead."
             ;;
         --sign)
             # Automatically done with release build

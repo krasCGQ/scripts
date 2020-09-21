@@ -20,6 +20,7 @@ show_duration() { date -ud @$(($(date +%s) - START_TIME)) +'%M:%S (mm:ss)'; }
 
 # Get supported AOSP Clang version
 get_clang-ver() {
+    local QTI_VERSION
     ROOT_DIR=/opt/kud/android
 
     case $1 in
@@ -30,9 +31,13 @@ get_clang-ver() {
     9) CLANG_VERSION=r365631c2 ;; # 9.0.8
     10) CLANG_VERSION=r377782d ;; # 10.0.6
     11) CLANG_VERSION=r383902c ;; # 11.0.3
-    qti)
-        # Snapdragon LLVM - doesn't really have version to consider right now
-        CLANG_PATH=$ROOT_DIR/sdclang
+    qti-*)
+        QTI_VERSION=${1/*-/}
+        case $QTI_VERSION in
+        6 | 8 | 10) ;; # do nothing; this is just to trap invalid version
+        *) prWarn "Invalid version specified!" && exit 1 ;;
+        esac
+        CLANG_PATH=$ROOT_DIR/sdclang-$QTI_VERSION.0
         CLANG_VERSION=qti
         ;;
     *)
