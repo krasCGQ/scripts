@@ -40,17 +40,11 @@ get_clang-ver() {
         CLANG_PATH=$ROOT_DIR/sdclang-$QTI_VERSION.0
         CLANG_VERSION=qti
         ;;
-    *)
-        prWarn "Invalid version specified!"
-        exit 1
-        ;;
+    *) prWarn "Invalid version specified!" && exit 1 ;;
     esac
 
     [[ -z $CLANG_PATH ]] && CLANG_PATH=$ROOT_DIR/clang-$CLANG_VERSION
-    if [[ ! -x $CLANG_PATH/bin/clang ]]; then
-        prWarn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path nor executable."
-        return 1
-    fi
+    [[ ! -x $CLANG_PATH/bin/clang ]] && { prWarn "Clang ${BLD}$CLANG_VERSION$RST doesn't exist in defined path nor executable." && exit 1; }
     export CLANG_PATH
 }
 
