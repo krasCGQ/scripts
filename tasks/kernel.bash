@@ -173,7 +173,7 @@ KERNEL=$VERSION.$PATCHLEVEL
 TELEGRAM=$SCRIPT_DIR/modules/telegram/telegram
 # Default message for posting to Telegram
 MSG="*[BuildCI]* Kernel build job for #$DEVICE ($KERNEL)"
-tg_getid kp-on
+tg_getid kp-chat
 
 # Paths
 ROOT_DIR=$HOME/KudProject
