@@ -196,14 +196,18 @@ updMirrorlist() {
 
     # Chaotic-AUR
     prInfo "Updating Chaotic-AUR mirrorlist..."
-    curl -s https://lonewolf.pedrohlc.com/chaotic-aur/mirrorlist |
-        sed -e /#/d | rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
+    if [[ -f /etc/pacman.d/chaotic-mirrorlist ]] || pacman -Qq chaotic-mirrorlist &>/dev/null; then
+        curl -s https://lonewolf.pedrohlc.com/chaotic-aur/mirrorlist |
+            sed -e /#/d | rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
+    fi
 
     # Arch Linux CN
     prInfo "Updating Arch Linux CN mirrorlist..."
-    curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
-        sed -e s/#Server/Server/g -e /##/d |
-        rankMirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
+    if [[ -f /etc/pacman.d/archlinuxcn-mirrorlist ]] || pacman -Qq archlinuxcn-mirrorlist &>/dev/null; then
+        curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
+            sed -e s/#Server/Server/g -e /##/d |
+            rankMirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
+    fi
 
     prInfo "Done."
 }
