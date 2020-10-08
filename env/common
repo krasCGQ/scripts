@@ -178,16 +178,21 @@ rankMirrors() {
 updMirrorlist() {
     chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
 
-    # Prevent executing on non-Arch
+    # Prevent executing on anything other than Arch and Manjaro
     . /etc/os-release 2>/dev/null
-    [[ $ID != arch ]] && {
-        prWarn "This function is only available for Arch Linux."
-        { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
-    }
+    case $ID in
+    arch | manjaro) ;; # ignore
+    *) prWarn "This function is only available for Arch and Manjaro." && { [[ -n $IS_TERMUX ]] && return 1 || exit 1; } ;;
+    esac
 
-    # Arch Linux official repositories can just use reflector
-    prInfo "Updating Arch Linux mirrorlist..."
-    reflector --save /etc/pacman.d/mirrorlist --sort rate --threads "$(nproc --all)"
+    ## Official repositories:
+    # Arch: use reflector from Xyne
+    # Manjaro: use the official pacman-mirrors tool
+    prInfo "Updating official mirrorlist..."
+    case $ID in
+    arch) reflector --save /etc/pacman.d/mirrorlist --sort rate --threads "$(nproc --all)" ;;
+    manjaro) pacman-mirrors --fasttrack -q ;;
+    esac
 
     # Chaotic-AUR
     prInfo "Updating Chaotic-AUR mirrorlist..."
