@@ -108,3 +108,28 @@ _vkInstall() {
     "$USER_DIR"/KudProject/aur-src/linux-vk/sign_modules.sh
 }
 vkInstall() { chkSudo --preserve-env=SCRIPT_DIR,USER_DIR su -c "$(declare -f _vkInstall) && _vkInstall $1"; }
+
+# Play from HDMI capture device using mpv
+playCapture() {
+    ## What those parameters mean?
+    # profile=low-latency - tune configuration for low latency playback
+    # no-correct-pts - use fixed frame rate for video timing
+    # untimed - prevent sleep when outputting video frames
+    PARAMS=("--profile=low-latency" "--no-correct-pts" "--untimed")
+
+    ## Try to start audio first
+    # av://alsa:default:CARD=X - card ID/name to play from using ALSA
+    for i in :; do
+        mpv "${PARAMS[@]}" av://alsa:default:CARD=MS2109 &
+        [[ $? == 0 ]] && break
+    done
+
+    ## Additional parameters for video:
+    # demuxer-lavf-o-set=input_format=mjpeg - use MJPEG video input format
+    # av://v4l2:/dev/v4l/by-id/X - path to capture device to play using Video4Linux v2
+    mpv "${PARAMS[@]}" --demuxer-lavf-o-set=input_format=mjpeg \
+        av://v4l2:/dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0
+
+    # Terminate all mpv processes upon exit
+    pkill -15 mpv
+}
