@@ -26,7 +26,7 @@ build_prehook() {
     echo "==== Testing ${1^^}: $config-perf_defconfig ===="
     rm -rf /tmp/build
     START_TIME=$(date +%s)
-    make -sj"$CPUs" ARCH="$1" O=/tmp/build "$config"-perf_defconfig
+    make -sj"$CPUs" ARCH="$1" O=/tmp/build "$config"-perf_defconfig || return
     # override to disable qm215 on msm8937 targets
     [[ $KERNVER == 4.9 && $config =~ msm8937 ]] && scripts/config --file /tmp/build/.config -d ARCH_QM215
     export START_TIME WLAN
@@ -130,7 +130,7 @@ CPUs=$(nproc --all)
         TARGETS=("CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc")
 
     for config in "${arm32_configs[@]}"; do
-        build_prehook arm
+        build_prehook arm || { echo && continue; }
         if [[ $KERNVER == 4.9 ]]; then
             # override to enable qm215 on msm8909 targets
             [[ $config =~ msm8909 ]] && scripts/config --file /tmp/build/.config -e ARCH_QM215
@@ -155,7 +155,7 @@ CPUs=$(nproc --all)
         TARGETS=("CC=aarch64-linux-android-gcc")
 
     for config in "${arm64_configs[@]}"; do
-        build_prehook arm64
+        build_prehook arm64 || { echo && continue; }
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
             "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules || STATUS=$?
