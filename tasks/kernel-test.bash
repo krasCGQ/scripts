@@ -87,9 +87,9 @@ case "$KERNVER" in
         msm8937         # sdm429 / sdm439 / qm215
         msm8937go       # sdm429 / sdm439 / qm215 Android Go
         msm8953         # sdm450 / sdm632
-        msm8953-batcam  # sdm450 / sdm632 with batcam (?)
+        msm8953-batcam  # msm8953-based batcam
         sa415m
-        sdm429-bg    # sdm429 with G-Link BGCOM Transport
+        sdm429-bg    # sdw3300 Wear OS
         sdm670       # sdm710
         sdxpoorwills # sda845
         spyro        # spyro Wear OS
@@ -102,8 +102,7 @@ case "$KERNVER" in
         sdm845
     )
 
-    prima_enabled=(msm8909 msm8909-minimal msm8909w msm8937 msm8937go
-        msm8953 msm8953-batcam sdm429-bg spyro)
+    prima_enabled=(msm8909 msm8909-minimal msm8909w msm8937 msm8937go msm8953 msm8953-batcam spyro)
     # msm8917 on 4.9 apparently also has one with qcacld instead of prima
     qcacld_enabled=(mdm9607 qcs605 sdm670 sdm845)
     ;;
