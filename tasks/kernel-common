@@ -30,7 +30,7 @@ get_clang-ver() {
     8) CLANG_VERSION=r349610b ;;  # 8.0.9
     9) CLANG_VERSION=r365631c2 ;; # 9.0.8
     10) CLANG_VERSION=r377782d ;; # 10.0.6
-    11) CLANG_VERSION=r383902c ;; # 11.0.3
+    11) CLANG_VERSION=r399163b ;; # 11.0.5
     qti-*)
         QTI_VERSION=${1/*-/}
         case $QTI_VERSION in
