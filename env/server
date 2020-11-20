@@ -34,6 +34,3 @@ sshSetup() {
     eval "$(ssh-agent -s)"
     ssh-add "$HOME"/.ssh/id_ed25519
 }
-
-# Finally, run ssh_setup on tmux sessions
-[[ -n $TMUX ]] && sshSetup
