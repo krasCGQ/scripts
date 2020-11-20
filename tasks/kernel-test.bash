@@ -51,8 +51,12 @@ MSM_KERNVER=msm-$KERNVER
 # Kernel detection
 case "$KERNVER" in
 3.18)
-    arm32_configs=(
+    common_configs=(
         apq8053_IoE
+        msm8937   # msm8917 / msm8937
+        msmcortex # msm8953
+    )
+    arm32_configs=(
         mdm           # mdm9650 IoT
         mdm9607       # mdm9607 IoT
         mdm9607-128mb # mdm9607 IoT (128 MB)
@@ -60,49 +64,42 @@ case "$KERNVER" in
         msm8909       # msm8909 Android Go
         msm8909w      # msm8909 Android Watch
         msm8909w-1gb  # msm8909 Android Watch (1 GB)
-        msm8937       # msm8917 / msm8937
-        msmcortex     # msm8953
         sdx           # sdx20
     )
-
     arm64_configs=(
-        apq8053_IoE
-        msm8937   # msm8917 / msm8937
-        msmcortex # msm8953
-        msm       # msm8996
-        msm-auto  # msm8996 Android Auto
+        msm      # msm8996
+        msm-auto # msm8996 Android Auto
     )
 
-    prima_enabled=(apq8053_IoE msm8909 msm8909w msm8909w-1gb msm8937 msmcortex)
-    qcacld_enabled=(mdm mdm9607 mdm9607-128m mdm9640 msm sdx)
+    prima_enabled=(apq8053_IoE msm8909{,w{,-1gb}} msm8937 msmcortex)
+    qcacld_enabled=(mdm mdm9607{,-128m} mdm9640 msm{,-auto} sdx)
     ;;
 4.9)
     # Clang by default for this target
     CLANG=true
+    common_configs=(
+        msm8937 # sdm429 / sdm439 / qm215
+        msm8953 # sdm450 / sdm632
+        sdm670  # sdm710
+    )
     arm32_configs=(
         mdm9607         # mdm9607 Wear OS
         msm8909         # msm8909 Android Go
         msm8909-minimal # msm8909 Android Go (minimal)
         msm8909w        # msm8909 Android Watch
-        msm8937         # sdm429 / sdm439 / qm215
         msm8937go       # sdm429 / sdm439 / qm215 Android Go
-        msm8953         # sdm450 / sdm632
         msm8953-batcam  # msm8953-based batcam
         sa415m
         sdm429-bg    # sdw3300 Wear OS
-        sdm670       # sdm710
         sdxpoorwills # sda845
         spyro        # spyro Wear OS
     )
     arm64_configs=(
-        msm8937 # sdm429 / sdm439 / qm215
-        msm8953 # sdm450 / sdm632
         qcs605
-        sdm670 # sdm710
         sdm845
     )
 
-    prima_enabled=(msm8909 msm8909-minimal msm8909w msm8937 msm8937go msm8953 msm8953-batcam spyro)
+    prima_enabled=(msm8909{,w,-minimal} msm8937{,go} msm8953{,-batcam} sdm429-bg spyro)
     # msm8917 on 4.9 apparently also has one with qcacld instead of prima
     qcacld_enabled=(mdm9607 qcs605 sdm670 sdm845)
     ;;
@@ -129,7 +126,7 @@ CPUs=$(nproc --all)
     [[ -n $CLANG ]] && TARGETS=("CROSS_COMPILE=arm-linux-androideabi-" "CC=clang" "LD=arm-eabi-ld" "CLANG_TRIPLE=arm-linux-gnueabi") ||
         TARGETS=("CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc")
 
-    for config in "${arm32_configs[@]}"; do
+    for config in "${common_configs[@]}" "${arm32_configs[@]}"; do
         build_prehook arm || { echo && continue; }
         if [[ $KERNVER == 4.9 ]]; then
             # override to enable qm215 on msm8909 targets
@@ -154,7 +151,7 @@ CPUs=$(nproc --all)
     [[ -n $CLANG ]] && TARGETS=("CC=clang" "CLANG_TRIPLE=aarch64-linux-gnu") ||
         TARGETS=("CC=aarch64-linux-android-gcc")
 
-    for config in "${arm64_configs[@]}"; do
+    for config in "${common_configs[@]}" "${arm64_configs[@]}"; do
         build_prehook arm64 || { echo && continue; }
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
