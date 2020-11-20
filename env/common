@@ -212,6 +212,7 @@ updMirrorlist() {
 
     prInfo "Done."
 }
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors updMirrorlist) && updMirrorlist"'
 
 # sudo: Shortcut to do system update; completely depends on distribution
 alias sysUpdate &>/dev/null && unalias sysUpdate
@@ -240,9 +241,4 @@ sysUpdate() {
     *) prWarn "This distribution (${ID:-unknown}) is currently not supported." ;;
     esac
 }
-
-if [[ -z $IS_TERMUX ]]; then
-    # Wrap around sudo
-    alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors updMirrorlist) && updMirrorlist"'
-    alias sysUpdate='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
-fi
+alias sysUpdate='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f sysUpdate) && sysUpdate"'

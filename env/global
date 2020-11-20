@@ -40,8 +40,6 @@ prWarn() {
 
 # Making sure user has sudo before executing command
 chkSudo() {
-    [[ -n $IS_TERMUX ]] && { prInfo "This function is unnecessary on Termux; go ahead." && return; }
-
     prInfo "Checking for sudo; please enter password if prompted."
     if ! sudo -v 2>/dev/null; then
         prWarn "Current user isn't a sudoer!"

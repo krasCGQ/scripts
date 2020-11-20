@@ -25,4 +25,10 @@ export SCRIPT_DIR
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR"/env/common
 
-## Android-specific functions aren't available yet. Check back later.
+# Drop aliases and functions meant for GNU/Linux systems
+for i in updMirrorlist sysUpdate; do
+    unalias $i
+done
+for i in chkSudo getProtonClang rankMirrors updMirrorlist; do
+    unset -f $i
+done
