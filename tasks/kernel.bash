@@ -311,7 +311,7 @@ fi
 
 # Script beginning
 prInfo "Starting build script..."
-tgPost "$MSG has been started on \`$(hostname)\`." \
+tgPost "$MSG has been started on \`$(</etc/hostname)\`." \
     "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
 # Explicitly declare build script startup
 STARTED=true
