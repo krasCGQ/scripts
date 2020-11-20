@@ -175,6 +175,7 @@ rankMirrors() {
 }
 
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
+alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
     chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
 
@@ -213,6 +214,7 @@ updMirrorlist() {
 }
 
 # sudo: Shortcut to do system update; completely depends on distribution
+alias sysUpdate &>/dev/null && unalias sysUpdate
 sysUpdate() {
     # Try inheriting Distro's /etc/os-release first
     . /etc/os-release 2>/dev/null

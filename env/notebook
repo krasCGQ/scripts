@@ -63,6 +63,7 @@ opusConvert() {
 }
 
 # Setup zRAM to take the whole RAM size
+alias zramInit &>/dev/null && unalias zramInit
 function zramInit() { (
     [[ $(whoami) != root ]] && return 1
     local MEMSIZE
@@ -85,6 +86,7 @@ function zramInit() { (
 alias zramInit='chkSudo su -c "$(declare -f zramInit) && zramInit &> /dev/null"'
 
 # De-init zRAM configuration set before
+alias zramDeinit &>/dev/null && unalias zramDeinit
 zramDeinit() { (
     [[ $(whoami) != root ]] && return 1
 
