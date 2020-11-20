@@ -100,15 +100,6 @@ zramDeinit() { (
 ) || return 0; } # suppress non-zero exit status
 alias zramDeinit='chkSudo su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/null"'
 
-# Quick way to install MoeSyndrome Kernel packages
-_vkInstall() {
-    [[ $(whoami) != root ]] && return 1
-
-    pacman -U /mnt/ssd/aur/linux-moesyndrome*"$1"-"$(uname -m)".pkg.tar*
-    "$USER_DIR"/KudProject/aur-src/linux-vk/sign_modules.sh
-}
-vkInstall() { chkSudo --preserve-env=SCRIPT_DIR,USER_DIR su -c "$(declare -f _vkInstall) && _vkInstall $1"; }
-
 # Play from HDMI capture device using mpv
 playCapture() {
     ## What those parameters mean?
