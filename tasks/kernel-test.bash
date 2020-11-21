@@ -155,14 +155,14 @@ CPUs=$(nproc --all)
         [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] &&
             sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
         PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
+            make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" DTC_EXT=dtc "${WLAN[@]}" \
             zImage-dtb modules
         if [[ $KERNVER == 4.9 ]]; then
             case $CONFIG in
             mdm9607 | msm8909 | sa415m | sdxpoorwills) ;; # target doesn't have DTBOs
             *)
                 PATH=$BIN LD_LIBRARY_PATH=$LD \
-                    make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" \
+                    make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" DTC_EXT=dtc \
                     CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
                 ;;
             esac
@@ -185,10 +185,10 @@ CPUs=$(nproc --all)
         build_prehook arm64 || { echo && continue; }
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-            "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules
+            "${TARGETS[@]}" DTC_EXT=dtc "${WLAN[@]}" Image.gz-dtb modules
         [[ $KERNVER == 4.9 ]] && PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-            "${TARGETS[@]}" CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
+            "${TARGETS[@]}" DTC_EXT=dtc CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
         build_posthook arm64
     done
 )
