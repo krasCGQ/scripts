@@ -149,13 +149,14 @@ CPUs=$(nproc --all)
 
     for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM32_CONFIGS[@]}"; do
         build_prehook arm || { echo && continue; }
-        # override to force disable techpack/audio
-        [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
+        # override to disable audio-kernel for batcam targets
+        [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] &&
+            sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
             zImage-dtb modules || STATUS=$?
-        # override to re-enable techpack/audio
-        [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953_FALSE/ARCH_MSM8953/g' techpack/audio/Makefile
+        [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] &&
+            sed -i 's/ARCH_MSM8953_FALSE/ARCH_MSM8953/g' techpack/audio/Makefile
         build_posthook
     done
 )
