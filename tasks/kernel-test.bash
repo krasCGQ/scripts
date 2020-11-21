@@ -12,6 +12,11 @@ set -e
 
 # Pre-hook
 build_prehook() {
+    local BASE_CFG TARGET_CFG
+    BASE_CFG=$(echo "$config" | cut -d',' -f1)
+    TARGET_CFG=$(echo "$config" | cut -d',' -f2)
+
+    # define WLAN targets
     for target in "${prima_enabled[@]}"; do
         [[ $target == "$config" ]] && WLAN=("CONFIG_PRONTO_WLAN=y")
         break
@@ -23,12 +28,26 @@ build_prehook() {
         break
     done
 
-    echo "==== Testing ${1^^}: $config-perf_defconfig ===="
+    echo -n "==== Testing ${1^^}: $BASE_CFG-perf_defconfig"
+    [[ $BASE_CFG != "$TARGET_CFG" ]] && echo -n " - $TARGET_CFG target"
+    echo " ===="
     rm -rf /tmp/build
     START_TIME=$(date +%s)
-    make -sj"$CPUs" ARCH="$1" O=/tmp/build "$config"-perf_defconfig || return
-    # override to disable qm215 on msm8937 targets
-    [[ $KERNVER == 4.9 && $config =~ msm8937 ]] && scripts/config --file /tmp/build/.config -d ARCH_QM215
+    make -sj"$CPUs" ARCH="$1" O=/tmp/build "$BASE_CFG"-perf_defconfig || return
+
+    # override for msm8937 configs, to allow testing both msm8937 and qm215 targets
+    if [[ $BASE_CFG =~ msm8937 ]]; then
+        if [[ $TARGET_CFG == qm215 ]]; then
+            # disable any other ARCHes
+            scripts/config --file /tmp/build/.config \
+                -d ARCH_MSM8917 -d ARCH_MSM8937 -d ARCH_MSM8940 -d ARCH_SDM429 -d ARCH_SDM439
+        else
+            # disable qm215
+            scripts/config --file /tmp/build/.config -d ARCH_QM215
+        fi
+    fi
+
+    # export out from function
     export START_TIME WLAN
 }
 
@@ -52,23 +71,23 @@ MSM_KERNVER=msm-$KERNVER
 case "$KERNVER" in
 3.18)
     common_configs=(
-        apq8053_IoE
-        msm8937   # msm8917 / msm8937
-        msmcortex # msm8953
+        'apq8053_IoE'
+        'msm8937'   # msm8917 / msm8937
+        'msmcortex' # msm8953
     )
     arm32_configs=(
-        mdm           # mdm9650 IoT
-        mdm9607       # mdm9607 IoT
-        mdm9607-128mb # mdm9607 IoT (128 MB)
-        mdm9640       # mdm9640 IoT
-        msm8909       # msm8909 Android Go
-        msm8909w      # msm8909 Android Watch
-        msm8909w-1gb  # msm8909 Android Watch (1 GB)
-        sdx           # sdx20
+        'mdm'           # mdm9650 IoT
+        'mdm9607'       # mdm9607 IoT
+        'mdm9607-128mb' # mdm9607 IoT (128 MB)
+        'mdm9640'       # mdm9640 IoT
+        'msm8909'       # msm8909 Android Go
+        'msm8909w'      # msm8909 Android Watch
+        'msm8909w-1gb'  # msm8909 Android Watch (1 GB)
+        'sdx'           # sdx20
     )
     arm64_configs=(
-        msm      # msm8996
-        msm-auto # msm8996 Android Auto
+        'msm'      # msm8996
+        'msm-auto' # msm8996 Android Auto
     )
 
     prima_enabled=(apq8053_IoE msm8909{,w{,-1gb}} msm8937 msmcortex)
@@ -78,25 +97,27 @@ case "$KERNVER" in
     # Clang by default for this target
     CLANG=true
     common_configs=(
-        msm8937 # sdm429 / sdm439 / qm215
-        msm8953 # sdm450 / sdm632
-        sdm670  # sdm710
+        'msm8937'       # sdm429 / sdm439 / qm215 - #1 8937 platform
+        'msm8937,qm215' # sdm429 / sdm439 / qm215 - #2 8909 platform
+        'msm8953'       # sdm450 / sdm632
+        'sdm670'        # sdm710
     )
     arm32_configs=(
-        mdm9607         # mdm9607 Wear OS
-        msm8909         # msm8909 Android Go
-        msm8909-minimal # msm8909 Android Go (minimal)
-        msm8909w        # msm8909 Android Watch
-        msm8937go       # sdm429 / sdm439 / qm215 Android Go
-        msm8953-batcam  # msm8953-based batcam
-        sa415m
-        sdm429-bg    # sdw3300 Wear OS
-        sdxpoorwills # sda845
-        spyro        # spyro Wear OS
+        'mdm9607'         # mdm9607 Wear OS
+        'msm8909'         # msm8909 Android Go
+        'msm8909-minimal' # msm8909 Android Go (minimal)
+        'msm8909w'        # msm8909 Android Watch
+        'msm8937go'       # sdm429 / sdm439 / qm215 Android Go - #1 8937 platform
+        'msm8937go,qm215' # sdm429 / sdm439 / qm215 Android Go - #2 8909 platform
+        'msm8953-batcam'  # msm8953-based batcam
+        'sa415m'
+        'sdm429-bg'    # sdw3300 Wear OS
+        'sdxpoorwills' # sda845
+        'spyro'        # spyro Wear OS
     )
     arm64_configs=(
-        qcs605
-        sdm845
+        'qcs605'
+        'sdm845'
     )
 
     prima_enabled=(msm8909{,w,-minimal} msm8937{,go} msm8953{,-batcam} sdm429-bg spyro)
@@ -128,12 +149,8 @@ CPUs=$(nproc --all)
 
     for config in "${common_configs[@]}" "${arm32_configs[@]}"; do
         build_prehook arm || { echo && continue; }
-        if [[ $KERNVER == 4.9 ]]; then
-            # override to enable qm215 on msm8909 targets
-            [[ $config =~ msm8909 ]] && scripts/config --file /tmp/build/.config -e ARCH_QM215
-            # override to force disable techpack/audio
-            [[ $config == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
-        fi
+        # override to force disable techpack/audio
+        [[ $KERNVER == 4.9 && $config == msm8953-batcam ]] && sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
             zImage-dtb modules || STATUS=$?
