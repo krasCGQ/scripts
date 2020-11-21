@@ -134,7 +134,7 @@ echo "==== Testing kernel: $MSM_KERNVER ===="
 # Number of CPUs/Threads
 CPUs=$(nproc --all)
 # Clang
-[[ -n $CLANG ]] && get_clang-ver 11
+[[ -n $CLANG ]] && get_clang-ver qti-10
 
 # ARM tasks
 (
