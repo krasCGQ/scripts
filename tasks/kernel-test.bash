@@ -12,6 +12,8 @@ set -e
 
 # Catch errors
 trap '[[ -n $START_TIME ]] && STATUS=$? && build_posthook' ERR
+# Catch interrupts
+trap 'rm -rf /tmp/build' EXIT INT
 
 # Pre-hook
 build_prehook() {
@@ -34,7 +36,6 @@ build_prehook() {
     echo -n "==== Testing ${1^^}: $BASE_CFG-perf_defconfig"
     [[ $BASE_CFG != "$TARGET_CFG" ]] && echo -n " - $TARGET_CFG target"
     echo " ===="
-    rm -rf /tmp/build
     START_TIME=$(date +%s)
     make -sj"$CPUs" ARCH="$1" O=/tmp/build "$BASE_CFG"-perf_defconfig || return
 
@@ -58,11 +59,9 @@ build_prehook() {
 build_posthook() {
     echo
     echo -n "Build done in $(show_duration)"
-    if [[ -n $STATUS ]]; then
-        echo " and ${BLD}failed$RST"
-        exit "$STATUS"
-    fi
-    echo -e '\n'
+    [[ -n $STATUS ]] && echo " and ${BLD}failed$RST" || echo -e '\n'
+    [[ -n $1 ]] && make -sj"$CPUs" ARCH="$1" O=/tmp/build mrproper
+    [[ -n $STATUS ]] && exit "$STATUS"
     unset START_TIME WLAN
 }
 
@@ -170,7 +169,7 @@ CPUs=$(nproc --all)
             [[ $CONFIG == msm8953-batcam ]] &&
                 sed -i 's/ARCH_MSM8953_FALSE/ARCH_MSM8953/g' techpack/audio/Makefile
         fi
-        build_posthook
+        build_posthook arm
     done
 )
 
@@ -190,6 +189,6 @@ CPUs=$(nproc --all)
         [[ $KERNVER == 4.9 ]] && PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
             "${TARGETS[@]}" CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
-        build_posthook
+        build_posthook arm64
     done
 )
