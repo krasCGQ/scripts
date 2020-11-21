@@ -10,6 +10,9 @@ set -e
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
 
+# Catch errors
+trap '[[ -n $START_TIME ]] && STATUS=$? && build_posthook' ERR
+
 # Pre-hook
 build_prehook() {
     local BASE_CFG TARGET_CFG
@@ -154,7 +157,7 @@ CPUs=$(nproc --all)
             sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
-            zImage-dtb modules || STATUS=$?
+            zImage-dtb modules
         [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] &&
             sed -i 's/ARCH_MSM8953_FALSE/ARCH_MSM8953/g' techpack/audio/Makefile
         build_posthook
@@ -173,7 +176,7 @@ CPUs=$(nproc --all)
         build_prehook arm64 || { echo && continue; }
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-            "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules || STATUS=$?
+            "${TARGETS[@]}" "${WLAN[@]}" Image.gz-dtb modules
         build_posthook
     done
 )
