@@ -411,9 +411,16 @@ if [[ $TASK_TYPE != build-only ]]; then
     [[ -n $NEEDS_DTBO ]] && cp "$OUT_KERNEL"/dts/dtbo.img "$AK"
     # Copy kernel modules if target device has them
     if [[ -n $HAS_MODULES ]]; then
+        . <(grep CONFIG_MODULE_SIG_HASH "$OUT"/.config)
         mkdir -p "$AK"/modules/vendor/lib/modules
         for MODULE in "$OUT"/**/*.ko; do
-            cp "$MODULE" "$AK"/modules/vendor/lib/modules
+            if [[ -n $CONFIG_MODULE_SIG_HASH ]]; then
+                "$OUT"/scripts/sign-file "$CONFIG_MODULE_SIG_HASH" \
+                    "$OUT"/certs/signing_key.{pem,x509} "$MODULE" \
+                    "$AK"/modules/vendor/lib/modules/"$(basename "$MODULE")"
+            else
+                cp "$MODULE" "$AK"/modules/vendor/lib/modules
+            fi
         done
     fi
 
