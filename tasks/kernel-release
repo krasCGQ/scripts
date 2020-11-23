@@ -24,19 +24,21 @@ export RELEASE_SOURCED KEY_PAIR
 # Kernel branding
 setBranding() {
     # MoeSyndrome Kernel is only available for the following devices
-    if [[ $DEVICE == mido ]]; then
-        NAME=MoeSyndrome
-        # Define which variant we're building
-        if [[ $KERNEL == 4.9 ]]; then
-            [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
-        else
-            # Legacy kernel; maintenance support only
-            NAME+=-legacy
-        fi
-        # Release zip name
-        [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
+    case $DEVICE in
+    grus | mido) NAME=MoeSyndrome ;;
+    *) return 1 ;;
+    esac
+    # Define which variant we're building
+    if [[ $DEVICE == mido && $KERNEL == 3.18 ]]; then
+        # Legacy kernel; maintenance support only
+        NAME+=-legacy
+    else
+        # If branch name contains word "custom", it's custom kernel otherwise vanilla (stock)
+        [[ $(git rev-parse) =~ custom ]] && NAME+=-custom || NAME+=-vanilla
     fi
-    [[ -n $NAME ]] && return
+    # Release zip name
+    [[ -n $RELEASE ]] && RELEASE_ZIP=$NAME-$DEVICE-r$RELEASE-$(date +%Y%m%d).zip
+    return 0
 }
 
 # Generate FKM-compatible JSON
