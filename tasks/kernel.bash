@@ -113,10 +113,6 @@ parseParams() {
         -s | --stock)
             STOCK=true
             ;;
-        -sd | --sdclang)
-            # Deprecated
-            die "Parameter \`$1\` is deprecated. Use \`-cv qti-<major>\` or \`--clang-version <major>\` instead."
-            ;;
         --sign)
             # Automatically done with release build
             SIGN_BUILD=true
@@ -154,12 +150,8 @@ unset LIB_PATHs TARGETS
 parseParams "$@"
 
 # telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
-if [[ -z $NO_ANNOUNCE ]]; then
-    tgPost() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
-else
-    # Allow bypassing announcement altogether
-    tgPost() { return 0; }
-fi
+# Allow bypassing it altogether with `--no-announce` parameter
+tgPost() { [[ -z $NO_ANNOUNCE ]] && "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
 
 # Make '**' recursive
 shopt -s globstar
@@ -168,7 +160,6 @@ shopt -s globstar
 
 # Kernel version
 KERNEL=$VERSION.$PATCHLEVEL
-
 # Telegram-specific environment setup
 TELEGRAM=$SCRIPT_DIR/modules/telegram/telegram
 # Default message for posting to Telegram
