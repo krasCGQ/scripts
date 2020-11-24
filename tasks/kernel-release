@@ -56,7 +56,7 @@ genFkmJson() {
     SUPPORT_LINK=https://t.me/joinchat/DX68OlGQPEd7y8VOmc67Eg
 
     JSON=$(printf '"kernel": { "name": "%s Kernel (%s)", "version": "%s", "link": "%s", "changelog_url": "%s", "date": "%s", "sha1": "%s" }' \
-        "$KERNEL_NAME" "${KERNEL_TYPE^}" "$VERSION" "$LINK" "$CHANGELOG" "$DATE" "$SHA1")
+        "$KERNEL_NAME" "${KERNEL_TYPE^}" "$UTS_RELEASE" "$LINK" "$CHANGELOG" "$DATE" "$SHA1")
     [[ -n $SUPPORT_LINK ]] && JSON+=$(printf ', "support": { "link": "%s" }' "$SUPPORT_LINK")
 
     prInfo "Creating compatible FKM updater JSON..."

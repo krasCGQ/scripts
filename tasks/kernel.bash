@@ -12,21 +12,12 @@ TASKS_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 ## Functions
 
-# 'git log --pretty' alias
-git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
-
-# In case of signal interrupt, post interruption notification and exit script
-trap '{
-    [[ -n $STARTED ]] && tgPost "$MSG interrupted in $(show_duration)."
-    exit 130
-}' INT
-
 # For any errors, no matter what, post error notification and exit script
 tgError() {
     # make SIGINT no-op to avoid double-posting
     trap ' ' INT
-    tgPost "$MSG failed in $(show_duration)."
-    [[ -n $STATUS ]] && exit "$STATUS" || exit 1
+    tgNotify fail
+    exit "${STATUS:-1}"
 }
 
 # Prints message to stderr and exit script, OR call tgError function
@@ -37,11 +28,9 @@ die() {
 }
 
 # Whenever script fails, save exit status and run tgError
-trap '{
-    [[ -n $STARTED ]] && STATUS=$?
-    tgError
-}' ERR
-
+trap '[[ -n $STARTED ]] && STATUS=$?; tgError' ERR
+# In case of signal interrupt, post interruption notification and exit script
+trap '[[ -n $STARTED ]] && tgNotify interrupt; exit 130' INT
 # Wait every process before exit
 trap 'wait' EXIT
 
@@ -149,22 +138,12 @@ parseParams() {
 unset LIB_PATHs TARGETS
 parseParams "$@"
 
-# telegram.sh message posting wrapper to avoid use of 'echo -e' and '\n'
-# Allow bypassing it altogether with `--no-announce` parameter
-tgPost() { [[ -z $NO_ANNOUNCE ]] && "$TELEGRAM" -M -D "$(for POST in "$@"; do echo "$POST"; done)" &>/dev/null || return 0; }
-
+# Import announcement-specific tasks
+. "$TASKS_DIR"/kernel-announce
 # Make '**' recursive
 shopt -s globstar
 
 ## Variables
-
-# Kernel version
-KERNEL=$VERSION.$PATCHLEVEL
-# Telegram-specific environment setup
-TELEGRAM=$SCRIPT_DIR/modules/telegram/telegram
-# Default message for posting to Telegram
-MSG="*[BuildCI]* Kernel build job for #$DEVICE ($KERNEL)"
-tg_getid kp-chat
 
 # Paths
 ROOT_DIR=$HOME/KudProject
@@ -291,23 +270,9 @@ if [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
     . $OPT_DIR/venv2/bin/activate
 fi
 
-# Set compiler version here to avoid being included in total build time
-if [[ -z $NO_ANNOUNCE ]]; then
-    [[ -z $CLANG_CUSTOM && $CLANG_VERSION != qti ]] && CUT=,2
-    [[ $CLANG_VERSION == qti ]] && LINE=2 || LINE=1
-    [[ -n $CLANG ]] && COMPILER=$(clang --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
-        COMPILER=$(${CROSS_COMPILE}gcc --version | head -1)
-    LINKER=$(${CROSS_COMPILE}ld --version | head -1)
-fi
-
 # Script beginning
 prInfo "Starting build script..."
-tgPost "$MSG has been started on \`$(</etc/hostname)\`." \
-    "" "Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*." &
-# Explicitly declare build script startup
-STARTED=true
-# shellcheck disable=SC2034
-START_TIME=$(date +%s)
+tgNotify start
 sleep 1
 
 # Clang-only setup
@@ -349,11 +314,12 @@ else
 fi
 
 # Announce build information; only pass as minimum as possible make variables
-[[ -z $NO_ANNOUNCE || -n $GENERATE_JSON ]] && VERSION=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" kernelrelease 2>/dev/null | tail -1)
-tgPost "*[BuildCI]* Build information:" "" \
-    "*Kernel version:* \`$VERSION\`" \
-    "*Compiler:* $COMPILER" \
-    "*Linker:* $LINKER" &
+if [[ -z $NO_ANNOUNCE || -n $GENERATE_JSON ]]; then
+    UTS_RELEASE=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 \
+        "${CLANG_EXTRAS[@]}" kernelrelease 2>/dev/null | tail -1)
+    export UTS_RELEASE
+fi
+tgNotify info
 
 # Only execute modules build if it's explicitly needed
 grep -q '=m' "$OUT"/.config && HAS_MODULES=true
@@ -439,10 +405,7 @@ if [[ $TASK_TYPE != build-only ]]; then
     )
 fi
 
-# Notify successful build
-tgPost "$MSG completed in $(show_duration)." &
-unset STARTED
-
+tgNotify complete
 [[ $TASK_TYPE != build-only && -n $GENERATE_JSON ]] && genFkmJson
 [[ $TASK_TYPE == upload ]] && kernUpload
 

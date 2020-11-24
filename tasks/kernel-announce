@@ -1,0 +1,62 @@
+# shellcheck shell=bash
+# Kernel announcement-specific functions
+# Copyright (C) 2020 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Exit if it's being executed
+if ! (return 2>/dev/null); then
+    echo "! Please source this script instead of running directly." >&2
+    exit 126
+fi
+
+# Telegram-specific environment setup
+TELEGRAM=$SCRIPT_DIR/modules/telegram/telegram
+if [[ -n $NO_ANNOUNCE || ! -f $TELEGRAM ]]; then
+    [[ ! -f $TELEGRAM ]] && prWarn "telegram.sh module doesn't exist. Bailing out."
+    tgNotify() { return; }
+    unset TELEGRAM
+    return
+fi
+
+# `git log --pretty` alias
+git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
+# telegram.sh message posting wrapper, may be used to avoid use of `echo -e` and `\n`
+tgPost() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo -e "$POST"; done)" &>/dev/null || return 0; }
+
+tgNotify() {
+    # Kernel version
+    KERNEL=$VERSION.$PATCHLEVEL
+    # Default message for posting to Telegram
+    MSG="*[BuildCI]* Kernel build job for #$DEVICE ($KERNEL)"
+    case $1 in
+    complete)
+        MSG+=" ${1}d in $(show_duration)."
+        unset STARTED
+        ;;
+    fail | interrupt) MSG+=" ${1}ed in $(show_duration)." ;;
+    info)
+        [[ -z $CLANG_CUSTOM && $CLANG_VERSION != qti ]] && CUT=,2
+        [[ $CLANG_VERSION == qti ]] && LINE=2 || LINE=1
+        [[ -n $CLANG ]] && COMPILER=$(clang --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//')
+        [[ -z $CLANG ]] && COMPILER=$("${CROSS_COMPILE}"gcc --version | head -1)
+        LINKER=$("${CROSS_COMPILE}"ld --version | head -1)
+        # Build information, UTS_RELEASE is on the main script
+        MSG="*[BuildCI]* Build information:\n\n"
+        MSG+="*Kernel version:* \`${UTS_RELEASE:-unknown}\`\n"
+        MSG+="*Compiler:* $COMPILER\n"
+        MSG+="*Linker:* $LINKER"
+        ;;
+    start)
+        MSG+=" has been ${1}ed on \`$(</etc/hostname)\`.\n\n"
+        MSG+="Branch \`${BRANCH:-HEAD}\` at commit *$(git_pretty)*."
+        # Explicitly declare build script startup
+        STARTED=true
+        START_TIME=$(date +%s)
+        export STARTED START_TIME
+        ;;
+    esac
+    tgPost "$MSG" &
+}
+
+# Obtain chat ID to post announcements to
+declare -f tg_getid >/dev/null && tg_getid kp-chat
