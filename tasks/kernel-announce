@@ -60,3 +60,4 @@ tgNotify() {
 
 # Obtain chat ID to post announcements to
 declare -f tg_getid >/dev/null && tg_getid kp-chat
+return 0
