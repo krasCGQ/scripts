@@ -351,9 +351,11 @@ if [[ -n $NEEDS_DTBO ]]; then
 fi
 
 if [[ $TASK_TYPE != build-only ]]; then
-    prInfo "Cleaning and copying required file(s) to AnyKernel folder..."
+    prInfo "Cleaning AnyKernel folder..."
     # Clean everything except zip files
     git -C "$AK" clean -qdfx -e '*.zip'
+
+    prInfo "Copying kernel image and devicetree..."
     # ARM64: Compress resulting kernel image with fastest compression
     [[ -z $IS_32BIT ]] && gzip -f9 "$OUT_KERNEL"/Image
     if [[ -n $NEEDS_DT_IMG ]]; then
@@ -366,8 +368,16 @@ if [[ $TASK_TYPE != build-only ]]; then
     fi
     # Copy dtbo.img for supported devices
     [[ -n $NEEDS_DTBO ]] && cp "$OUT_KERNEL"/dts/dtbo.img "$AK"
-    # Copy kernel modules if target device has them
+
     if [[ -n $HAS_MODULES ]]; then
+        # Strip kernel modules
+        prInfo "Stripping kernel modules..."
+        for MODULE in "$OUT"/**/*.ko; do
+            PATH=$PATH ${CROSS_COMPILE}strip -g "$MODULE"
+        done
+
+        # Copy kernel modules
+        prInfo "Copying kernel modules..."
         . <(grep CONFIG_MODULE_SIG_HASH "$OUT"/.config)
         mkdir -p "$AK"/modules/vendor/lib/modules
         for MODULE in "$OUT"/**/*.ko; do
