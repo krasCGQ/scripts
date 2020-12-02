@@ -21,18 +21,6 @@ build_prehook() {
     BASE_CFG=$(echo "$CONFIG" | cut -d',' -f1)
     TARGET_CFG=$(echo "$CONFIG" | cut -d',' -f2)
 
-    # define WLAN targets
-    for TARGET in "${PRIMA_ENABLED[@]}"; do
-        [[ $TARGET == "$CONFIG" ]] && WLAN=("CONFIG_PRONTO_WLAN=y")
-        break
-    done
-    for TARGET in "${QCACLD_ENABLED[@]}"; do
-        [[ $TARGET == "$CONFIG" ]] && WLAN=("CONFIG_QCA_CLD_WLAN=y")
-        # Just in case it's still SDXHEDGEHOG instead of SDX20
-        [[ $TARGET == sdx ]] && WLAN=("CONFIG_ARCH_SDXHEDGEHOG=y")
-        break
-    done
-
     echo -n "==== Testing ${1^^}: $BASE_CFG-perf_defconfig"
     [[ $BASE_CFG != "$TARGET_CFG" ]] && echo -n " - $TARGET_CFG target"
     echo " ===="
@@ -50,6 +38,23 @@ build_prehook() {
             scripts/config --file /tmp/build/.config -d ARCH_QM215
         fi
     fi
+    # define WLAN targets
+    for TARGET in "${PRIMA_ENABLED[@]}"; do
+        if [[ $TARGET == "$BASE_CFG" ]]; then
+            scripts/config --file /tmp/build/.config -e PRONTO_WLAN
+            break
+        fi
+    done
+    for TARGET in "${QCACLD_ENABLED[@]}"; do
+        if [[ $TARGET == "$BASE_CFG" ]]; then
+            # QCA_CLD_WLAN_PROFILE is set unconditionally; only supported on qcacld-3.0 5.2.x
+            scripts/config --file /tmp/build/.config \
+                -e QCA_CLD_WLAN --set-str QCA_CLD_WLAN_PROFILE default
+            # just in case it's still SDXHEDGEHOG instead of SDX20
+            [[ $TARGET == sdx ]] && WLAN=("CONFIG_ARCH_SDXHEDGEHOG=y")
+            break
+        fi
+    done
 
     # export out from function
     export START_TIME WLAN
