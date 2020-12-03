@@ -127,7 +127,7 @@ case "$KERNVER" in
         'sdm845'
     )
 
-    PRIMA_ENABLED=(msm8909{,w,-minimal} msm8937{,go} msm8953{,-batcam} sdm429-bg spyro)
+    PRIMA_ENABLED=(msm8909{,w,-minimal} msm8937{,go} msm8953 sdm429-bg spyro)
     # msm8917 on 4.9 apparently also has one with qcacld instead of prima
     QCACLD_ENABLED=(mdm9607 qcs605 sdm670 sdm845)
     ;;
