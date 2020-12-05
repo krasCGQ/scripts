@@ -148,11 +148,17 @@ BINUTILS=/opt/kud/binutils
 
 # ARM tasks
 (
-    GCC=/opt/kud/android/arm-linux-androideabi-4.9
+    [[ -n $CUSTOM ]] && GCC=/opt/kud/linaro/gcc-arm-10.2-2020.11-x86_64-arm-none-linux-gnueabihf ||
+        GCC=/opt/kud/android/arm-linux-androideabi-4.9
     BIN=${CLANG:+$CLANG_PATH/bin:}$BINUTILS/bin:$GCC/bin:$PATH
     LD=${CLANG:+$CLANG_PATH/lib:}$BINUTILS/lib:$GCC/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     TARGETS=("CROSS_COMPILE=arm-linux-gnueabi-")
-    [[ -n $CLANG ]] && TARGETS+=("CC=clang") || TARGETS+=("CC=arm-linux-androideabi-gcc")
+    if [[ -n $CLANG ]]; then
+        TARGETS+=("CC=clang")
+    else
+        [[ -n $CUSTOM ]] && TARGETS+=("CC=arm-none-linux-gnueabihf-gcc") ||
+            TARGETS+=("CC=arm-linux-androideabi-gcc")
+    fi
     TARGETS+=("DTC_EXT=dtc")
 
     for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM32_CONFIGS[@]}"; do
@@ -182,11 +188,17 @@ BINUTILS=/opt/kud/binutils
 
 # ARM64 tasks
 (
-    GCC=/opt/kud/android/aarch64-linux-android-4.9
+    [[ -n $CUSTOM ]] && GCC=/opt/kud/linaro/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu ||
+        GCC=/opt/kud/android/aarch64-linux-android-4.9
     BIN=${CLANG:+$CLANG_PATH/bin:}$BINUTILS/bin:$GCC/bin:$PATH
     LD=${CLANG:+$CLANG_PATH/lib:}$BINUTILS/lib:$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     TARGETS=("CROSS_COMPILE=aarch64-linux-gnu-")
-    [[ -n $CLANG ]] && TARGETS+=("CC=clang") || TARGETS+=("CC=aarch64-linux-android-gcc")
+    if [[ -n $CLANG ]]; then
+        TARGETS+=("CC=clang")
+    else
+        [[ -n $CUSTOM ]] && TARGETS+=("CC=aarch64-none-linux-gnu-gcc") ||
+            TARGETS+=("CC=aarch64-linux-android-gcc")
+    fi
     TARGETS+=("DTC_EXT=dtc")
 
     for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM64_CONFIGS[@]}"; do
