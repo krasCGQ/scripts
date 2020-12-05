@@ -140,19 +140,18 @@ esac
 echo "==== Testing kernel: $MSM_KERNVER ===="
 # Number of CPUs/Threads
 CPUs=$(nproc --all)
+# Path to Binutils
+BINUTILS=/opt/kud/binutils
 # Clang
 [[ -n $CLANG ]] && get_clang-ver qti-10
 
 # ARM tasks
 (
-    # For the rest of the GCC if not Clang
-    GCC_48=/opt/kud/android/arm-eabi-4.8
-    # For compiler only
-    GCC_49=/opt/kud/android/arm-linux-androideabi-4.9
-    BIN=${CLANG:+$CLANG_PATH/bin:}$GCC_48/bin:$GCC_49/bin:$PATH
-    LD=${CLANG:+$CLANG_PATH/lib:}$GCC_48/lib:$GCC_49/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-    [[ -n $CLANG ]] && TARGETS=("CROSS_COMPILE=arm-linux-androideabi-" "CC=clang" "LD=arm-eabi-ld" "CLANG_TRIPLE=arm-linux-gnueabi") ||
-        TARGETS=("CROSS_COMPILE=arm-eabi-" "CC=arm-linux-androideabi-gcc")
+    GCC=/opt/kud/android/arm-linux-androideabi-4.9
+    BIN=${CLANG:+$CLANG_PATH/bin:}$BINUTILS/bin:$GCC/bin:$PATH
+    LD=${CLANG:+$CLANG_PATH/lib:}$BINUTILS/lib:$GCC/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    TARGETS=("CROSS_COMPILE=arm-linux-gnueabi-")
+    [[ -n $CLANG ]] && TARGETS+=("CC=clang") || TARGETS+=("CC=arm-linux-androideabi-gcc")
 
     for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM32_CONFIGS[@]}"; do
         build_prehook arm || { echo && continue; }
@@ -181,19 +180,19 @@ CPUs=$(nproc --all)
 # ARM64 tasks
 (
     GCC=/opt/kud/android/aarch64-linux-android-4.9
-    BIN=${CLANG:+$CLANG_PATH/bin:}$GCC/bin:$PATH
-    LD=${CLANG:+$CLANG_PATH/lib:}$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-    [[ -n $CLANG ]] && TARGETS=("CC=clang" "CLANG_TRIPLE=aarch64-linux-gnu") ||
-        TARGETS=("CC=aarch64-linux-android-gcc")
+    BIN=${CLANG:+$CLANG_PATH/bin:}$BINUTILS/bin:$GCC/bin:$PATH
+    LD=${CLANG:+$CLANG_PATH/lib:}$BINUTILS/lib:$GCC/lib:$GCC/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    TARGETS=("CROSS_COMPILE=aarch64-linux-gnu-")
+    [[ -n $CLANG ]] && TARGETS+=("CC=clang") || TARGETS+=("CC=aarch64-linux-android-gcc")
 
     for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM64_CONFIGS[@]}"; do
         build_prehook arm64 || { echo && continue; }
         PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-            "${TARGETS[@]}" DTC_EXT=dtc "${WLAN[@]}" Image.gz-dtb modules
+            make -sj"$CPUs" ARCH=arm64 O=/tmp/build "${TARGETS[@]}" DTC_EXT=dtc "${WLAN[@]}" \
+            Image.gz-dtb modules
         [[ $KERNVER == 4.9 ]] && PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm64 O=/tmp/build CROSS_COMPILE=aarch64-linux-android- \
-            "${TARGETS[@]}" DTC_EXT=dtc CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
+            make -sj"$CPUs" ARCH=arm64 O=/tmp/build "${TARGETS[@]}" DTC_EXT=dtc \
+            CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
         build_posthook arm64
     done
 )
