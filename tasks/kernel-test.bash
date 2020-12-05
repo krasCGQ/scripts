@@ -102,7 +102,7 @@ case "$KERNVER" in
     ;;
 4.9)
     # Clang by default for this target
-    CLANG=true
+    [[ -z $CLANG ]] && CLANG=qti-10
     COMMON_CONFIGS=(
         'msm8937'       # sdm429 / sdm439 / qm215 - #1 8937 platform
         'msm8937,qm215' # sdm429 / sdm439 / qm215 - #2 8909 platform
@@ -142,8 +142,9 @@ echo "==== Testing kernel: $MSM_KERNVER ===="
 CPUs=$(nproc --all)
 # Path to Binutils
 BINUTILS=/opt/kud/binutils
-# Clang
-[[ -n $CLANG ]] && get_clang-ver qti-10
+# Clang: Use CLANG=false to use GCC for targets that default to use Clang
+[[ $CLANG == false ]] && unset CLANG
+[[ -n $CLANG ]] && get_clang-ver "$CLANG"
 
 # ARM tasks
 (
