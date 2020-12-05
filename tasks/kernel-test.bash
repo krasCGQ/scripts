@@ -165,7 +165,8 @@ BINUTILS=/opt/kud/binutils
             zImage-dtb modules
         if [[ $KERNVER == 4.9 ]]; then
             case $CONFIG in
-            mdm9607 | msm8909 | sa415m | sdxpoorwills) ;; # target doesn't have DTBOs
+            mdm9607 | msm8909 | msm8909w | msm8909-minimal | sa415m | sdxpoorwills) ;;
+                # target doesn't have DTBOs
             *)
                 PATH=$BIN LD_LIBRARY_PATH=$LD \
                     make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" \
