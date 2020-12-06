@@ -10,10 +10,8 @@ set -e
 # shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
 
-# Catch errors
-trap '[[ -n $START_TIME ]] && STATUS=$? && build_posthook' ERR
-# Catch interrupts
-trap 'rm -rf /tmp/build' EXIT INT
+# Delete build folder upon exit
+trap 'rm -rf /tmp/build' EXIT
 
 # Pre-hook
 build_prehook() {
@@ -63,10 +61,9 @@ build_prehook() {
 # Post-hook
 build_posthook() {
     echo
-    echo -n "Build done in $(show_duration)"
-    [[ -n $STATUS ]] && echo " and ${BLD}failed$RST" || echo -e '\n'
-    [[ -n $1 ]] && make -sj"$CPUs" ARCH="$1" O=/tmp/build mrproper
-    [[ -n $STATUS ]] && exit "$STATUS"
+    echo "Build completed in $(show_duration)"
+    echo
+    make -sj"$CPUs" ARCH="$1" O=/tmp/build mrproper
     unset START_TIME WLAN
 }
 
