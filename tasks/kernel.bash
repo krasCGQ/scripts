@@ -198,6 +198,8 @@ if [[ $COMPILER == gcc ]]; then
     BINs+=("$GCC_32BIN")
     # Pass compiler of choice to CC
     [[ -n $IS_32BIT ]] && CC=$GCC_32BIN || CC=$GCC_64BIN
+    # CC_ARM32 variable here is placeholder
+    [[ -z $IS_32BIT && $COMPILER != clang ]] && CC_ARM32=true
 fi
 
 # Set compiler PATHs and LD_LIBRARY_PATHs here to be used later while building
@@ -299,7 +301,7 @@ fi
 # Announce build information; only pass as minimum as possible make variables
 if [[ -z $NO_ANNOUNCE || -n $GENERATE_JSON ]]; then
     UTS_RELEASE=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 \
-        CC=$CC kernelrelease 2>/dev/null | tail -1)
+        CC=$CC ${CC_ARM32:+CC_ARM32=$GCC_32BIN} kernelrelease 2>/dev/null | tail -1)
     export UTS_RELEASE
 fi
 tgNotify info
@@ -316,8 +318,8 @@ KBUILD_BUILD_TIMESTAMP="$(date)"
 export KBUILD_BUILD_TIMESTAMP
 PATH=$PATH \
     make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE=$CROSS_COMPILE \
-    CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 CC=$CC "${TARGETS[@]}" \
-    ${IS_32BIT:+z}Image dtbs ${HAS_MODULES:+modules}
+    CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 CC=$CC ${CC_ARM32:+CC_ARM32=$GCC_32BIN} \
+    "${TARGETS[@]}" ${IS_32BIT:+z}Image dtbs ${HAS_MODULES:+modules}
 
 # Build dt.img and/or dtbo.img if needed
 if [[ -n $NEEDS_DT_IMG ]]; then
