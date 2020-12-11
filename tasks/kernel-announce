@@ -37,14 +37,14 @@ tgNotify() {
     info)
         [[ -z $CLANG_CUSTOM && $CLANG_VERSION != qti ]] && CUT=,2
         [[ $CLANG_VERSION == qti ]] && LINE=2 || LINE=1
-        [[ -n $CLANG ]] && COMPILER=$(clang --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//')
-        [[ -z $CLANG ]] && COMPILER=$("${CROSS_COMPILE}"gcc --version | head -1)
-        LINKER=$("${CROSS_COMPILE}"ld --version | head -1)
+        [[ $COMPILER == clang ]] && CC_VERSION=$($CC --version | sed -n "${LINE}p" | cut -d \( -f 1$CUT | sed 's/[[:space:]]*$//') ||
+            CC_VERSION=$($CC --version | head -1)
+        LD_VERSION=$("${CROSS_COMPILE}"ld --version | head -1)
         # Build information, UTS_RELEASE is on the main script
         MSG="*[BuildCI]* Build information:\n\n"
         MSG+="*Kernel version:* \`${UTS_RELEASE:-unknown}\`\n"
-        MSG+="*Compiler:* $COMPILER\n"
-        MSG+="*Linker:* $LINKER"
+        MSG+="*Compiler:* $CC_VERSION\n"
+        MSG+="*Linker:* $LD_VERSION"
         ;;
     start)
         MSG+=" has been ${1}ed on \`$(</etc/hostname)\`.\n\n"

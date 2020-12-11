@@ -73,7 +73,7 @@ parseParams() {
             TASK_TYPE=build-only
             ;;
         -c | --clang)
-            CLANG=true
+            COMPILER=clang
             ;;
         --clean)
             # Overrides incompatible `--dirty`
@@ -136,6 +136,8 @@ parseParams() {
 
 # Unset the following parameters just in case
 unset LIB_PATHs TARGETS
+# Assume GCC by default, will be overridden by parseParams() below
+COMPILER=gcc
 parseParams "$@"
 
 # Import announcement-specific tasks
@@ -150,70 +152,66 @@ ROOT_DIR=$HOME/KudProject
 OPT_DIR=/opt/kud
 # Number of threads used
 THREADS=$(nproc --all)
+# FIXME: Find a way to reverse this; introduce a variable for now
+[[ $COMPILER == clang && -z $STOCK ]] && CLANG_CUSTOM=true
 
-# Clang compiler (if used)
-if [[ -n $CLANG ]]; then
-    [[ -z $STOCK ]] && CLANG_PATH=$OPT_DIR/proton-clang
-    CLANG_PATH=$CLANG_PATH/bin
-fi
-# GCC compiler
-if [[ -z $STOCK ]]; then
-    # Aarch64 toolchain
-    TC_64BIT_PATH=aarch64-linux-gnu/bin
-    # Aarch32 toolchain, required for compat vDSO on ARM64 devices
-    TC_32BIT_PATH=arm-linux-gnueabi/bin
-    # Compiler prefixes
-    if [[ -z $IS_32BIT ]]; then
-        CROSS_COMPILE=aarch64-linux-gnu-
-        CROSS_COMPILE_ARM32=arm-linux-gnueabi-
-    else
-        CROSS_COMPILE=arm-linux-gnueabi-
-    fi
+# Binutils (standalone, unified)
+BINUTILS=$OPT_DIR/binutils
+if [[ -z $IS_32BIT ]]; then
+    CROSS_COMPILE=aarch64-linux-gnu-
+    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 else
-    # Aarch64 toolchain
-    TC_64BIT_PATH=android/aarch64-linux-android-4.9/bin
-    # Aarch32 toolchain, required for compat vDSO on ARM64 devices
-    TC_32BIT_PATH=android/arm-linux-androideabi-4.9/bin
-    # Compiler prefixes
-    if [[ -z $IS_32BIT ]]; then
-        CROSS_COMPILE=aarch64-linux-android-
-        CROSS_COMPILE_ARM32=arm-linux-androideabi-
+    CROSS_COMPILE=arm-linux-gnueabi-
+fi
+BINs=("${CROSS_COMPILE}"ld ${CROSS_COMPILE_ARM32:+"${CROSS_COMPILE_ARM32}"ld})
+# Custom Clang compiler (if used)
+# Refer to llvm-proton-bin on AUR: https://aur.archlinux.org/packages/llvm-proton-bin
+[[ -n $CLANG_CUSTOM ]] && CLANG_PATH=/opt/proton-clang
+# Clang: Pass compiler of choice to CC
+[[ $COMPILER == clang ]] && CC=$COMPILER
+# GCC compiler
+if [[ $COMPILER == gcc ]]; then
+    if [[ -z $STOCK ]]; then
+        # GNU-A version
+        GNUA_VERSION=gcc-arm-10.2-2020.11-x86_64
+        # Aarch64 toolchain
+        GCC_64BIT=linaro/$GNUA_VERSION-aarch64-none-linux-gnu
+        GCC_64BIN=${GCC_64BIT/linaro\/$GNUA_VERSION-/}-$COMPILER
+        # Aarch32 toolchain, required for compat vDSO on ARM64 devices
+        GCC_32BIT=linaro/$GNUA_VERSION-arm-none-linux-gnueabihf
+        GCC_32BIN=${GCC_32BIT/linaro\/$GNUA_VERSION-/}-$COMPILER
     else
-        # For arm-eabi-ld
-        TC_32BIT_PATH_48=android/arm-eabi-4.8/bin
-        CROSS_COMPILE=arm-linux-androideabi-
+        # Aarch64 toolchain
+        GCC_64BIT=android/aarch64-linux-android-4.9
+        GCC_64BIN=${GCC_64BIT/android\//}
+        GCC_64BIN=${GCC_64BIN/4.9/$COMPILER}
+        # Aarch32 toolchain, required for compat vDSO on ARM64 devices
+        GCC_32BIT=android/arm-linux-androideabi-4.9
+        GCC_32BIN=${GCC_32BIT/android\//}
+        GCC_32BIN=${GCC_32BIN/4.9/$COMPILER}
     fi
+    # Aarch64 toolchain
+    GCC_64BIT=$OPT_DIR/$GCC_64BIT
+    [[ -z $IS_32BIT ]] && BINs+=("$GCC_64BIN")
+    # Aarch32 toolchain, required for compat vDSO on ARM64 devices
+    GCC_32BIT=$OPT_DIR/$GCC_32BIT
+    BINs+=("$GCC_32BIN")
+    # Pass compiler of choice to CC
+    [[ -n $IS_32BIT ]] && CC=$GCC_32BIN || CC=$GCC_64BIN
 fi
 
 # Set compiler PATHs and LD_LIBRARY_PATHs here to be used later while building
-# FIXME: Find a way to reverse this; introduce a variable for now
-[[ -n $CLANG && -z $STOCK ]] && CLANG_CUSTOM=true
-if [[ -n $CLANG ]]; then
-    LD_PATHs=${CLANG_PATH/bin/lib}
-    if [[ -n $STOCK ]]; then
-        # Include lib64 for AOSP Clang
-        LD_PATHs+=:${CLANG_PATH/bin/lib64}
-    elif [[ -d $OPT_DIR/binutils ]]; then
-        # Only include Binutils if they're separate from Clang directory
-        TC_UNIFIED_PATH=$OPT_DIR/binutils/bin
-        TC_PATHs=$TC_UNIFIED_PATH
-        LD_PATHs+=:$OPT_DIR/binutils/lib
-    fi
-fi
-if [[ -z $CLANG_CUSTOM ]]; then
-    if [[ -z $IS_32BIT ]]; then
-        TC_64BIT_PATH=$OPT_DIR/$TC_64BIT_PATH
-        TC_PATHs=$TC_64BIT_PATH
-        LD_PATHs+=${LD_PATHs:+:}${TC_64BIT_PATH/bin/lib}
-    fi
-    TC_32BIT_PATH=$OPT_DIR/$TC_32BIT_PATH
-    [[ -n $IS_32BIT && -n $STOCK ]] && TC_32BIT_PATH_48=$OPT_DIR/$TC_32BIT_PATH_48
-    TC_PATHs+=${TC_PATHs:+:}$TC_32BIT_PATH${TC_32BIT_PATH_48:+:$TC_32BIT_PATH_48}
-    LD_PATHs+=${LD_PATHs:+:}${TC_32BIT_PATH/bin/lib}${TC_32BIT_PATH_48:+:${TC_32BIT_PATH_48/bin/lib}}
+if [[ $COMPILER == clang ]]; then
+    TC_PATHs=$CLANG_PATH/bin
+    # Include lib64 for AOSP Clang
+    LD_PATHs=$CLANG_PATH/lib${STOCK:+:$CLANG_PATH/lib64}
+else
+    TC_PATHs=$GCC_64BIT/bin:$GCC_32BIT/bin
+    LD_PATHs=$GCC_64BIT/lib:$GCC_32BIT/lib
 fi
 # Not exported; will be passed to make instead
-PATH=${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs}:$PATH
-export LD_LIBRARY_PATH="$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+PATH=$BINUTILS/bin:$TC_PATHs:$PATH
+export LD_LIBRARY_PATH=$BINUTILS/lib:$LD_PATHs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
 # Kernel build variables
 AK=$ROOT_DIR/AnyKernel/$DEVICE
@@ -246,21 +244,14 @@ sleep 1
 
 # Missing device choice
 [[ -z $DEVICE ]] && die "Please specify target device."
-# Clang-specific checks
-if [[ -n $CLANG ]]; then
-    # Requested to use non-custom Clang, but desired version isn't specified
-    [[ -z $CLANG_VERSION && -n $STOCK ]] && die "Please specify non-custom Clang version to use."
-    # We're not going to assume Clang version for custom one
-    if [[ -n $CLANG_VERSION && -z $STOCK ]]; then
-        prWarn "Assigning Clang version is only meant for non-custom Clang, disabling."
-        unset CLANG_VERSION
-    fi
-fi
-# Missing GCC and/or Clang
-for BIN in ${CROSS_COMPILE}elfedit ${CROSS_COMPILE_ARM32:+${CROSS_COMPILE_ARM32}elfedit} ${TC_32BIT_PATH_48:+arm-eabi-ld} ${CLANG:+clang}; do
-    PATH="${CLANG_PATH:+$CLANG_PATH:}${TC_PATHs:+$TC_PATHs:}/dev/null" \
-        command -v "$BIN" >/dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
+# Requested to use non-custom Clang, but desired version isn't specified
+[[ $COMPILER == clang && -z $CLANG_VERSION && -n $STOCK ]] && die "Please specify non-custom Clang version to use."
+# Missing any build components (excluding Clang, since it's already checked on get_clang-ver())
+for BIN in "${BINs[@]}"; do
+    PATH=$BINUTILS/bin:$TC_PATHs command -v "$BIN" >/dev/null || die "$BLD$(basename "$BIN")$RST doesn't exist in defined path."
 done
+# Unset when done
+unset BINs
 # It's not a build-only task, but missing device's AnyKernel resource
 [[ $TASK_TYPE != build-only && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 # CAF's gcc-wrapper.py is written in Python 2, but MSM kernels <= 3.10 doesn't
@@ -274,14 +265,6 @@ fi
 prInfo "Starting build script..."
 tgNotify start
 sleep 1
-
-# Clang-only setup
-if [[ -n $CLANG ]]; then
-    # Define additional parameters that'll be passed to make
-    CLANG_EXTRAS=("CC=clang")
-    [[ -z $IS_32BIT ]] && CLANG_EXTRAS+=("CLANG_TRIPLE=aarch64-linux-gnu" "CLANG_TRIPLE_ARM32=arm-linux-gnueabi") ||
-        CLANG_EXTRAS+=("CLANG_TRIPLE=arm-linux-gnueabi")
-fi
 
 # Clean build directory
 if [[ $BUILD_TYPE != dirty && -d $OUT ]]; then
@@ -316,7 +299,7 @@ fi
 # Announce build information; only pass as minimum as possible make variables
 if [[ -z $NO_ANNOUNCE || -n $GENERATE_JSON ]]; then
     UTS_RELEASE=$(PATH=$PATH make -s ARCH=$ARCH O="$OUT" CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 \
-        "${CLANG_EXTRAS[@]}" kernelrelease 2>/dev/null | tail -1)
+        CC=$CC kernelrelease 2>/dev/null | tail -1)
     export UTS_RELEASE
 fi
 tgNotify info
@@ -333,8 +316,7 @@ KBUILD_BUILD_TIMESTAMP="$(date)"
 export KBUILD_BUILD_TIMESTAMP
 PATH=$PATH \
     make -j"$THREADS" -s ARCH=$ARCH O="$OUT" CROSS_COMPILE=$CROSS_COMPILE \
-    CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 "${CLANG_EXTRAS[@]}" \
-    ${TC_32BIT_PATH_48:+LD=arm-eabi-ld} "${TARGETS[@]}" \
+    CROSS_COMPILE_ARM32=$CROSS_COMPILE_ARM32 CC=$CC "${TARGETS[@]}" \
     ${IS_32BIT:+z}Image dtbs ${HAS_MODULES:+modules}
 
 # Build dt.img and/or dtbo.img if needed
