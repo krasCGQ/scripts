@@ -94,7 +94,7 @@ parseParams() {
             ;;
         --external-dtc)
             # This has no effect on sources without or has DTC_EXT removed
-            TARGETS+=("DTC_EXT=/usr/bin/dtc")
+            TARGETS+=("DTC_EXT=$(command -v dtc || die "System DTC doesn't exist!")")
             ;;
         --no-announce)
             NO_ANNOUNCE=true
