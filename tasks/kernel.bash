@@ -258,8 +258,8 @@ unset BINs
 [[ $TASK_TYPE != build-only && ! -d $AK ]] && die "$BLD$(basename "$AK")$RST doesn't exist in defined path."
 # CAF's gcc-wrapper.py is written in Python 2, but MSM kernels <= 3.10 doesn't
 # call python2 directly without a patch from newer kernels; we have to utilize
-# virtualenv2 neverthless.
-if [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
+# virtualenv2 for such kernels.
+if chkKernel 3.10 && [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
     . $OPT_DIR/venv2/bin/activate
 fi
 
@@ -283,7 +283,7 @@ fi
 
 # Linux kernel < 3.15 doesn't automatically create out folder without an upstream
 # patch. We have to do this manually otherwise such kernel will cause an error.
-[[ ! -d $OUT ]] && mkdir -p "$OUT"
+chkKernel 3.14 && [[ ! -d $OUT ]] && mkdir -p "$OUT"
 
 # Regenerate config for source changes when required
 if [[ -f $OUT/.config ]]; then

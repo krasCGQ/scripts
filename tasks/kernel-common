@@ -48,6 +48,28 @@ get_clang-ver() {
     export CLANG_PATH
 }
 
+# Check kernel version
+# Status code is inverted
+chkKernel() {
+    local TARGET_PATCHLEVEL TARGET_VERSION
+    TARGET_VERSION=${1/.*/}
+    TARGET_PATCHLEVEL=${1/*./}
+
+    # Check for invalid version
+    [[ -n ${TARGET_VERSION//[0-9]/} || -n ${TARGET_PATCHLEVEL//[0-9]/} ]] &&
+        { prWarn "Invalid version specified!" && exit 1; }
+
+    # Kernel version older than target is always true
+    [[ $VERSION -lt $TARGET_VERSION ]] && return 0
+    # Kernel version equals target
+    if [[ $VERSION -eq $TARGET_VERSION ]]; then
+        # If patchlevel is older than or equals target, return true otherwise false
+        [[ $PATCHLEVEL -le $TARGET_PATCHLEVEL ]] && return 0 || return 1
+    fi
+    # Kernel version newer than target is always false
+    [[ $VERSION -gt $TARGET_VERSION ]] && return 1
+}
+
 # Run this inside kernel source
 if ! [[ -f Makefile && -d kernel ]]; then
     prWarn "Please run this script inside kernel source folder!"
