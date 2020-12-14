@@ -24,6 +24,7 @@ git_pretty() { git log --pretty=format:"%h (\"%s\")" -1; }
 tgPost() { "$TELEGRAM" -M -D "$(for POST in "$@"; do echo -e "$POST"; done)" &>/dev/null || return 0; }
 
 tgNotify() {
+    local CC_VERSION KERNEL LD_VERSION MSG
     # Kernel version
     KERNEL=$VERSION.$PATCHLEVEL
     # Default message for posting to Telegram
