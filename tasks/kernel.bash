@@ -260,7 +260,7 @@ unset BINs
 # call python2 directly without a patch from newer kernels; we have to utilize
 # virtualenv2 for such kernels.
 if chkKernel 3.10 && [[ -f scripts/gcc-wrapper.py ]] && grep -q gcc-wrapper.py Makefile; then
-    . $OPT_DIR/venv2/bin/activate
+    . $OPT_DIR/venv2/bin/activate || prWarn "virtualenv2 can't be sourced. Build may fail."
 fi
 
 # Script beginning
