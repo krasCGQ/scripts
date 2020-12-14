@@ -228,7 +228,7 @@ else
     ARCH=arm
     KERNEL_NAME=zImage
 fi
-OUT=/tmp/kernel-build/$DEVICE
+OUT=/home/android-build/kernels/$DEVICE
 OUT_KERNEL=$OUT/arch/$ARCH/boot
 if [[ -n $RELEASE ]]; then
     # Release builds: Set build version
