@@ -112,17 +112,21 @@ parseParams() {
             # Ignored if we're not releasing build
             [[ -n $RELEASE_SOURCED ]] && GENERATE_JSON=true
             ;;
-        -r | --release)
-            shift
-            if [[ -n $RELEASE_SOURCED ]]; then
-                # Only integers are accepted
-                RELEASE=$1
-                [[ -n ${RELEASE//[0-9]/} ]] && die "Invalid version specified!"
-            fi
-            ;;
         -u | --upload)
+            shift
             # Overrides incompatible `-b | --build-only`
-            [[ -n $RELEASE_SOURCED ]] && TASK_TYPE=upload
+            if [[ -n $RELEASE_SOURCED ]]; then
+                TASK_TYPE=upload
+                case $1 in
+                ci) UPLOAD_TYPE=ci ;;
+                release)
+                    SIGN_BUILD=true
+                    UPLOAD_TYPE=release
+                    ;;
+                *) prWarn "\"$1\" is invalid upload type. Skipping." ;;
+                esac
+                [[ -n $UPLOAD_TYPE ]] && export UPLOAD_TYPE
+            fi
             ;;
 
         # Unsupported parameter, skip
@@ -230,13 +234,6 @@ else
 fi
 OUT=/home/android-build/kernels/$DEVICE
 OUT_KERNEL=$OUT/arch/$ARCH/boot
-if [[ -n $RELEASE ]]; then
-    # Release builds: Set build version
-    export KBUILD_BUILD_VERSION=$RELEASE
-else
-    # CI builds: Set build username
-    export KBUILD_BUILD_USER=BuildCI
-fi
 
 ## Commands
 
@@ -387,12 +384,12 @@ if [[ $TASK_TYPE != build-only ]]; then
         7za a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" ./* -x'!'README.md -xr'!'*Image* -xr'!'*.zip
         zip -q0 "$ZIP" ./*Image*
 
-        if [[ -n $RELEASE || -n $SIGN_BUILD ]]; then
+        if [[ -n $SIGN_BUILD ]]; then
             # Remove existing (release) zip
-            rm -f "${RELEASE_ZIP:-${ZIP/-unsigned/}}"
+            rm -f "${ZIP/-unsigned/}"
             # Sign zip for release
             . "$SCRIPT_DIR"/snippets/zipsigner
-            zipsigner ${KEY_PAIR:+-s "$KEY_PAIR"} "$ZIP" "${RELEASE_ZIP:-${ZIP/-unsigned/}}"
+            zipsigner ${KEY_PAIR:+-s "$KEY_PAIR"} "$ZIP" "${ZIP/-unsigned/}"
             # Delete 'unsigned' zip
             rm "$ZIP"
         fi
