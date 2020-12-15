@@ -227,10 +227,10 @@ setBranding 2>/dev/null || NAME=$BRANCH
 # Set required ARCH, kernel name
 if [[ -z $IS_32BIT ]]; then
     ARCH=arm64
-    KERNEL_NAME=Image.gz
+    IMAGE_NAME=Image.gz
 else
     ARCH=arm
-    KERNEL_NAME=zImage
+    IMAGE_NAME=zImage
 fi
 OUT=/home/android-build/kernels/$DEVICE
 OUT_KERNEL=$OUT/arch/$ARCH/boot
@@ -341,11 +341,11 @@ if [[ $TASK_TYPE != build-only ]]; then
     [[ -z $IS_32BIT ]] && gzip -f9 "$OUT_KERNEL"/Image
     if [[ -n $NEEDS_DT_IMG ]]; then
         # Copy compressed kernel image and dt.img
-        cp "$OUT_KERNEL"/$KERNEL_NAME "$AK"
+        cp "$OUT_KERNEL"/$IMAGE_NAME "$AK"
         cp "$OUT_KERNEL"/dts/dt.img "$AK"
     else
         # Append dtbs to compressed kernel image and copy
-        cat "$OUT_KERNEL"/$KERNEL_NAME "$OUT_KERNEL"/dts/**/*.dtb >"$AK"/$KERNEL_NAME-dtb
+        cat "$OUT_KERNEL"/$IMAGE_NAME "$OUT_KERNEL"/dts/**/*.dtb >"$AK"/$IMAGE_NAME-dtb
     fi
     # Copy dtbo.img for supported devices
     [[ -n $NEEDS_DTBO ]] && cp "$OUT_KERNEL"/dts/dtbo.img "$AK"
