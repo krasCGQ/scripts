@@ -198,7 +198,7 @@ updMirrorlist() {
     # Chaotic-AUR
     if [[ -f /etc/pacman.d/chaotic-mirrorlist ]] || pacman -Qq chaotic-mirrorlist &>/dev/null; then
         prInfo "Updating Chaotic-AUR mirrorlist..."
-        curl -s https://lonewolf.pedrohlc.com/chaotic-aur/mirrorlist |
+        curl -sL https://lonewolf.pedrohlc.com/chaotic-aur/mirrorlist |
             sed -e /#/d | rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
     fi
 
