@@ -58,7 +58,7 @@ genFkmJson() {
     prInfo "Creating compatible FKM updater JSON..."
     echo "{ $JSON }" | jq >/tmp/"$DEVICE".json
     if [[ $UPLOAD_TYPE == release ]] && {
-        rsync -qP --relative /tmp/"$DEVICE".json krascgq@kudnet.id:/srv/http/ota/kernel/"$DEVICE"/$KERNEL_TYPE.json
+        rsync -qP --mkpath /tmp/"$DEVICE".json krascgq@kudnet.id:/srv/http/ota/kernel/"$DEVICE"/$KERNEL_TYPE.json
     }; then
         prInfo "JSON created and uploaded."
         rm /tmp/"$DEVICE".json
@@ -88,7 +88,7 @@ kernUpload() {
 
             prInfo "Uploading ${ZIP/-unsigned/}..."
             if {
-                rsync -qP --relative "${ZIP/-unsigned/}" krascgq@kudnet.id:/srv/downloads/kernels/"$DEVICE"/$KERNEL_TYPE/
+                rsync -qP --mkpath "${ZIP/-unsigned/}" krascgq@kudnet.id:/srv/downloads/kernels/"$DEVICE"/$KERNEL_TYPE/
                 mega-put -c "${ZIP/-unsigned/}" /Public/KudProject/kernels/"$DEVICE"/$KERNEL_TYPE/
             }; then
                 prInfo "${ZIP/-unsigned/} uploaded to webserver and MEGA successfully."
