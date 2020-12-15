@@ -57,7 +57,15 @@ genFkmJson() {
     [[ -n $SUPPORT_LINK ]] && JSON+=$(printf ', "support": { "link": "%s" }' "$SUPPORT_LINK")
 
     prInfo "Creating compatible FKM updater JSON..."
-    echo "{ $JSON }" | jq
+    echo "{ $JSON }" | jq >/tmp/"$DEVICE".json
+    if [[ $UPLOAD_TYPE == release ]] && {
+        rsync -qP --relative /tmp/"$DEVICE".json krascgq@kudnet.id:/srv/http/ota/kernel/"$DEVICE"/$KERNEL_TYPE.json
+    }; then
+        prInfo "JSON created and uploaded."
+        rm /tmp/"$DEVICE".json
+    else
+        prInfo "JSON created and available on /tmp/$DEVICE.json."
+    fi
 }
 
 # Kernel upload
@@ -91,9 +99,11 @@ kernUpload() {
                     "*Downloads:* [Webserver]($BASE_URL/downloads/kernels/$DEVICE/${ZIP/-unsigned/}) | [OSDN](https://osdn.net/dl/kudproject/${ZIP/-unsigned/})" &
             else
                 prWarn "Failed to upload ${ZIP/-unsigned/}."
+                unset UPLOAD_TYPE
             fi
         )
     else
         prWarn "\"$UPLOAD_TYPE\" is invalid upload type. Skipping."
+        unset UPLOAD_TYPE
     fi
 }

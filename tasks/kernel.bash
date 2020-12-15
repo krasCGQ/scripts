@@ -397,8 +397,8 @@ if [[ $TASK_TYPE != build-only ]]; then
 fi
 
 tgNotify complete
-[[ $TASK_TYPE != build-only && -n $GENERATE_JSON ]] && genFkmJson
 [[ $TASK_TYPE == upload ]] && kernUpload
+[[ $TASK_TYPE != build-only && -n $GENERATE_JSON ]] && genFkmJson
 
 # Script ending
 prInfo "That's it. Job well done!"
