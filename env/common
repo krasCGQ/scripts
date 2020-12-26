@@ -174,6 +174,34 @@ rankMirrors() {
     rm /tmp/"$0"
 }
 
+# Filter an existing mirrorlist to only include exactly one protocol from same server
+# Usage: filterMirrorlist <mirrorlist>
+filterMirrorlist() {
+    local DEL LINE MIRRORLIST NEXT_SRV PREV_PROTO PREV_SRV SED
+    MIRRORLIST=$1
+
+    # Bail out early if path to mirrorlist isn't supplied
+    [[ -z $MIRRORLIST ]] && { prWarn "Incorrect usage!" && return 1; }
+
+    # seq allows dynamic number of lines to be checked
+    for LINE in $(seq "$(wc <"$MIRRORLIST" -l)"); do
+        PREV_SRV=$(sed "${LINE}q;d" "$MIRRORLIST" | cut -d'/' -f3)
+        NEXT_SRV=$(sed "$((LINE + 1))q;d" "$MIRRORLIST" | cut -d'/' -f3)
+        # If server name doesn't match between the two, don't proceed any further
+        [[ $PREV_SRV != "$NEXT_SRV" ]] && continue
+
+        PREV_PROTO=$(sed "${LINE}q;d" "$MIRRORLIST" | cut -d':' -f1 | cut -d' ' -f3)
+        # Determine which line to be discarded, that's HTTP
+        [[ $PREV_PROTO == http ]] && DEL=$LINE || DEL=$((LINE + 1))
+        # We discard this HTTP version
+        SED+=(-e "${DEL}"d)
+    done
+    # Write the result to exact same mirrorlist file, overwriting it
+    # FIXME: sed: can't read : No such file or directory
+    sed "${SED[@]}" -i "$MIRRORLIST" 2>/dev/null
+    return 0
+}
+
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
