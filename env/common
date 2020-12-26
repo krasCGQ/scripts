@@ -215,11 +215,23 @@ updMirrorlist() {
     esac
 
     ## Official repositories:
-    # Arch: use reflector from Xyne
+    # Arch: use rankmirrors script provided by pacman-contrib
     # Manjaro: use the official pacman-mirrors tool
     prInfo "Updating official mirrorlist..."
     case $ID in
-    arch) reflector --save /etc/pacman.d/mirrorlist --sort rate --threads "$(nproc --all)" ;;
+    arch)
+        if curl -s https://archlinux.org/mirrorlist/all/ |
+            sed -e /##/d -e s/#Server/Server/g >/tmp/arch-mirrorlist; then
+            # Filter HTTP mirrors out when HTTPS counterparts are available
+            filterMirrorlist /tmp/arch-mirrorlist
+            # rankMirrors() is still too slow even when almost a third have been filtered out
+            # This also allows interrupting process without having no listed servers
+            rankmirrors /tmp/arch-mirrorlist >/etc/pacman.d/mirrorlist
+            rm /tmp/arch-mirrorlist
+        else
+            prWarn "Unable to retrieve mirrorlist to rank, skipping."
+        fi
+        ;;
     manjaro) pacman-mirrors --fasttrack -q ;;
     esac
 
@@ -240,7 +252,7 @@ updMirrorlist() {
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors filterMirrorlist updMirrorlist) && updMirrorlist"'
 
 # sudo: Shortcut to do system update; completely depends on distribution
 alias sysUpdate &>/dev/null && unalias sysUpdate
