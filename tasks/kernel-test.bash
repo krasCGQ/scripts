@@ -11,7 +11,7 @@ set -e
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/kernel-common
 
 # Delete build folder upon exit
-trap 'rm -rf /tmp/build' EXIT
+trap 'rm -rf $OUT' EXIT
 
 # Pre-hook
 build_prehook() {
@@ -23,30 +23,30 @@ build_prehook() {
     [[ $BASE_CFG != "$TARGET_CFG" ]] && echo -n " - $TARGET_CFG target"
     echo " ===="
     START_TIME=$(date +%s)
-    make -sj"$CPUs" ARCH="$1" O=/tmp/build "$BASE_CFG"-perf_defconfig || return
+    make -sj"$CPUs" ARCH="$1" O="$OUT" "$BASE_CFG"-perf_defconfig || return
 
     # override for msm8937 configs, to allow testing both msm8937 and qm215 targets
     if [[ $BASE_CFG =~ msm8937 ]]; then
         if [[ $TARGET_CFG == qm215 ]]; then
             # disable any other ARCHes
-            scripts/config --file /tmp/build/.config \
+            scripts/config --file "$OUT"/.config \
                 -d ARCH_MSM8917 -d ARCH_MSM8937 -d ARCH_MSM8940 -d ARCH_SDM429 -d ARCH_SDM439
         else
             # disable qm215
-            scripts/config --file /tmp/build/.config -d ARCH_QM215
+            scripts/config --file "$OUT"/.config -d ARCH_QM215
         fi
     fi
     # define WLAN targets
     for TARGET in "${PRIMA_ENABLED[@]}"; do
         if [[ $TARGET == "$BASE_CFG" ]]; then
-            scripts/config --file /tmp/build/.config -e PRONTO_WLAN
+            scripts/config --file "$OUT"/.config -e PRONTO_WLAN
             break
         fi
     done
     for TARGET in "${QCACLD_ENABLED[@]}"; do
         if [[ $TARGET == "$BASE_CFG" ]]; then
             # QCA_CLD_WLAN_PROFILE is set unconditionally; only supported on qcacld-3.0 5.2.x
-            scripts/config --file /tmp/build/.config \
+            scripts/config --file "$OUT"/.config \
                 -e QCA_CLD_WLAN --set-str QCA_CLD_WLAN_PROFILE default
             # just in case it's still SDXHEDGEHOG instead of SDX20
             [[ $TARGET == sdx ]] && WLAN=("CONFIG_ARCH_SDXHEDGEHOG=y")
@@ -63,13 +63,15 @@ build_posthook() {
     echo
     echo "Build completed in $(show_duration)"
     echo
-    make -sj"$CPUs" ARCH="$1" O=/tmp/build mrproper
+    make -sj"$CPUs" ARCH="$1" O="$OUT" mrproper
     unset START_TIME WLAN
 }
 
 # Kernel repository
 KERNVER=$VERSION.$PATCHLEVEL
 MSM_KERNVER=msm-$KERNVER
+# Build directory
+OUT=/home/android-build/kernel-test
 
 # Kernel detection
 case "$KERNVER" in
@@ -164,7 +166,7 @@ BINUTILS=/opt/kud/binutils
         [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] &&
             sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
         PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
+            make -sj"$CPUs" ARCH=arm O=$OUT "${TARGETS[@]}" "${WLAN[@]}" \
             zImage-dtb modules
         if [[ $KERNVER == 4.9 ]]; then
             case $CONFIG in
@@ -172,7 +174,7 @@ BINUTILS=/opt/kud/binutils
                 # target doesn't have DTBOs
             *)
                 PATH=$BIN LD_LIBRARY_PATH=$LD \
-                    make -sj"$CPUs" ARCH=arm O=/tmp/build "${TARGETS[@]}" \
+                    make -sj"$CPUs" ARCH=arm O=$OUT "${TARGETS[@]}" \
                     CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
                 ;;
             esac
@@ -201,10 +203,10 @@ BINUTILS=/opt/kud/binutils
     for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM64_CONFIGS[@]}"; do
         build_prehook arm64 || { echo && continue; }
         PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm64 O=/tmp/build "${TARGETS[@]}" "${WLAN[@]}" \
+            make -sj"$CPUs" ARCH=arm64 O=$OUT "${TARGETS[@]}" "${WLAN[@]}" \
             Image.gz-dtb modules
         [[ $KERNVER == 4.9 ]] && PATH=$BIN LD_LIBRARY_PATH=$LD \
-            make -sj"$CPUs" ARCH=arm64 O=/tmp/build "${TARGETS[@]}" \
+            make -sj"$CPUs" ARCH=arm64 O=$OUT "${TARGETS[@]}" \
             CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
         build_posthook arm64
     done
