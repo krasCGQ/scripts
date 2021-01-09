@@ -105,11 +105,14 @@ alias zramDeinit='chkSudo su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/
 # Play from HDMI capture device using mpv
 # NOTE: profile=capture-device is defined on dotfiles mpv.conf
 playCapture() {
+    local PID
+
     ## Try to start audio first
+    # cache-pause=yes - this is disabled with profile=low-latency inherited
     # av://alsa:default:CARD=X - card ID/name to play from using ALSA
-    for i in :; do
+    until [[ -n $PID ]]; do
         mpv --profile=capture-device --cache-pause=yes av://alsa:default:CARD=MS2109 &
-        [[ $? == 0 ]] && break
+        PID=$! && sleep 0.3 && ! pgrep mpv | grep -q $PID && unset PID
     done
 
     ## Additional parameters for video:
@@ -118,6 +121,6 @@ playCapture() {
     mpv --profile=capture-device --demuxer-lavf-o-set=input_format=mjpeg \
         av://v4l2:/dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0
 
-    # Terminate all mpv processes upon exit
-    pkill -15 mpv
+    # Terminate audio upon exit
+    kill -15 $PID
 }
