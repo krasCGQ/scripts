@@ -108,7 +108,7 @@ playCapture() {
     ## Try to start audio first
     # av://alsa:default:CARD=X - card ID/name to play from using ALSA
     for i in :; do
-        mpv --profile=capture-device av://alsa:default:CARD=MS2109 &
+        mpv --profile=capture-device --cache-pause=yes av://alsa:default:CARD=MS2109 &
         [[ $? == 0 ]] && break
     done
 
