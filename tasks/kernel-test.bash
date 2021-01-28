@@ -67,6 +67,16 @@ build_posthook() {
     unset START_TIME WLAN
 }
 
+# Find -perf configs
+findConfig() {
+    [[ -z $1 ]] && exit 1
+    (
+        cd arch/"$1"/configs || exit 1
+        # shellcheck disable=SC2012,SC2035
+        ls *perf* | sed -e 's/-perf.*//g'
+    )
+}
+
 # Kernel repository
 KERNVER=$VERSION.$PATCHLEVEL
 MSM_KERNVER=msm-$KERNVER
@@ -76,56 +86,12 @@ OUT=/home/android-build/kernel-test
 # Kernel detection
 case "$KERNVER" in
 3.18)
-    COMMON_CONFIGS=(
-        'apq8053_IoE'
-        'msm8937'   # msm8917 / msm8937
-        'msmcortex' # msm8953
-    )
-    ARM32_CONFIGS=(
-        'mdm'           # mdm9650 IoT
-        'mdm9607'       # mdm9607 IoT
-        'mdm9607-128mb' # mdm9607 IoT (128 MB)
-        'mdm9640'       # mdm9640 IoT
-        'msm8909'       # msm8909 Android Go
-        'msm8909w'      # msm8909 Android Watch
-        'msm8909w-1gb'  # msm8909 Android Watch (1 GB)
-        'sdx'           # sdx20
-    )
-    ARM64_CONFIGS=(
-        'msm'      # msm8996
-        'msm-auto' # msm8996 Android Auto
-    )
-
     PRIMA_ENABLED=(apq8053_IoE msm8909{,w{,-1gb}} msm8937 msmcortex)
     QCACLD_ENABLED=(mdm mdm9607{,-128m} mdm9640 msm{,-auto} sdx)
     ;;
 4.9)
     # Clang by default for this target
     [[ -z $CLANG ]] && CLANG=qti-10
-    COMMON_CONFIGS=(
-        'msm8937'       # sdm429 / sdm439 / qm215 - #1 8937 platform
-        'msm8937,qm215' # sdm429 / sdm439 / qm215 - #2 8909 platform
-        'msm8953'       # sdm450 / sdm632
-        'sdm670'        # sdm710
-    )
-    ARM32_CONFIGS=(
-        'mdm9607'         # mdm9607 Wear OS
-        'msm8909'         # msm8909 Android Go
-        'msm8909-minimal' # msm8909 Android Go (minimal)
-        'msm8909w'        # msm8909 Android Watch
-        'msm8937go'       # sdm429 / sdm439 / qm215 Android Go - #1 8937 platform
-        'msm8937go,qm215' # sdm429 / sdm439 / qm215 Android Go - #2 8909 platform
-        'msm8953-batcam'  # msm8953-based batcam
-        'sa415m'
-        'sdm429-bg'    # sdw3300 Wear OS
-        'sdxpoorwills' # sda845
-        'spyro'        # spyro Wear OS
-    )
-    ARM64_CONFIGS=(
-        'qcs605'
-        'sdm845'
-    )
-
     PRIMA_ENABLED=(msm8909{,w,-minimal} msm8937{,go} msm8953 sdm429-bg spyro)
     # msm8917 on 4.9 apparently also has one with qcacld instead of prima
     QCACLD_ENABLED=(mdm9607 qcs605 sdm670 sdm845)
@@ -135,6 +101,19 @@ case "$KERNVER" in
     exit
     ;;
 esac
+
+# List kernel configs
+mapfile -t ARM32_CONFIGS < <(findConfig arm)
+mapfile -t ARM64_CONFIGS < <(findConfig arm64)
+
+# Append additionally required configs
+[[ $KERNVER == 4.9 ]] && {
+    # Using msm8937 platform defconfig, but is actually msm909 platform
+    QM215='msm8937,qm215'
+    QM215GO='msm8937go,qm215'
+    ARM32_CONFIGS+=("$QM215" "$QM215GO")
+    ARM64_CONFIGS+=("$QM215")
+}
 
 echo "==== Testing kernel: $MSM_KERNVER ===="
 # Number of CPUs/Threads
@@ -160,7 +139,7 @@ BINUTILS=/opt/kud/binutils
     fi
     TARGETS+=("DTC_EXT=dtc")
 
-    for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM32_CONFIGS[@]}"; do
+    for CONFIG in "${ARM32_CONFIGS[@]}"; do
         build_prehook arm || { echo && continue; }
         # override to disable audio-kernel for batcam targets
         [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] &&
@@ -200,7 +179,7 @@ BINUTILS=/opt/kud/binutils
     fi
     TARGETS+=("DTC_EXT=dtc")
 
-    for CONFIG in "${COMMON_CONFIGS[@]}" "${ARM64_CONFIGS[@]}"; do
+    for CONFIG in "${ARM64_CONFIGS[@]}"; do
         build_prehook arm64 || { echo && continue; }
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=$OUT "${TARGETS[@]}" "${WLAN[@]}" \
