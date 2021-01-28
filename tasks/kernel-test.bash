@@ -72,8 +72,8 @@ findConfig() {
     [[ -z $1 ]] && exit 1
     (
         cd arch/"$1"/configs || exit 1
-        # shellcheck disable=SC2012,SC2035
-        ls *perf* | sed -e 's/-perf.*//g'
+        # shellcheck disable=SC2012
+        ls ${IS_414:+vendor/}*perf* | sed -e 's/-perf.*//g'
     )
 }
 
@@ -86,22 +86,26 @@ OUT=/home/android-build/kernel-test
 # Kernel detection
 case "$KERNVER" in
 3.18)
+    # Continue to test using GCC unless requested to use Clang
+    [[ -z $CLANG ]] && IS_GCC=true
     PRIMA_ENABLED=(apq8053_IoE msm8909{,w{,-1gb}} msm8937 msmcortex)
     QCACLD_ENABLED=(mdm mdm9607{,-128m} mdm9640 msm{,-auto} sdx)
     ;;
 4.9)
-    # Clang by default for this target
-    [[ -z $CLANG ]] && CLANG=qti-10
     PRIMA_ENABLED=(msm8909{,w,-minimal} msm8937{,go} msm8953 sdm429-bg spyro)
     # msm8917 on 4.9 apparently also has one with qcacld instead of prima
     QCACLD_ENABLED=(mdm9607 qcs605 sdm670 sdm845)
     ;;
+4.14 | 4.19) # 4.19 support will be a placeholder until it can be determined further
+    IS_414=true ;;
 *)
     # nothing to do
     exit
     ;;
 esac
 
+# Clang by default
+[[ -z $CLANG && -z $IS_GCC ]] && CLANG=qti-10
 # List kernel configs
 mapfile -t ARM32_CONFIGS < <(findConfig arm)
 mapfile -t ARM64_CONFIGS < <(findConfig arm64)
