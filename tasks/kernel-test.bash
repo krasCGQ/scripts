@@ -23,7 +23,7 @@ build_prehook() {
     [[ $BASE_CFG != "$TARGET_CFG" ]] && echo -n " - $TARGET_CFG target"
     echo " ===="
     START_TIME=$(date +%s)
-    make -sj"$CPUs" ARCH="$1" O="$OUT" "$BASE_CFG"-perf_defconfig || return
+    make -sj"$CPUs" ARCH="$1" O="$OUT" "$BASE_CFG"-perf_defconfig
 
     # override for msm8937 configs, to allow testing both msm8937 and qm215 targets
     if [[ $BASE_CFG =~ msm8937 ]]; then
@@ -140,7 +140,7 @@ BINUTILS=/opt/kud/binutils
     TARGETS+=("DTC_EXT=dtc")
 
     for CONFIG in "${ARM32_CONFIGS[@]}"; do
-        build_prehook arm || { echo && continue; }
+        build_prehook arm
         # override to disable audio-kernel for batcam targets
         [[ $KERNVER == 4.9 && $CONFIG == msm8953-batcam ]] &&
             sed -i 's/ARCH_MSM8953/ARCH_MSM8953_FALSE/g' techpack/audio/Makefile
@@ -180,7 +180,7 @@ BINUTILS=/opt/kud/binutils
     TARGETS+=("DTC_EXT=dtc")
 
     for CONFIG in "${ARM64_CONFIGS[@]}"; do
-        build_prehook arm64 || { echo && continue; }
+        build_prehook arm64
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=$OUT "${TARGETS[@]}" "${WLAN[@]}" \
             Image.gz-dtb modules
