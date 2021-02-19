@@ -96,6 +96,7 @@ getProtonClang() {
 
 # Fix Snapdragon LLVM permissions and symlinks; prebuilts extracted from BSP
 fixSdllvm() {
+    local VERSION
     chkArch x86_64 || return 1
     cd "$1" || { prWarn "$BLD$(basename "$1")$RST doesn't exist in defined path" && return 1; }
 
@@ -107,7 +108,8 @@ fixSdllvm() {
     (
         cd bin || return 1
         [[ -f ld.qcld ]] && {
-            for i in a{arch64,rm}-link; do
+            for i in {a{arch64,rm},x86}-link; do
+                [[ ! -f $i ]] && continue
                 rm -f $i
                 ln -s ld.qcld $i
             done
@@ -124,9 +126,18 @@ fixSdllvm() {
             rm -f $i
             ln -s llvm-ar $i
         done
-        rm -f clang llvm-strip
+        for i in llvm-{install-name-tool,strip}; do
+            [[ ! -f $i ]] && continue
+            rm -f $i
+            ln -s llvm-objcopy $i
+        done
+        [[ -f llvm-addr2line ]] && {
+            rm -f llvm-addr2line
+            ln -s llvm-{symbolizer,addr2line}
+        }
+        rm -f clang llvm-readelf
         ln -s clang{-"$VERSION",}
-        ln -s llvm-{objcopy,strip}
+        ln -s llvm-{readobj,readelf}
     )
     (
         cd lib || return 1
@@ -138,6 +149,17 @@ fixSdllvm() {
         ln -s libc++.so.1{.0,}
         ln -s libc++abi.so{.1,}
         ln -s libc++abi.so.1{.0,}
+        # only present on 12+
+        [[ -f libprotobuf-lite.so ]] && {
+            VERSION=$(find . -name 'libprotobuf-lite.so.*' | rev | cut -d. -f-4 | rev)
+            rm -f libprotobuf-lite.so
+            ln -s libprotobuf-lite.so{."$VERSION",}
+        }
+        [[ -f libprotoc.so ]] && {
+            VERSION=$(find . -name 'libprotoc.so.*' | rev | cut -d. -f-4 | rev)
+            rm -f libprotoc.so
+            ln -s libprotoc.so{."$VERSION",}
+        }
     )
     find ./**/bin -type f -exec test ! -x {} \; -exec chmod +x {} \;
     find libexec -type f -exec test ! -x {} \; -exec chmod +x {} \;
