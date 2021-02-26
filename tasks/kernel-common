@@ -34,7 +34,7 @@ get_clang-ver() {
     qti-*)
         QTI_VERSION=${1/*-/}
         case $QTI_VERSION in
-        6 | 8 | 10) ;; # do nothing; this is just to trap invalid version
+        6 | 8 | 10 | 12) ;; # do nothing; this is just to trap invalid version
         *) prWarn "Invalid version specified!" && exit 1 ;;
         esac
         CLANG_PATH=$ROOT_DIR/sdclang-$QTI_VERSION.0
