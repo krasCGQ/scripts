@@ -96,12 +96,20 @@ case "$KERNVER" in
     QCACLD_ENABLED=(mdm mdm9607{,-128m} mdm9640 msm{,-auto} sdx)
     ;;
 4.9)
-    PRIMA_ENABLED=(msm8909{,w,-minimal} msm8937{,go} msm8953 sdm429-bg spyro)
     # msm8917 on 4.9 apparently also has one with qcacld instead of prima
+    PRIMA_ENABLED=(msm8909{,w,-minimal} msm8937{,go} msm8953 sdm429-bg spyro)
     QCACLD_ENABLED=(mdm9607 qcs605 sdm670 sdm845)
     ;;
-4.14 | 4.19) # 4.19 support will be a placeholder until it can be determined further
+4.14)
+    # QTI configs are inside vendor subfolder
     IS_414=true ;;
+4.19)
+    # QTI configs are inside vendor subfolder
+    IS_414=true
+    # RIP prima :')
+    PRIMA_ENABLED=()
+    QCACLD_ENABLED=(all)
+    ;;
 *)
     # nothing to do
     exit
@@ -122,6 +130,10 @@ mapfile -t ARM64_CONFIGS < <(findConfig arm64)
     ARM32_CONFIGS+=("$QM215" "$QM215GO")
     ARM64_CONFIGS+=("$QM215")
 }
+
+# Replace placeholder "all" with combination of both kernel configs
+[[ "${QCACLD_ENABLED[0]}" == all ]] && \
+    mapfile -t QCACLD_ENABLED < <(trimConfigList "${ARM32_CONFIGS[*]} ${ARM64_CONFIGS[*]}" | sed 's/ /\n/g' | sort -u)
 
 echo "==== Testing kernel: $MSM_KERNVER ===="
 # Print included targets
