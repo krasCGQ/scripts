@@ -23,7 +23,8 @@ build_prehook() {
     [[ $BASE_CFG != "$TARGET_CFG" ]] && echo -n " - $TARGET_CFG target"
     echo " ===="
     START_TIME=$(date +%s)
-    make -sj"$CPUs" ARCH="$1" O="$OUT" "$BASE_CFG"-perf_defconfig
+    PATH=$BIN LD_LIBRARY_PATH=$LD \
+        make -sj"$CPUs" ARCH="$1" O="$OUT" "${TARGETS[@]}" "$BASE_CFG"-perf_defconfig
 
     # override for msm8937 configs, to allow testing both msm8937 and qm215 targets
     if [[ $BASE_CFG =~ msm8937 ]]; then
