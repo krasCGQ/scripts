@@ -77,6 +77,9 @@ findConfig() {
     )
 }
 
+# Trim vendor/ out
+trimConfigList() { echo "${*//vendor\/}"; }
+
 # Kernel repository
 KERNVER=$VERSION.$PATCHLEVEL
 MSM_KERNVER=msm-$KERNVER
@@ -120,6 +123,11 @@ mapfile -t ARM64_CONFIGS < <(findConfig arm64)
 }
 
 echo "==== Testing kernel: $MSM_KERNVER ===="
+# Print included targets
+echo "32-bit targets: $(trimConfigList "${ARM32_CONFIGS[@]}")"
+echo "64-bit targets: $(trimConfigList "${ARM64_CONFIGS[@]}")"
+echo
+
 # Number of CPUs/Threads
 CPUs=$(nproc --all)
 # Path to Binutils
