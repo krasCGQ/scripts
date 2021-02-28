@@ -162,7 +162,7 @@ BINUTILS=/opt/kud/binutils
         [[ -n $CUSTOM ]] && TARGETS+=("CC=arm-none-linux-gnueabihf-gcc") ||
             TARGETS+=("CC=arm-linux-androideabi-gcc")
     fi
-    TARGETS+=("DTC_EXT=dtc")
+    TARGETS+=("DTC_EXT=$(command -v dtc)")
 
     for CONFIG in "${ARM32_CONFIGS[@]}"; do
         build_prehook arm
@@ -202,7 +202,7 @@ BINUTILS=/opt/kud/binutils
         [[ -n $CUSTOM ]] && TARGETS+=("CC=aarch64-none-linux-gnu-gcc") ||
             TARGETS+=("CC=aarch64-linux-android-gcc")
     fi
-    TARGETS+=("DTC_EXT=dtc")
+    TARGETS+=("DTC_EXT=$(command -v dtc)")
 
     for CONFIG in "${ARM64_CONFIGS[@]}"; do
         build_prehook arm64
