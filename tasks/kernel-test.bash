@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # MSM kernel compilation testing
-# Copyright (C) 2020 Albert I (krasCGQ)
+# Copyright (C) 2020-2021 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+
+# Use SCHED_BATCH for the entire process
+chrt -abp 0 $$
 
 ## Exit script on error
 set -e

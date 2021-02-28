@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck source=/dev/null
 # KudProject kernel build tasks
-# Copyright (C) 2018-2020 Albert I (krasCGQ)
+# Copyright (C) 2018-2021 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+
+# Use SCHED_BATCH for the entire process
+chrt -abp 0 $$
 
 TASKS_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 # Import common kernel script
