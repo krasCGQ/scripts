@@ -172,7 +172,7 @@ BINUTILS=/opt/kud/binutils
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm O=$OUT "${TARGETS[@]}" "${WLAN[@]}" \
             zImage-dtb modules
-        if [[ $KERNVER == 4.9 ]]; then
+        if ! chkKernel 4.8; then
             case $CONFIG in
             mdm9607 | msm8909 | msm8909w | msm8909-minimal | sa415m | sdxpoorwills) ;;
                 # target doesn't have DTBOs
@@ -209,7 +209,7 @@ BINUTILS=/opt/kud/binutils
         PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=$OUT "${TARGETS[@]}" "${WLAN[@]}" \
             Image.gz-dtb modules
-        [[ $KERNVER == 4.9 ]] && PATH=$BIN LD_LIBRARY_PATH=$LD \
+        chkKernel 4.8 || PATH=$BIN LD_LIBRARY_PATH=$LD \
             make -sj"$CPUs" ARCH=arm64 O=$OUT "${TARGETS[@]}" \
             CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs
         build_posthook arm64
