@@ -341,7 +341,7 @@ if [[ $TASK_TYPE != build-only ]]; then
 
     prInfo "Copying kernel image and devicetree..."
     # ARM64: Compress resulting kernel image with fastest compression
-    [[ -z $IS_32BIT ]] && gzip -f9 "$OUT_KERNEL"/Image
+    [[ -z $IS_32BIT ]] && pigz -f9 "$OUT_KERNEL"/Image
     if [[ -n $NEEDS_DT_IMG ]]; then
         # Copy compressed kernel image and dt.img
         cp "$OUT_KERNEL"/$IMAGE_NAME "$AK"
