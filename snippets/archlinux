@@ -101,14 +101,14 @@ updMirrorlist() {
     esac
 
     # Chaotic-AUR
-    if [[ -f /etc/pacman.d/chaotic-mirrorlist ]] || pacman -Qq chaotic-mirrorlist &>/dev/null; then
+    if pacman -Qq chaotic-mirrorlist &>/dev/null || [[ -f /etc/pacman.d/chaotic-mirrorlist ]]; then
         prInfo "Updating Chaotic-AUR mirrorlist..."
         curl -s https://builds.garudalinux.org/repos/chaotic-aur/mirrorlist |
             sed -e /#/d | rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
     fi
 
     # Arch Linux CN
-    if [[ -f /etc/pacman.d/archlinuxcn-mirrorlist ]] || pacman -Qq archlinuxcn-mirrorlist &>/dev/null; then
+    if pacman -Qq archlinuxcn-mirrorlist &>/dev/null || [[ -f /etc/pacman.d/archlinuxcn-mirrorlist ]]; then
         prInfo "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
             sed -e s/#Server/Server/g -e /##/d |
