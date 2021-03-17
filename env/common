@@ -7,6 +7,14 @@
 # Import treewide environment script
 source "$SCRIPT_DIR"/env/global
 
+# Try to obtain Distro ID from /etc/os-release
+source <(grep '^ID' /etc/os-release 2>/dev/null)
+# If Distro ID returns empty, check possibility of running Termux on Android
+# This shouldn't interfere with (ch|pr)oot-ed environment
+[[ -z $ID ]] && [[ -n $IS_TERMUX ]] && ID=termux
+# Export Distro ID to be picked up by select functions
+export ID
+
 # Aliases
 alias nano='nano -au'
 alias wget='wget -c -t 0 --retry-connrefused'
@@ -230,7 +238,6 @@ updMirrorlist() {
     chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
 
     # Prevent executing on anything other than Arch and Manjaro
-    . /etc/os-release 2>/dev/null
     case $ID in
     arch | manjaro) ;; # ignore
     *) prWarn "This function is only available for Arch and Manjaro." && { [[ -n $IS_TERMUX ]] && return 1 || exit 1; } ;;
@@ -274,16 +281,11 @@ updMirrorlist() {
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors filterMirrorlist updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo --preserve-env=ID su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors filterMirrorlist updMirrorlist) && updMirrorlist"'
 
 # sudo: Shortcut to do system update; completely depends on distribution
 alias sysUpdate &>/dev/null && unalias sysUpdate
 sysUpdate() {
-    # Try inheriting Distro's /etc/os-release first
-    . /etc/os-release 2>/dev/null
-    # If $ID returns empty, check possibility of running Termux on Android
-    # This shouldn't interfere with (ch|pr)oot-ed environment
-    [[ -z $ID ]] && [[ -n $IS_TERMUX ]] && ID=termux
     case $ID in
     alpine)
         apk update && apk upgrade
@@ -303,4 +305,4 @@ sysUpdate() {
     *) prWarn "This distribution (${ID:-unknown}) is currently not supported." ;;
     esac
 }
-alias sysUpdate='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
+alias sysUpdate='chkSudo --preserve-env=ID su -c ". $SCRIPT_DIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
