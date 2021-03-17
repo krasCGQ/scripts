@@ -14,6 +14,8 @@ rankMirrors() {
 
     # Parse every URL in the mirrorlist
     while read -r URL; do
+        # Skip empty lines; no point on checking that
+        [[ -z $URL ]] && continue
         # Convert to base repository URL
         REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$1/" -e "s/\$arch/$ARCH/")
         # Track status code and time required to download database
