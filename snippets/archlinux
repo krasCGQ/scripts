@@ -6,31 +6,34 @@
 # A wannabe rankmirrors that doesn't expect repository name being exist on URI
 # Usage: rankMirrors <repo name> <mirrorlist or stdin>
 rankMirrors() {
-    local ARCH REPO RESULT URL
+    local ARCH MIRRORLIST OUT REPO RESULT URL
+    OUT=/tmp/$0
+    REPO=$1
+    MIRRORLIST=$2
     ARCH=$(uname -m)
 
     # Bail out early if no repo name
-    [[ -z $1 ]] && { prWarn "Incorrect usage!" && return 1; }
+    [[ -z $REPO ]] && { prWarn "Incorrect usage!" && return 1; }
 
     # Parse every URL in the mirrorlist
     while read -r URL; do
         # Skip empty lines; no point on checking that
         [[ -z $URL ]] && continue
         # Convert to base repository URL
-        REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$1/" -e "s/\$arch/$ARCH/")
+        REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$REPO/" -e "s/\$arch/$ARCH/")
         # Track status code and time required to download database
-        RESULT=$(curl -s -w '%{time_total} %{http_code}' "$REPO_URL"/"$1".db -o /dev/null)
+        RESULT=$(curl -s -w '%{time_total} %{http_code}' "$REPO_URL"/"$REPO".db -o /dev/null)
         # Only save to temporary file if it can be downloaded
-        [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $REPO_URL" >>/tmp/"$0"
-    done < <(cut -d' ' -f3 "$2" 2>/dev/null)
-    [[ ! -f /tmp/$0 ]] && { prWarn "Nothing to rank?" && return 1; }
+        [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $REPO_URL" >>"$OUT"
+    done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
+    [[ ! -f $OUT ]] && { prWarn "Nothing to rank?" && return 1; }
 
     # Convert back and rank mirrors by fastest download time
     while read -r URL; do
         echo "Server = $URL"
-    done < <(sort -n /tmp/"$0" | sed -e "s/$1/\$repo/" -e "s/$ARCH/\$arch/" | cut -d' ' -f3)
+    done < <(sort -n "$OUT" | sed -e "s/$REPO/\$repo/" -e "s/$ARCH/\$arch/" | cut -d' ' -f3)
     # Delete temporary file afterwards
-    rm /tmp/"$0"
+    rm "$OUT"
 }
 
 # Filter an existing mirrorlist to only include exactly one protocol from same server
