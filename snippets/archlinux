@@ -71,8 +71,6 @@ updMirrorlist() {
     esac
 
     ## Official repositories:
-    # Arch: use rankmirrors script provided by pacman-contrib
-    # Manjaro: use the official pacman-mirrors tool
     prInfo "Updating official mirrorlist..."
     case $ID in
     arch)
@@ -80,14 +78,25 @@ updMirrorlist() {
             sed -e /##/d -e s/#Server/Server/g >/tmp/arch-mirrorlist; then
             # Filter HTTP mirrors out when HTTPS counterparts are available
             filterMirrorlist /tmp/arch-mirrorlist
-            # rankMirrors() is still too slow even when almost a third have been filtered out
-            # This also allows interrupting process without having no listed servers
-            rankmirrors /tmp/arch-mirrorlist >/etc/pacman.d/mirrorlist
+            # Prefer rankmirrors script provided by pacman-contrib, as rankMirrors() is still too
+            # slow even when almost a third have been filtered out. This also allows interrupting
+            # the ranking process without ended up having no listed servers; something currently not
+            # implemented by the latter.
+            {
+                if pacman -Qq pacman-contrib &>/dev/null || command -v rankmirrors >/dev/null; then
+                    rankmirrors /tmp/arch-mirrorlist
+                else
+                    prWarn "Continuing with rankMirrors() (most likely very slow)..."
+                    # core repository has the smallest database size
+                    rankMirrors core /tmp/arch-mirrorlist
+                fi
+            } >/etc/pacman.d/mirrorlist
             rm /tmp/arch-mirrorlist
         else
             prWarn "Unable to retrieve mirrorlist to rank, skipping."
         fi
         ;;
+    # Use official pacman-mirrors tool installed by default on Manjaro
     manjaro) pacman-mirrors --fasttrack -q ;;
     esac
 
