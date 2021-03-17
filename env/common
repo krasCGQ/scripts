@@ -36,6 +36,8 @@ if [[ -z $IS_TERMUX ]]; then
     export USER_DIR EDITOR
 fi
 
+# Include Arch Linux-specific snippets for Arch-based distros
+[[ $ID == arch || $ID == manjaro ]] && source "$SCRIPT_DIR"/snippets/archlinux
 # Source Telegram-specific script if exists
 [[ -f $SCRIPT_DIR/env/telegram ]] && source "$SCRIPT_DIR"/env/telegram
 
@@ -175,113 +177,6 @@ fixSdllvm() {
     prInfo "Done."
     cd - >/dev/null || true
 }
-
-# A wannabe rankmirrors that doesn't expect repository name being exist on URI
-# Usage: rankMirrors <repo name> <mirrorlist or stdin>
-rankMirrors() {
-    local ARCH REPO RESULT URL
-    ARCH=$(uname -m)
-
-    # Bail out early if no repo name
-    [[ -z $1 ]] && { prWarn "Incorrect usage!" && return 1; }
-
-    # Parse every URL in the mirrorlist
-    while read -r URL; do
-        # Convert to base repository URL
-        REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$1/" -e "s/\$arch/$ARCH/")
-        # Track status code and time required to download database
-        RESULT=$(curl -s -w '%{time_total} %{http_code}' "$REPO_URL"/"$1".db -o /dev/null)
-        # Only save to temporary file if it can be downloaded
-        [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $REPO_URL" >>/tmp/"$0"
-    done < <(cut -d' ' -f3 "$2" 2>/dev/null)
-    [[ ! -f /tmp/$0 ]] && { prWarn "Nothing to rank?" && return 1; }
-
-    # Convert back and rank mirrors by fastest download time
-    while read -r URL; do
-        echo "Server = $URL"
-    done < <(sort -n /tmp/"$0" | sed -e "s/$1/\$repo/" -e "s/$ARCH/\$arch/" | cut -d' ' -f3)
-    # Delete temporary file afterwards
-    rm /tmp/"$0"
-}
-
-# Filter an existing mirrorlist to only include exactly one protocol from same server
-# Usage: filterMirrorlist <mirrorlist>
-filterMirrorlist() {
-    local DEL LINE MIRRORLIST NEXT_SRV PREV_PROTO PREV_SRV SED
-    MIRRORLIST=$1
-
-    # Bail out early if path to mirrorlist isn't supplied
-    [[ -z $MIRRORLIST ]] && { prWarn "Incorrect usage!" && return 1; }
-
-    # seq allows dynamic number of lines to be checked
-    for LINE in $(seq "$(wc <"$MIRRORLIST" -l)"); do
-        PREV_SRV=$(sed "${LINE}q;d" "$MIRRORLIST" | cut -d'/' -f3)
-        NEXT_SRV=$(sed "$((LINE + 1))q;d" "$MIRRORLIST" | cut -d'/' -f3)
-        # If server name doesn't match between the two, don't proceed any further
-        [[ $PREV_SRV != "$NEXT_SRV" ]] && continue
-
-        PREV_PROTO=$(sed "${LINE}q;d" "$MIRRORLIST" | cut -d':' -f1 | cut -d' ' -f3)
-        # Determine which line to be discarded, that's HTTP
-        [[ $PREV_PROTO == http ]] && DEL=$LINE || DEL=$((LINE + 1))
-        # We discard this HTTP version
-        SED+=(-e "${DEL}"d)
-    done
-    # Write the result to exact same mirrorlist file, overwriting it
-    # FIXME: sed: can't read : No such file or directory
-    sed "${SED[@]}" -i "$MIRRORLIST" 2>/dev/null
-    return 0
-}
-
-# sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
-alias updMirrorlist &>/dev/null && unalias updMirrorlist
-updMirrorlist() {
-    chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
-
-    # Prevent executing on anything other than Arch and Manjaro
-    case $ID in
-    arch | manjaro) ;; # ignore
-    *) prWarn "This function is only available for Arch and Manjaro." && { [[ -n $IS_TERMUX ]] && return 1 || exit 1; } ;;
-    esac
-
-    ## Official repositories:
-    # Arch: use rankmirrors script provided by pacman-contrib
-    # Manjaro: use the official pacman-mirrors tool
-    prInfo "Updating official mirrorlist..."
-    case $ID in
-    arch)
-        if curl -s https://archlinux.org/mirrorlist/all/ |
-            sed -e /##/d -e s/#Server/Server/g >/tmp/arch-mirrorlist; then
-            # Filter HTTP mirrors out when HTTPS counterparts are available
-            filterMirrorlist /tmp/arch-mirrorlist
-            # rankMirrors() is still too slow even when almost a third have been filtered out
-            # This also allows interrupting process without having no listed servers
-            rankmirrors /tmp/arch-mirrorlist >/etc/pacman.d/mirrorlist
-            rm /tmp/arch-mirrorlist
-        else
-            prWarn "Unable to retrieve mirrorlist to rank, skipping."
-        fi
-        ;;
-    manjaro) pacman-mirrors --fasttrack -q ;;
-    esac
-
-    # Chaotic-AUR
-    if [[ -f /etc/pacman.d/chaotic-mirrorlist ]] || pacman -Qq chaotic-mirrorlist &>/dev/null; then
-        prInfo "Updating Chaotic-AUR mirrorlist..."
-        curl -s https://builds.garudalinux.org/repos/chaotic-aur/mirrorlist |
-            sed -e /#/d | rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
-    fi
-
-    # Arch Linux CN
-    if [[ -f /etc/pacman.d/archlinuxcn-mirrorlist ]] || pacman -Qq archlinuxcn-mirrorlist &>/dev/null; then
-        prInfo "Updating Arch Linux CN mirrorlist..."
-        curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
-            sed -e s/#Server/Server/g -e /##/d |
-            rankMirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
-    fi
-
-    prInfo "Done."
-}
-alias updMirrorlist='chkSudo --preserve-env=ID su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors filterMirrorlist updMirrorlist) && updMirrorlist"'
 
 # sudo: Shortcut to do system update; completely depends on distribution
 alias sysUpdate &>/dev/null && unalias sysUpdate
