@@ -84,7 +84,7 @@ updMirrorlist() {
     prInfo "Updating official mirrorlist..."
     case $ID in
     arch)
-        if curl -s https://archlinux.org/mirrorlist/all/ |
+        if curl -s 'https://archlinux.org/mirrorlist/?use_mirror_status=on' |
             sed -e /##/d -e s/#Server/Server/g >/tmp/arch-mirrorlist; then
             # Filter HTTP mirrors out when HTTPS counterparts are available
             filterMirrorlist /tmp/arch-mirrorlist
