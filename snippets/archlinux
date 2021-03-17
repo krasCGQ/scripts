@@ -100,11 +100,12 @@ updMirrorlist() {
     manjaro) pacman-mirrors --fasttrack -q ;;
     esac
 
-    # Chaotic-AUR
+    # Chaotic-AUR - discard random-mirror server as it's bad for powerpill use
     if pacman -Qq chaotic-mirrorlist &>/dev/null || [[ -f /etc/pacman.d/chaotic-mirrorlist ]]; then
         prInfo "Updating Chaotic-AUR mirrorlist..."
-        curl -s https://builds.garudalinux.org/repos/chaotic-aur/mirrorlist |
-            sed -e /#/d | rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
+        curl -s https://aur.chaotic.cx/mirrorlist.txt |
+            sed -e s/#Server/Server/g -e /random-mirror/d -e '/# /d' |
+            rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
     fi
 
     # Arch Linux CN
