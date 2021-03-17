@@ -6,7 +6,7 @@
 # A wannabe rankmirrors that doesn't expect repository name being exist on URI
 # Usage: rankMirrors <repo name> <mirrorlist or stdin>
 rankMirrors() {
-    local ARCH MIRRORLIST OUT REPO RESULT URL
+    local ARCH MIRRORLIST NEW_URL OLD_URL OUT REPO REPO_URL RESULT URL
     OUT=/tmp/$0
     REPO=$1
     MIRRORLIST=$2
@@ -21,8 +21,13 @@ rankMirrors() {
         [[ -z $URL ]] && continue
         # Convert to base repository URL
         REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$REPO/" -e "s/\$arch/$ARCH/")
+        [[ $(curl -sw '%{http_code}' "$REPO_URL") =~ 30[12378]{1} ]] && {
+            OLD_URL=$(echo "$REPO_URL" | cut -d'/' -f3)
+            NEW_URL=$(curl -sI "$REPO_URL" | grep -iw location: | cut -d' ' -f2 | cut -d'/' -f3)
+            REPO_URL=${REPO_URL/$OLD_URL/$NEW_URL}
+        }
         # Track status code and time required to download database
-        RESULT=$(curl -s -w '%{time_total} %{http_code}' "$REPO_URL"/"$REPO".db -o /dev/null)
+        RESULT=$(curl -sw '%{time_total} %{http_code}' "$REPO_URL"/"$REPO".db -o /dev/null)
         # Only save to temporary file if it can be downloaded
         [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $REPO_URL" >>"$OUT"
     done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
