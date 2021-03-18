@@ -21,11 +21,18 @@ rankMirrors() {
         [[ -z $URL ]] && continue
         # Convert to base repository URL
         REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$REPO/" -e "s/\$arch/$ARCH/")
-        [[ $(curl -sw '%{http_code}' "$REPO_URL") =~ 30[12378]{1} ]] && {
+        case $(curl -sw '%{http_code}' "$REPO_URL") in
+        # Server is responding, so proceed to ranking process
+        200) ;;
+        # Handle redirections here as tracking can't be done while following it
+        301 | 302 | 303 | 307 | 308)
             OLD_URL=$(echo "$REPO_URL" | cut -d'/' -f3)
             NEW_URL=$(curl -sI "$REPO_URL" | grep -iw location: | cut -d' ' -f2 | cut -d'/' -f3)
             REPO_URL=${REPO_URL/$OLD_URL/$NEW_URL}
-        }
+            ;;
+        # Server is either unreachable, has internal problem, or we're not allowed to use it
+        *) continue ;;
+        esac
         # Track status code and time required to download database
         RESULT=$(curl -sw '%{time_total} %{http_code}' "$REPO_URL"/"$REPO".db -o /dev/null)
         # Only save to temporary file if it can be downloaded
