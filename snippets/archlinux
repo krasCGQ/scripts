@@ -21,7 +21,7 @@ rankMirrors() {
         [[ -z $URL ]] && continue
         # Convert to base repository URL
         REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$REPO/" -e "s/\$arch/$ARCH/")
-        case $(curl -sw '%{http_code}' "$REPO_URL") in
+        case $(curl -sw '%{http_code}' "$REPO_URL"/ -o /dev/null) in
         # Server is responding, so proceed to ranking process
         200) ;;
         # Handle redirections here as tracking can't be done while following it
