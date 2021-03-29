@@ -384,7 +384,7 @@ if [[ $TASK_TYPE != build-only ]]; then
 
         # Create with p7zip, excluding README and any other zip
         # Store kernel image uncompressed, however
-        7za a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" ./* -x'!'README.md -xr'!'*Image* -xr'!'*.zip
+        7zz a -bso0 -mx=9 -mpass=15 -mmt="$THREADS" "$ZIP" ./* -x'!'README.md -xr'!'*Image* -xr'!'*.zip
         zip -q0 "$ZIP" ./*Image*
 
         if [[ -n $SIGN_BUILD ]]; then
