@@ -48,7 +48,7 @@ parseParams() {
             shift
             # Supported devices:
             case ${1,,} in
-            grus | sirius)
+            grus | pyxis | sirius | vela)
                 DEVICE=${1,,}
                 PAGE_SIZE=4096
                 ;;
@@ -292,9 +292,11 @@ if [[ -f $OUT/.config ]]; then
 # However, if config file doesn't exist, generate a fresh config
 else
     prInfo "Generating a new config..."
+    # There are devices that share a common defconfig
+    [[ $DEVICE == pyxis || $DEVICE == vela ]] && DEVICE_CONFIG=pyxis-cosmos
     read -rp "  Input a defconfig name (without '_defconfig'): " DEFCONFIG
     # If defconfig name is empty, assume device name as defconfig name instead
-    [[ -z $DEFCONFIG ]] && DEFCONFIG=$DEVICE
+    [[ -z $DEFCONFIG ]] && DEFCONFIG=${DEVICE_CONFIG:-$DEVICE}
     make -j"$THREADS" -s ARCH=$ARCH O="$OUT" "${DEFCONFIG}"_defconfig
 fi
 
