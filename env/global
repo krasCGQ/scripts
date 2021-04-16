@@ -38,16 +38,22 @@ prWarn() {
     done
 }
 
-# Making sure user has sudo before executing command
+# Making sure user has su rights before executing command
 chkSudo() {
-    prInfo "Checking for sudo; please enter password if prompted."
-    if ! sudo -v 2>/dev/null; then
-        prWarn "Current user isn't a sudoer!"
+    prInfo "Checking for su rights; please enter password if prompted."
+    if ! (sudo -v || doas true) 2>/dev/null; then
+        prWarn "Current user doesn't have su rights!"
         return 1
     fi
 
-    # Prevent falsely returning non-zero status
-    if [[ $# != 0 ]]; then sudo "$@"; fi
+    # We aren't gotta follow symlinks blindly
+    if [[ $# != 0 ]]; then
+        if sudo -v 2>/dev/null; then
+            sudo "$@"
+        elif doas true 2>/dev/null; then
+            doas "$@"
+        fi
+    fi
 }
 
 # Check for system architecture support
