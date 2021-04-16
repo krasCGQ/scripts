@@ -79,7 +79,9 @@ filterMirrorlist() {
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
+    local ID
     chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
+    ID=$(getDistroID)
 
     # Prevent executing on anything other than Arch and Manjaro
     case $ID in
@@ -135,4 +137,4 @@ updMirrorlist() {
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo --preserve-env=ID su -c ". $SCRIPT_DIR/env/global && $(declare -f rankMirrors filterMirrorlist updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f filterMirrorlist getDistroID rankMirrors updMirrorlist) && updMirrorlist"'

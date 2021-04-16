@@ -7,12 +7,8 @@
 # Import treewide environment script
 source "$SCRIPT_DIR"/env/global
 
-# Try to obtain Distro ID from /etc/os-release
-source <(grep '^ID' /etc/os-release 2>/dev/null)
-# If Distro ID returns empty, check possibility of running Termux on Android
-# This shouldn't interfere with (ch|pr)oot-ed environment
-[[ -z $ID ]] && [[ -n $IS_TERMUX ]] && ID=termux
 # Export Distro ID to be picked up by select functions
+ID=$(getDistroID)
 export ID
 
 # Aliases
