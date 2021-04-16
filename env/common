@@ -179,19 +179,18 @@ fixSdllvm() {
 }
 
 # sudo: Shortcut to do system update; completely depends on distribution
-alias sysUpdate &>/dev/null && unalias sysUpdate
 sysUpdate() {
     case $ID in
     alpine)
-        apk update && apk upgrade
+        chkSudo su -c "apk update && apk upgrade"
         ;;
     arch | manjaro)
         # AUR, please fuck yourself
         [[ -n $(command -v powerpill) ]] && UPD=powerpill || UPD=pacman
-        pacman -Sy && $UPD -Su --noconfirm
+        chkSudo su -c "pacman -Sy && $UPD -Su --noconfirm"
         ;;
     debian | ubuntu)
-        apt update && apt dist-upgrade -y
+        chkSudo su -c "apt update && apt dist-upgrade -y"
         ;;
     termux)
         # Equivalent to `apt update && apt upgrade`
@@ -200,4 +199,3 @@ sysUpdate() {
     *) prWarn "This distribution (${ID:-unknown}) is currently not supported." ;;
     esac
 }
-alias sysUpdate='chkSudo --preserve-env=ID su -c ". $SCRIPT_DIR/env/global && $(declare -f sysUpdate) && sysUpdate"'
