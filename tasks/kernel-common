@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # Common kernel functions
-# Copyright (C) 2020 Albert I (krasCGQ)
+# Copyright (C) 2020-2021 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Exit if it's being executed

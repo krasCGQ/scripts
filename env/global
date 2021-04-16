@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # Treewide environment setup
-# Copyright (C) 2017-2019 Albert I (krasCGQ)
+# Copyright (C) 2017-2021 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Text styles
