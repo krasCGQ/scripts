@@ -1,0 +1,73 @@
+#!/usr/bin/env ion
+# Common kernel functions
+# Copyright (C) 2020-2021 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Import common print functions
+source $parent(@args[0])/../env/prints.ion
+
+## Functions
+
+# Show build script duration
+fn showDuration t:int
+    let duration:int = $(date +%s)
+    let duration:int -= $t
+    date -ud \@$duration +'%M:%S (mm:ss)'
+end
+
+# Get supported AOSP Clang version
+fn getClangVer v:str
+    let clangPath:str clangVersion:str rootDir:str = '' '' /opt/kud/android
+    match $v
+        case 5; let clangVersion:str = 4053586   # 5.0.300080
+        case 6; let clangVersion:str = 4691093   # 6.0.2
+        case 7; let clangVersion:str = r328903   # 7.0.2
+        case 8; let clangVersion:str = r349610b  # 8.0.9
+        case 9; let clangVersion:str = r365631c2 # 9.0.8
+        case 10; let clangVersion:str = r377782d # 10.0.6
+        case 11; let clangVersion:str = r399163b # 11.0.5
+        case _ if contains $v qti-
+            let qtiVersion:int = $v[4..]
+            match $qtiVersion
+                case [6 8 10 12]; # do nothing; this is just to trap invalid version
+                case _; die "! Invalid version specified!"
+            end
+            let clangPath:str clangVersion:str = $rootDir/sdclang-$qtiVersion.0 qti
+        case _; die "Invalid version specified!"
+    end
+
+    test -z $clangPath &&
+        let clangPath:str = $rootDir/clang-$clangVersion
+    not test -x $clangPath/bin/clang &&
+        die "${c::bold}$clangVersion${c::reset} doesn't exist in defined path nor executable!"
+
+    # Limitations: export so other parts of the script can see them
+    export CLANG_PATH = $clangPath
+    export CLANG_VERSION = $clangVersion
+end
+
+# Check kernel version
+# Status code is inverted
+fn chkKernel v:str
+    let targets:str = [@split(v '.')]
+    let targetVersion:int targetPatchlevel:int = @targets[0] @targets[1]
+
+    # Kernel version older than target is always true
+    test $version -lt $targetVersion && return 0
+    # Kernel version equals target
+    if eq $version $targetVersion
+        # If patchlevel is older than or equals target, return true otherwise false
+        test $patchlevel -le $targetPatchlevel && return 0 || return 1
+    end
+    # Kernel version newer than target is always false
+    test $version -gt $targetVersion && return 1
+end
+
+# Run this inside kernel source
+if not exists -f Makefile || not exists -d kernel
+    die "Please run this script inside kernel source folder!"
+end
+
+# Get kernel release - stealing from scripts/patch-kernel is a bad idea here
+let version:int = $(grep '^VERSION' Makefile | cut -d= -f2 | sed -r s/\\s+//)
+let patchlevel:int = $(grep '^PATCHLEVEL' Makefile | cut -d= -f2 | sed -r s/\\s+//)
