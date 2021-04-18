@@ -1,0 +1,82 @@
+#!/usr/bin/env ion
+# Sign flashable zip with ZipSigner - Java executable wrapper
+# Copyright (C) 2019-2021 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Main scripts directory
+let scriptDir:str = $parent(@args[0])/..
+# ZipSigner executable
+let zipSigner:str = $scriptDir/prebuilts/bin/zipsigner-3.0-dexed.jar
+
+# Import common print functions
+source $scriptDir/env/prints.ion
+
+fn usage
+    # Treat every line as array members
+    let lines:str = []
+    let lines:str ++= "Usage: ${c::bold}@args[0]${c::reset} [FLAGS] ..."
+    let lines:str ++= ''
+    let lines:str ++= 'FLAGS:'
+    let lines:str ++= '    -i= | --input=		Path to flashable zip that will be signed. Required parameter.'
+    let lines:str ++= '    -o= | --output=		Path where signed zip will be written to. Might be same as input, which will overwrite it. If unspecified, this defaults to input filename with '-signed' suffix.'
+    let lines:str ++= '    -s= | --signing-key=	Path to pair of signing keys to be used, without extensions. If unspecified, default AOSP test-keys bundled with zipsigner will be used instead.'
+    let lines:str ++= ''
+
+    for line in @lines[0..]
+        # Print usage lines to stderr
+        echo $line >/dev/stderr
+    end
+end
+
+# At least 1 argument isn't specified
+eq $len(@args) 1 && usage && die "Insufficient argument specified!"
+# Existing Java installation isn't detected
+not which java >/dev/null && die "Unable to find existing Java installation in PATH!"
+# ZipSigner Java executable is absent
+not exists -f $zipSigner && die "ZipSigner Java executable not found!"
+
+# Empty global variables to be written into
+let in:str out:str signKey:str = '' '' ''
+# Parse all arguments
+for arg in @args[1..]
+    # Split every argument as an array of two
+    let var:str = [@split(arg '=')]
+    # Parse first array member and assign second one to respective values
+    match @var[0]
+        case ['-i' '--input']; let in:str = @var[1]
+        case ['-o' '--output']; let out:str = @var[1]
+        case ['-s' '--signing-key']; let signKey:str = @var[1]
+        # Print script usage and exit
+        case ['-u' '--usage']; usage && exit
+        # Ignore extra arguments
+        case _; prWarn "Invalid argument ignored: $arg"
+    end
+end
+
+# No input file
+test -z $in && usage && die "No input file specified!"
+# If input file has no extension or the extension isn't zip
+if is $filename($in) $extension($in)
+   or is not $extension($in) zip
+    die "Only flashable zip file is supported!"
+end
+
+if test -z $out
+    # Omit extension from filename, we'll add it back later
+    let base:str = $filename($in)
+    # Only append parent directory if needed
+    test -n $parent($in) && let base:str ::= $parent($in)/
+    # If output is unspecified, save as input-signed.zip
+    let out:str = $base-signed.zip
+end
+
+# Create target folder if it doesn't exist
+test -n $parent($out) && not exists -d $parent($out) && mkdir -p $parent($out)
+
+prInfo "Signing $basename($in) as $basename($out)..."
+# Initialize input and output parameters as an array
+let params:str = [$in $out]
+# Append signing keys at the beginning if specified
+test -n $signKey && let params:str ::= [$signKey.x509.pem $signKey.pk8]
+# Extend array as java executable parameters
+java -jar $zipSigner @params[0..]

@@ -393,8 +393,8 @@ if [[ $TASK_TYPE != build-only ]]; then
             # Remove existing (release) zip
             rm -f "${ZIP/-unsigned/}"
             # Sign zip for release
-            . "$SCRIPT_DIR"/snippets/zipsigner
-            zipsigner ${KEY_PAIR:+-s "$KEY_PAIR"} "$ZIP" "${ZIP/-unsigned/}"
+            "$SCRIPT_DIR"/tasks/zipsigner.ion \
+                ${KEY_PAIR:+-s="$KEY_PAIR"} -i="$ZIP" -o="${ZIP/-unsigned/}"
             # Delete 'unsigned' zip
             rm "$ZIP"
         fi
