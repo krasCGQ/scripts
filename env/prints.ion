@@ -1,0 +1,20 @@
+#!/usr/bin/env ion
+# Print wrappers
+# Copyright (C) 2021 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Prints a message with a dash
+fn prInfo s
+    echo "- $s"
+end
+
+# Prints a message with an exclamation point
+fn prWarn s
+    echo "! $s" >/dev/stderr
+end
+
+# Same as prWarn above but exits script
+# WARNING: Running this function under interactive or login shell will cause it to exit!
+fn die s
+    prWarn $s && exit 1
+end
