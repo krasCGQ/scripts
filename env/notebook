@@ -111,7 +111,7 @@ playCapture() {
     # cache-pause=yes - this is disabled with profile=low-latency inherited
     # av://alsa:default:CARD=X - card ID/name to play from using ALSA
     until [[ -n $PID ]]; do
-        mpv --profile=capture-device --cache-pause=yes av://alsa:default:CARD=MS2109 &
+        mpv --profile=capture-device --cache-pause=yes av://pulse:alsa_input.usb-MACROSILICON_USB_Video-02.analog-stereo &
         PID=$! && sleep 0.3 && ! pgrep mpv | grep -q $PID && unset PID
     done
 
