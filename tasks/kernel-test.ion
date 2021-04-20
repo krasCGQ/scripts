@@ -1,0 +1,248 @@
+#!/usr/bin/env ion
+# MSM kernel compilation testing
+# Copyright (C) 2020-2021 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Import common kernel script
+source $parent(@args[0])/kernel-common.ion
+
+# Define build directory early
+let out:str = /home/android-build/kernel-test
+
+# Find all -perf kernel defconfigs for select architecture
+fn findConfig a:str
+    cd arch/$a/configs || die "Unable to change directory!"
+    let cfgs:str = []
+    for cfg in [./$extra*perf*]
+        let cfgs:str ++= @split(cfg '-perf')[0]
+    end
+    cd - >/dev/null
+    # Limitations: print them to be piped into a global variable
+    echo @cfgs
+end
+
+# Trim vendor/ out
+fn trimConfigList b:bool
+    read input
+    let cfgs:str = []
+    for cfg in [@split(input)]
+        test -n $extra && let cfgs:str ++= @split(cfg '/')[1] || let cfgs:str ++= $cfg
+    end
+    # Make use of Ion Shell limitations to make conditional filtering
+    bool $b && echo $join(cfgs '\n') | sort -u || echo @cfgs
+end
+
+# Print test header
+fn headerPrint a:str c:str
+    let baseCfg:str targetCfg:str = $(echo $c | cut -d, -f1) $(echo $c | cut -d, -f2)
+    echo
+    echo -n "==== Testing $to_uppercase(a): $baseCfg-perf_defconfig"
+    is not $baseCfg $targetCfg && echo -n " - $targetCfg target"
+    echo " ===="
+end
+
+# Apply config changes according to platforms
+fn applyConfig c:str
+    let baseCfg:str targetCfg:str = $(echo $c | cut -d, -f1) $(echo $c | cut -d, -f2)
+    let applyCfg:str = [scripts/config --file $out/.config]
+
+    # Override for msm8937 configs, to allow testing both msm8937 and qm215 targets
+    if matches $baseCfg msm8937
+        is $targetCfg qm215 &&
+            @applyCfg -d ARCH_MSM8917 -d ARCH_MSM8937 -d ARCH_MSM8940 -d ARCH_SDM429 -d ARCH_SDM439 ||
+            @applyCfg -d ARCH_QM215
+    end
+
+    # Define WLAN targets - Prima
+    for tgt in [@primaTargets]
+        is $tgt $baseCfg && @applyCfg -e PRONTO_WLAN && break
+    end
+
+    # Define WLAN targets - QCA CLD
+    for tgt in [@qcacldTargets]
+        # QCA_CLD_WLAN_PROFILE is set unconditionally; only supported on qcacld-3.0 5.2.x
+        is $tgt $baseCfg && @applyCfg -e QCA_CLD_WLAN --set-str QCA_CLD_WLAN_PROFILE default && break
+    end
+end
+
+fn cleanAndExit
+    git checkout HEAD techpack/audio/Makefile ^>/dev/null
+    rm -rf $out && exit
+end
+
+# clangVersion: Clang version, will be defined later if not specified
+# isCustom: Don't use custom compiler by default, unless explicitly requested
+# isGcc: Use Clang by default, unless on selected targets if not explicitly requested
+let clangVersion:str isCustom:bool isGcc:bool = '' false false
+if not eq $len(@args) 1
+    # Parse all arguments
+    for arg in @args[1..]
+        # Split every argument as an array of two
+        let var:str = [@split(arg '=')]
+        # Parse first array member and assign second one to respective values
+        match @var[0]
+            case --clang-version
+                prWarn "Testing override: Using Clang version @var[1]..."
+                let clangVersion:str = @var[1]
+            case --custom
+                prWarn "Testing override: Using custom compiler..."
+                let isCustom:bool = true
+            case --use-gcc
+                prWarn "Testing override: Using GCC..."
+                let isGcc:bool = true
+            case _; prWarn "Invalid argument ignored: $arg"
+        end
+    end
+end
+
+# Kernel repository
+let kernel:str = $version.$patchlevel
+# QTI kernel version
+let msmKernel:str = msm-$kernel
+
+# Empty global variables to be written into
+let extra:str primaTargets:str qcacldTargets:str = '' [] []
+match $kernel
+    case 3.18
+        # Continue to test using GCC unless requested to use Clang
+        test -z $clangVersion || let isGcc:bool = true
+        let primaTargets:str = [apq8053_IoE msm8909{,w{,-1gb}} msm8937 msmcortex]
+        let qcacldTargets:str = [mdm mdm9607{,-128m} mdm9640 msm{,-auto} sdx]
+    case 4.9
+        let primaTargets:str = [msm8909{,w,-minimal} msm8937{,go} msm8953 sdm429-bg spyro]
+        let qcacldTargets:str = [mdm9607 qcs605 sdm670 sdm845]
+    # QTI configs are inside vendor subfolder
+    case 4.14; let extra:str = vendor/
+    case 4.19
+        # QTI configs are inside vendor subfolder
+        let extra:str = vendor/
+        # RIP Prima :')
+        let qcacldTargets:str ++= all
+    case _; prWarn "Nothing to do for target: $msmKernel" && exit
+end
+
+# Clang by default, defaults to Snapdragon LLVM 10
+test -z $clangVersion && not bool $isGcc && let clangVersion:str = qti-10
+# List kernel configs
+let armConfigs:str aarch64Configs:str = [@(findConfig arm)] [@(findConfig arm64)]
+
+# Append additionally required configs
+if is $kernel 4.9
+    # Using msm8937 platform defconfig, but is actually msm909 platform
+    let qm215:str qm215go:str = msm8937,qm215 msm8937go,qm215
+    let armConfigs:str aarch64Configs:str ++= [$qm215 $qm215go] $qm215
+end
+
+# Replace placeholder "all" with combination of both kernel configs
+is @qcacldTargets[0] all &&
+    let qcacldTargets:str = [@(echo @armConfigs @aarch64Configs | trimConfigList true)]
+
+echo
+echo "==== Testing kernel: $msmKernel ===="
+echo "32-bit targets: $(echo @armConfigs | trimConfigList false)"
+echo "64-bit targets: @(echo @aarch64Configs | trimConfigList false)"
+
+# binutilsPath: Path to Binutils
+# cpus: Number of CPUs/threads
+# clangPath: Path to detected Clang
+let binutilsPath:str cpus:int clangPath:str = /opt/kud/binutils $(nproc --all) ''
+# Override with real path to Clang if needed
+test -n $clangVersion && getClangVer $clangVersion && let clangPath:str = ${env::CLANG_PATH}
+
+# GCC logic
+let gccAarch64Path:str gccArmPath:str = '' ''
+if test -z $clangVersion
+    if bool $isCustom
+        let gccAarch64Path:str = linaro/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu
+        let gccArmPath:str = linaro/gcc-arm-10.2-2020.11-x86_64-arm-none-linux-gnueabihf
+    else
+        let gccAarch64Path:str = android/aarch64-linux-android-4.9
+        let gccArmPath:str = android/arm-linux-androideabi-4.9
+    end
+    let gccAarch64Path:str gccArmPath:str ::= /opt/kud/ /opt/kud/
+end
+
+# Binary paths
+let binPaths:str = $binutilsPath/bin:
+test -n $clangVersion &&
+    let binPaths:str ++= $clangPath/bin: ||
+    let binPaths:str ++= $gccAarch64Path/bin:$gccArmPath/bin:
+let binPaths:str ++= ${env::PATH}
+export PATH = $binPaths
+
+# Linker paths
+let ldPaths:str = $binutilsPath/lib:
+test -n $clangVersion &&
+    let ldPaths:str ++= $clangPath/lib ||
+    let ldPaths:str ++= $gccAarch64Path/lib:$gccAarch64Path/lib64:$gccArmPath/lib
+test -n ${env::LD_LIBRARY_PATH} && let ldPaths:str ++= :${env::LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH = $ldPaths
+
+# Common make targets
+let make:str = [make -j$cpus -s O=$out DTC_EXT=$(which dtc)]
+# Reset before starting
+git checkout HEAD techpack/audio/Makefile ^>/dev/null
+rm -rf $out
+
+# ARM tasks
+if true
+    let makeTargets:str = [ARCH=arm CROSS_COMPILE=arm-linux-gnueabi-]
+    if bool $isGcc
+        bool $isCustom &&
+            let makeTargets:str ++= CC=arm-none-linux-gnueabihf-gcc ||
+            let makeTargets:str ++= CC=arm-linux-androideabi-gcc
+    else
+        let makeTargets:str ++= CC=clang
+    end
+
+    for cfg in [@(echo @armConfigs | trimConfigList true)]
+        let baseCfg:str = $(echo $cfg | cut -d, -f1)
+        headerPrint arm $extra$cfg
+        let startTime:int = $(date +%s)
+        @make @makeTargets $extra$baseCfg-perf_defconfig
+        applyConfig $cfg
+        # override to disable audio-kernel for batcam targets
+        contains $cfg batcam &&
+            sed -i s/ARCH_MSM8953/ARCH_XXXXXXX/g techpack/audio/Makefile
+        @make @makeTargets zImage-dtb modules || cleanAndExit
+        match $baseCfg
+            case [mdm9607 msm8909{,w,-minimal} sa415m sdxpoorwills] # target doesn't have DTBOs
+            case _ if not chkKernel 4.8
+                @make @makeTargets CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs || cleanAndExit
+        end
+        # override to re-enable audio-kernel
+        contains $cfg batcam && git checkout HEAD techpack/audio/Makefile ^>/dev/null
+        echo
+        echo "Build completed in $(showDuration $startTime)"
+        make -j$cpus -s ARCH=arm O=$out mrproper
+    end
+end
+
+# ARM64 tasks
+if true
+    let makeTargets:str = [ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-]
+    if bool $isGcc
+        bool $isCustom &&
+            let makeTargets:str ++= CC=aarch64-none-linux-gnu-gcc ||
+            let makeTargets:str ++= CC=aarch64-linux-android-gcc
+    else
+        let makeTargets:str ++= CC=clang
+    end
+
+    for cfg in [@(echo @aarch64Configs | trimConfigList true)]
+        let baseCfg:str = $(echo $cfg | cut -d, -f1)
+        headerPrint arm64 $extra$cfg
+        let startTime:int = $(date +%s)
+        @make @makeTargets $extra$baseCfg-perf_defconfig
+        applyConfig $cfg
+        @make @makeTargets Image.gz-dtb modules || cleanAndExit
+        if not chkKernel 4.8
+            @make @makeTargets CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs || cleanAndExit
+        end
+        echo
+        echo "Build completed in $(showDuration $startTime)"
+        make -j$cpus -s ARCH=arm64 O=$out mrproper
+    end
+end
+
+cleanAndExit
