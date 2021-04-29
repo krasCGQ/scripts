@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import common kernel script
-source $parent(@args[0])/kernel-common.ion
+source $parent($(readlink -e @args[0]))/kernel-common.ion
 
 # Define build directory early
 let out:str = /home/android-build/kernel-test

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Main scripts directory
-let scriptDir:str = $parent(@args[0])/..
+let scriptDir:str = $parent($(readlink -e @args[0]))/..
 # ZipSigner executable
 let zipSigner:str = $scriptDir/prebuilts/bin/zipsigner-3.0-dexed.jar
 

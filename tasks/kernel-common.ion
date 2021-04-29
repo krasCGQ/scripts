@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import common print functions
-source $parent(@args[0])/../env/prints.ion
+source $parent($(readlink -e @args[0]))/../env/prints.ion
 
 ## Functions
 
