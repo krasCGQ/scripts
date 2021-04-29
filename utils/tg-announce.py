@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2019-2020 Albert I (krasCGQ)
+# Copyright (C) 2019-2021 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from hashlib import sha384
@@ -14,30 +14,22 @@ from requests import post
 # get content from a file
 def get_content(file):
     try:
-        file = open(file, 'rb')
-        content = file.read().decode()
-        file.close()
-
+        with open(file, 'rb') as file:
+            return file.read().decode()
     except FileNotFoundError:
-        content = None
-
-    return content
+        return None
 
 # get content hash from a file using sha384
 def get_hash(file):
     content = get_content(file)
-
     if content is not None:
         return sha384(content.encode()).hexdigest()
-    else:
-        # assume empty
-        return ''
+    return '' # assume empty
 
 # write content to a file
 def write_to(file, content):
-    file = open(file, 'w+')
-    file.write(content)
-    file.close()
+    with open(file, 'w+') as file:
+        file.write(content)
 
 # telegram sendMessage wrapper
 def notify(msg):
