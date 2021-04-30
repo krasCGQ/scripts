@@ -126,19 +126,21 @@ parseParams() {
                     SIGN_BUILD=true
                     UPLOAD_TYPE=release
                     ;;
-                *) prWarn "\"$1\" is invalid upload type. Skipping." ;;
+                *)
+                    prWarn "\"$1\" is invalid upload type. Skipping."
+                    unset TASK_TYPE
+                    ;;
                 esac
                 [[ -n $UPLOAD_TYPE ]] && export UPLOAD_TYPE
             fi
             ;;
 
         # Unsupported parameter, skip
-        *)
-            prWarn "Unrecognized parameter specified: \"$1\""
-            ;;
+        *) prWarn "Unrecognized parameter specified: \"$1\"" ;;
         esac
         shift
     done
+    return 0
 }
 
 # Unset the following parameters just in case
