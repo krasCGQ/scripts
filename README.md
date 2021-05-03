@@ -16,6 +16,8 @@ $ python3 -m pip install --user -r requirements.txt
 $ sudo pacman -S $(for i in $(< requirements.txt); do echo python-${i,,}; done) # Arch Linux
 ```
 
+Some scripts (with `.ion` extension) requires [latest development version of Ion Shell](https://gitlab.redox-os.org/redox-os/ion/#compile-instructions-for-distribution) installed. Follow given instructions, except that you need to install them in `/usr/local` unless you're using distro-provided package.
+
 Enjoy!
 
 ## License
