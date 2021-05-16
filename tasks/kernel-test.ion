@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Import common kernel script
-source $parent($(readlink -e @args[0]))/kernel-common.ion
+let scriptDir:str = $parent($(readlink -e @args[0]))/..
+source $scriptDir/tasks/kernel-common.ion
 
 # Define build directory early
 let out:str = /home/android-build/kernel-test
@@ -179,7 +180,7 @@ test -n ${env::LD_LIBRARY_PATH} && let ldPaths:str ++= :${env::LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH = $ldPaths
 
 # Common make targets
-let make:str = [make -j$cpus -s O=$out DTC_EXT=$(which dtc)]
+let make:str = [make -j$cpus -s O=$out DTC_EXT=$scriptDir/prebuilts/bin/dtc]
 # Reset before starting
 git checkout HEAD techpack/audio/Makefile ^>/dev/null
 rm -rf $out

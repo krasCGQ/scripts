@@ -97,7 +97,7 @@ parseParams() {
             ;;
         --external-dtc)
             # This has no effect on sources without or has DTC_EXT removed
-            TARGETS+=("DTC_EXT=$(command -v dtc || die "System DTC doesn't exist!")")
+            TARGETS+=("DTC_EXT=$SCRIPT_DIR/prebuilts/bin/dtc")
             ;;
         --no-announce)
             NO_ANNOUNCE=true
