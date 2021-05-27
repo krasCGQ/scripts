@@ -6,7 +6,7 @@
 # Main scripts directory
 let scriptDir:str = $parent($(readlink -e @args[0]))/..
 # ZipSigner executable
-let zipSigner:str = $scriptDir/prebuilts/bin/zipsigner-4.0.jar
+let zipSigner:str = $scriptDir/prebuilts/bin/zipsigner-3.0-dexed.jar
 
 # Import common print functions
 source $scriptDir/env/prints.ion
