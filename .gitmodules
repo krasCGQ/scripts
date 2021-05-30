@@ -4,3 +4,7 @@
 [submodule "libufdt"]
 	path = modules/libufdt
 	url = https://android.googlesource.com/platform/system/libufdt
+[submodule "modules/avbtool"]
+	path = modules/avbtool
+	url = https://android.googlesource.com/platform/external/avb
+	branch = android11-qpr2-release

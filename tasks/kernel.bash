@@ -48,7 +48,11 @@ parseParams() {
             shift
             # Supported devices:
             case ${1,,} in
-            grus | pyxis | sirius | vela)
+            grus | pyxis | vela)
+                DTBO_SIZE=25165824
+                WITH_AVB=true
+                ;&
+            sirius)
                 DEVICE=${1,,}
                 PAGE_SIZE=4096
                 ;;
@@ -330,12 +334,23 @@ if [[ -n $NEEDS_DT_IMG ]]; then
     prInfo "Creating dt.img..."
     "$SCRIPT_DIR"/prebuilts/bin/dtbToolLineage -s $PAGE_SIZE \
         -o "$OUT_KERNEL"/dts/dt.img -p "$OUT"/scripts/dtc/ "$OUT_KERNEL"/dts/ >/dev/null
+    if [[ $WITH_AVB ]]; then
+        prInfo "Adding AVB hash footer to dt.img..."
+        # shellcheck disable=SC2086,SC2153
+        python2 "$SCRIPT_DIR"/modules/avbtool/avbtool add_hash_footer \
+            --image "$OUT_KERNEL"/dts/dt.img --partition_size $DT_SIZE --partition_name dt
+    fi
 fi
 if [[ -n $NEEDS_DTBO ]]; then
     prInfo "Creating dtbo.img..."
     python2 "$SCRIPT_DIR"/modules/libufdt/utils/src/mkdtboimg.py create \
         "$OUT_KERNEL"/dts/dtbo.img --page_size=$PAGE_SIZE \
         "$OUT_KERNEL"/dts/**/*.dtbo
+    if [[ $WITH_AVB ]]; then
+        prInfo "Adding AVB hash footer to dtbo.img..."
+        python2 "$SCRIPT_DIR"/modules/avbtool/avbtool add_hash_footer \
+            --image "$OUT_KERNEL"/dts/dtbo.img --partition_size $DTBO_SIZE --partition_name dtbo
+    fi
 fi
 
 if [[ $TASK_TYPE != build-only ]]; then
