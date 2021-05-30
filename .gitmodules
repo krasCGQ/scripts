@@ -1,9 +1,10 @@
 [submodule "telegram"]
 	path = modules/telegram
 	url = git://github.com/fabianonline/telegram.sh
-[submodule "libufdt"]
+[submodule "modules/libufdt"]
 	path = modules/libufdt
 	url = https://android.googlesource.com/platform/system/libufdt
+	branch = android11-qpr2-release
 [submodule "modules/avbtool"]
 	path = modules/avbtool
 	url = https://android.googlesource.com/platform/external/avb
