@@ -105,22 +105,16 @@ alias zramDeinit='chkSudo su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/
 # Play from HDMI capture device using mpv
 # NOTE: profile=capture-device is defined on dotfiles mpv.conf
 playCapture() {
-    local PID
-
-    ## Try to start audio first
-    # cache-pause=yes - this is disabled with profile=low-latency inherited
-    # av://alsa:default:CARD=X - card ID/name to play from using ALSA
-    until [[ -n $PID ]]; do
-        mpv --profile=capture-device --cache-pause=yes av://pulse:alsa_input.usb-MACROSILICON_USB_Video-02.analog-stereo &
-        PID=$! && sleep 0.3 && ! pgrep mpv | grep -q $PID && unset PID
-    done
-
     ## Additional parameters for video:
     # demuxer-lavf-o-set=input_format=mjpeg - use MJPEG video input format
     # av://v4l2:/dev/v4l/by-id/X - path to capture device to play using Video4Linux v2
-    mpv --profile=capture-device --demuxer-lavf-o-set=input_format=mjpeg \
-        av://v4l2:/dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0
-
-    # Terminate audio upon exit
-    kill -15 $PID
+    # av://alsa:default:CARD=X - card ID/name to play from using ALSA
+    mpv --profile=capture-device \
+        --fps=30 --override-display-fps=30 \
+        --demuxer-lavf-o-append=input_format=mjpeg \
+        --demuxer-lavf-o-append=framerate=30 \
+        --demuxer-lavf-o-append=timestamps=2 \
+        --audio-file=av://pulse:alsa_input.usb-MACROSILICON_USB_Video-02.analog-stereo \
+        av://v4l2:/dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0 \
+        "$@"
 }
