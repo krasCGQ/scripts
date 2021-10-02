@@ -35,34 +35,30 @@ end
 
 # Print test header
 fn headerPrint a:str c:str
-    let baseCfg:str targetCfg:str = $(echo $c | cut -d, -f1) $(echo $c | cut -d, -f2)
     echo
-    echo -n "==== Testing $to_uppercase(a): $baseCfg-perf_defconfig"
-    is not $baseCfg $targetCfg && echo -n " - $targetCfg target"
-    echo " ===="
+    echo "==== Testing $to_uppercase(a): $c-perf_defconfig ===="
 end
 
 # Apply config changes according to platforms
 fn applyConfig c:str
-    let baseCfg:str targetCfg:str = $(echo $c | cut -d, -f1) $(echo $c | cut -d, -f2)
     let applyCfg:str = [scripts/config --file $out/.config]
 
     # Override for msm8937 configs, to allow testing both msm8937 and qm215 targets
-    if matches $baseCfg msm8937
-        is $targetCfg qm215 &&
+    if matches $c msm8937
+        is $c msm8937go &&
             @applyCfg -d ARCH_MSM8917 -d ARCH_MSM8937 -d ARCH_MSM8940 -d ARCH_SDM429 -d ARCH_SDM439 ||
             @applyCfg -d ARCH_QM215
     end
 
     # Define WLAN targets - Prima
     for tgt in [@primaTargets]
-        is $tgt $baseCfg && @applyCfg -e PRONTO_WLAN && break
+        is $tgt $c && @applyCfg -e PRONTO_WLAN && break
     end
 
     # Define WLAN targets - QCA CLD
     for tgt in [@qcacldTargets]
         # QCA_CLD_WLAN_PROFILE is set unconditionally; only supported on qcacld-3.0 5.2.x
-        is $tgt $baseCfg && @applyCfg -e QCA_CLD_WLAN --set-str QCA_CLD_WLAN_PROFILE default && break
+        is $tgt $c && @applyCfg -e QCA_CLD_WLAN --set-str QCA_CLD_WLAN_PROFILE default && break
     end
 end
 
@@ -127,13 +123,6 @@ test -z $clangVersion && not bool $isGcc && let clangVersion:str = qti-10
 # List kernel configs
 let armConfigs:str aarch64Configs:str = [@(findConfig arm)] [@(findConfig arm64)]
 
-# Append additionally required configs
-if is $kernel 4.9
-    # Using msm8937 platform defconfig, but is actually msm909 platform
-    let qm215:str qm215go:str = msm8937,qm215 msm8937go,qm215
-    let armConfigs:str aarch64Configs:str ++= [$qm215 $qm215go] $qm215
-end
-
 # Replace placeholder "all" with combination of both kernel configs
 is @qcacldTargets[0] all &&
     let qcacldTargets:str = [@(echo @armConfigs @aarch64Configs | trimConfigList true)]
@@ -197,16 +186,15 @@ if true
     end
 
     for cfg in [@(echo @armConfigs | trimConfigList true)]
-        let baseCfg:str = $(echo $cfg | cut -d, -f1)
         headerPrint arm $extra$cfg
         let startTime:int = $(date +%s)
-        @make @makeTargets $extra$baseCfg-perf_defconfig
+        @make @makeTargets $extra$cfg-perf_defconfig
         applyConfig $cfg
         # override to disable audio-kernel for batcam targets
         contains $cfg batcam &&
             sed -i s/ARCH_MSM8953/ARCH_XXXXXXX/g techpack/audio/Makefile
         @make @makeTargets zImage-dtb modules || cleanAndExit
-        match $baseCfg
+        match $cfg
             case [mdm9607 msm8909{,w,-minimal} sa415m sdxpoorwills] # target doesn't have DTBOs
             case _ if not chkKernel 4.8
                 @make @makeTargets CONFIG_BUILD_ARM64_DT_OVERLAY=y dtbs || cleanAndExit
@@ -231,10 +219,9 @@ if true
     end
 
     for cfg in [@(echo @aarch64Configs | trimConfigList true)]
-        let baseCfg:str = $(echo $cfg | cut -d, -f1)
         headerPrint arm64 $extra$cfg
         let startTime:int = $(date +%s)
-        @make @makeTargets $extra$baseCfg-perf_defconfig
+        @make @makeTargets $extra$cfg-perf_defconfig
         applyConfig $cfg
         @make @makeTargets Image.gz-dtb modules || cleanAndExit
         if not chkKernel 4.8
