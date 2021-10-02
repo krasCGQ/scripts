@@ -8,7 +8,7 @@ let scriptDir:str = $parent($(readlink -e @args[0]))/..
 source $scriptDir/tasks/kernel-common.ion
 
 # Define build directory early
-let out:str = /home/android-build/kernel-test
+let out:str = /mnt/android-out/kernel-test
 
 # Find all -perf kernel defconfigs for select architecture
 fn findConfig a:str
