@@ -114,7 +114,7 @@ fixSdllvm() {
     (
         cd bin || return 1
         [[ -f ld.qcld ]] && {
-            for i in {a{arch64,rm},x86}-link; do
+            for i in {a{arch64,rm},riscv,x86}-link; do
                 [[ ! -f $i ]] && continue
                 rm -f $i
                 ln -s ld.qcld $i
@@ -124,7 +124,8 @@ fixSdllvm() {
             rm -f $i
             ln -s clang $i
         done
-        for i in ld{,64}.lld lld-link wasm-ld; do
+        for i in ld.lld ld64.lld{,.darwinnew} lld-link wasm-ld; do
+            [[ ! -f $i ]] && continue
             rm -f $i
             ln -s lld $i
         done
@@ -132,7 +133,7 @@ fixSdllvm() {
             rm -f $i
             ln -s llvm-ar $i
         done
-        for i in llvm-{install-name-tool,strip}; do
+        for i in llvm-{install-name-tool,{bitcode-,}strip}; do
             [[ ! -f $i ]] && continue
             rm -f $i
             ln -s llvm-objcopy $i
@@ -151,7 +152,8 @@ fixSdllvm() {
             rm -f lib$i.so
             ln -s lib$i.so{."$VERSION",}
         done
-        rm -f libc++.so.1 libc++abi.so{,.1}
+        rm -f libc++.so{,.1} libc++abi.so{,.1}
+        ln -s libc++.so{.1,}
         ln -s libc++.so.1{.0,}
         ln -s libc++abi.so{.1,}
         ln -s libc++abi.so.1{.0,}
@@ -168,6 +170,7 @@ fixSdllvm() {
         }
     )
     find ./**/bin -type f -exec test ! -x {} \; -exec chmod +x {} \;
+    find lib -maxdepth 1 -type f -exec test ! -x {} \; -exec chmod +x {} \;
     find libexec -type f -exec test ! -x {} \; -exec chmod +x {} \;
 
     prInfo "Done."
