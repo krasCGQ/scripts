@@ -105,8 +105,9 @@ updMirrorlist() {
     prInfo "Updating official mirrorlist..."
     case $ID in
     arch)
-        if curl -s 'https://archlinux.org/mirrorlist/?use_mirror_status=on' |
-            sed -e /##/d -e s/#Server/Server/g >/tmp/arch-mirrorlist; then
+        if curl -s https://archlinux.org/mirrorlist/\?use_mirror_status=on >/tmp/arch-mirrorlist; then
+            # Delete every single comment then uncomment all server lists
+            sed -e /##/d -e s/#Server/Server/g -i /tmp/arch-mirrorlist
             # Filter HTTP mirrors out when HTTPS counterparts are available
             filterMirrorlist /tmp/arch-mirrorlist
             # Prefer rankmirrors script provided by pacman-contrib, as rankMirrors() is still too
