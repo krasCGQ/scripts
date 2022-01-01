@@ -76,6 +76,18 @@ filterMirrorlist() {
     return 0
 }
 
+# To check whether a specific repo has mirrorlist package installed or file exists
+# This function will read exactly one argument and specifying nothing always returns false
+# Usage: isMirrorlistExist <repo> (don't specify `-mirrorlist` at the end!)
+isMirrorlistExist() {
+    local REPO
+    REPO=$1
+
+    [[ -n $REPO ]] && {
+        pacman -Qq "$REPO"-mirrorlist &>/dev/null || test -f /etc/pacman.d/"$REPO"-mirrorlist
+    }
+}
+
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
@@ -120,21 +132,21 @@ updMirrorlist() {
     esac
 
     # CachyOS - generic
-    if pacman -Qq cachyos-mirrolist &>/dev/null || [[ -f /etc/pacman.d/cachyos-mirrorlist ]]; then
+    if isMirrorlistExist cachyos; then
         prInfo "Updating CachyOS mirrorlist (generic)..."
         curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/cachyos-mirrorlist/cachyos-mirrorlist |
             sed /##/d | rankMirrors cachyos-desktop - >/etc/pacman.d/cachyos-mirrorlist
     fi
 
     # CachyOS - x86-64-v3 variant
-    if pacman -Qq cachyos-v3-mirrolist &>/dev/null || [[ -f /etc/pacman.d/cachyos-v3-mirrorlist ]]; then
+    if isMirrorlistExist cachyos-v3; then
         prInfo "Updating CachyOS mirrorlist (x86-64-v3)..."
         curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/cachyos-v3-mirrorlist/cachyos-v3-mirrorlist |
             sed /##/d | rankMirrors cachyos-desktop-v3 - >/etc/pacman.d/cachyos-v3-mirrorlist
     fi
 
     # Chaotic-AUR - discard both geo-located and CDN mirrors
-    if pacman -Qq chaotic-mirrorlist &>/dev/null || [[ -f /etc/pacman.d/chaotic-mirrorlist ]]; then
+    if isMirrorlistExist chaotic; then
         prInfo "Updating Chaotic-AUR mirrorlist..."
         curl -s https://aur.chaotic.cx/mirrorlist.txt |
             sed -e s/#Server/Server/g -e /geo-mirror/d -e /cdn-mirror/d -e '/# /d' |
@@ -142,7 +154,7 @@ updMirrorlist() {
     fi
 
     # Arch Linux CN
-    if pacman -Qq archlinuxcn-mirrorlist &>/dev/null || [[ -f /etc/pacman.d/archlinuxcn-mirrorlist ]]; then
+    if isMirrorlistExist archlinuxcn; then
         prInfo "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
             sed -e s/#Server/Server/g -e /##/d |
@@ -151,4 +163,4 @@ updMirrorlist() {
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f filterMirrorlist getDistroID rankMirrors updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f filterMirrorlist getDistroID isMirrorlistExist rankMirrors updMirrorlist) && updMirrorlist"'
