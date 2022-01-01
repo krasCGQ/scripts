@@ -119,6 +119,20 @@ updMirrorlist() {
     manjaro) pacman-mirrors --fasttrack -q ;;
     esac
 
+    # CachyOS - generic
+    if pacman -Qq cachyos-mirrolist &>/dev/null || [[ -f /etc/pacman.d/cachyos-mirrorlist ]]; then
+        prInfo "Updating CachyOS mirrorlist (generic)..."
+        curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/cachyos-mirrorlist/cachyos-mirrorlist |
+            sed /##/d | rankMirrors cachyos-desktop - >/etc/pacman.d/cachyos-mirrorlist
+    fi
+
+    # CachyOS - x86-64-v3 variant
+    if pacman -Qq cachyos-v3-mirrolist &>/dev/null || [[ -f /etc/pacman.d/cachyos-v3-mirrorlist ]]; then
+        prInfo "Updating CachyOS mirrorlist (x86-64-v3)..."
+        curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/cachyos-v3-mirrorlist/cachyos-v3-mirrorlist |
+            sed /##/d | rankMirrors cachyos-desktop-v3 - >/etc/pacman.d/cachyos-v3-mirrorlist
+    fi
+
     # Chaotic-AUR - discard random-mirror server as it's bad for powerpill use
     if pacman -Qq chaotic-mirrorlist &>/dev/null || [[ -f /etc/pacman.d/chaotic-mirrorlist ]]; then
         prInfo "Updating Chaotic-AUR mirrorlist..."
