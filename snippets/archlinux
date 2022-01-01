@@ -91,7 +91,7 @@ isMirrorlistExist() {
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
-    local ID
+    local ID REPO
     chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
     ID=$(getDistroID)
 
@@ -132,19 +132,14 @@ updMirrorlist() {
     manjaro) pacman-mirrors --fasttrack -q ;;
     esac
 
-    # CachyOS - generic
-    if isMirrorlistExist cachyos; then
-        prInfo "Updating CachyOS mirrorlist (generic)..."
-        curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/cachyos-mirrorlist/cachyos-mirrorlist |
-            sed /##/d | rankMirrors cachyos-desktop - >/etc/pacman.d/cachyos-mirrorlist
-    fi
-
-    # CachyOS - x86-64-v3 variant
-    if isMirrorlistExist cachyos-v3; then
-        prInfo "Updating CachyOS mirrorlist (x86-64-v3)..."
-        curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/cachyos-v3-mirrorlist/cachyos-v3-mirrorlist |
-            sed /##/d | rankMirrors cachyos-desktop-v3 - >/etc/pacman.d/cachyos-v3-mirrorlist
-    fi
+    # CachyOS
+    for REPO in cachyos{,-v3}; do
+        if isMirrorlistExist $REPO; then
+            prInfo "Updating CachyOS mirrorlist ($REPO)..."
+            curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/$REPO-mirrorlist/$REPO-mirrorlist |
+                sed /##/d | rankMirrors ${REPO/os/os-desktop} - >/etc/pacman.d/$REPO-mirrorlist
+        fi
+    done
 
     # Chaotic-AUR - discard both geo-located and CDN mirrors
     if isMirrorlistExist chaotic; then
