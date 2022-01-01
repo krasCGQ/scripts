@@ -133,11 +133,11 @@ updMirrorlist() {
             sed /##/d | rankMirrors cachyos-desktop-v3 - >/etc/pacman.d/cachyos-v3-mirrorlist
     fi
 
-    # Chaotic-AUR - discard random-mirror server as it's bad for powerpill use
+    # Chaotic-AUR - discard both geo-located and CDN mirrors
     if pacman -Qq chaotic-mirrorlist &>/dev/null || [[ -f /etc/pacman.d/chaotic-mirrorlist ]]; then
         prInfo "Updating Chaotic-AUR mirrorlist..."
         curl -s https://aur.chaotic.cx/mirrorlist.txt |
-            sed -e s/#Server/Server/g -e /random-mirror/d -e '/# /d' |
+            sed -e s/#Server/Server/g -e /geo-mirror/d -e /cdn-mirror/d -e '/# /d' |
             rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
     fi
 
