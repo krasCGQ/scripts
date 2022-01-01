@@ -1,6 +1,6 @@
-# shellcheck shell=bash
+#!/hint/bash
 # Environment setup for my servers
-# Copyright (C) 2017-2020 Albert I (krasCGQ)
+# Copyright (C) 2017-2020, 2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Set path to script directory depending on which shell we use

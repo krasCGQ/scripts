@@ -1,6 +1,6 @@
-# shellcheck shell=bash
+#!/hint/bash
 # Android ROM signing wrapper
-# Copyright (C) 2017-2020 Albert I (krasCGQ)
+# Copyright (C) 2017-2020, 2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0
 #
 # This snippet contains portions of code taken from AOSP documentation and has

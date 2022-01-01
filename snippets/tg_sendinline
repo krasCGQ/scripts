@@ -1,6 +1,6 @@
-# shellcheck shell=bash
+#!/hint/bash
 # Wrapper for sending Telegram posts with inline buttons
-# Copyright (C) 2018-2020 Albert I (krasCGQ)
+# Copyright (C) 2018-2020, 2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Based and expanded from https://stackoverflow.com/a/49063573.

@@ -1,6 +1,6 @@
-# shellcheck shell=bash
+#!/hint/bash
 # Collection of Private Internet Access-related commands
-# Copyright (C) 2019-2020 Albert I (krasCGQ)
+# Copyright (C) 2019-2020, 2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Setup Private Internet Access configuration files for OpenVPN

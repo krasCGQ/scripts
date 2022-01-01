@@ -1,6 +1,6 @@
-# shellcheck shell=bash
+#!/hint/bash
 # Arch Linux-specific snippets
-# Copyright (C) 2021 Albert I (krasCGQ)
+# Copyright (C) 2021-2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # A wannabe rankmirrors that doesn't expect repository name being exist on URI
