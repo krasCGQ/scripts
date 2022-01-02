@@ -26,6 +26,6 @@ export SCRIPT_DIR
 source "$SCRIPT_DIR"/env/common
 
 # Drop aliases and functions meant for GNU/Linux systems
-for i in chkSudo getProtonClang; do
+for i in chkSudo; do
     unset -f $i
 done

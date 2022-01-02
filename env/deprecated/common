@@ -1,0 +1,63 @@
+#!/hint/bash
+# Common environment setup (deprecated functions)
+# Copyright (C) 2017-2022 Albert I (krasCGQ)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Bash: Parse current branch in git repository
+if [[ -n $BASH ]]; then
+    parseGitBranch() {
+        local BRANCH
+        BRANCH=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/^* //')
+
+        if [[ -n $BRANCH ]]; then
+            # Don't give extra brackets if project isn't at any branch or is currently detached
+            [[ $BRANCH != "("*")" ]] && BRANCH="($BRANCH)"
+
+            # This is what we want to stdout
+            echo " $BRANCH"
+        fi
+    }
+fi
+
+# Get latest Proton clang from GitHub releases
+getProtonClang() {
+    chkArch x86_64 || return 1
+    local INSTALL_DIR LATEST NAME REPO URL VERSION
+    INSTALL_DIR=/opt/kud/proton-clang
+    REPO=kdrag0n/proton-clang
+
+    prInfo "Obtaining latest version info..."
+    LATEST=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -w tag_name | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
+    if [[ $(<$INSTALL_DIR/ClangVersion.txt 2>/dev/null) -eq $LATEST ]]; then
+        # we're up to date, skip.
+        prInfo "Clang build $LATEST is up to date."
+        rm /tmp/latest.json
+        return
+    fi
+
+    URL=https://github.com/$REPO/archive/$LATEST.tar.gz
+    NAME=$(echo $REPO | cut -d "/" -f 2)-$LATEST.tar.gz
+    prInfo "Downloading $NAME..."
+    if ! aria2c -d /tmp "$URL"; then
+        prWarn "Failed to download $NAME."
+        rm /tmp/"$NAME"
+        return 1
+    fi
+
+    if [[ -d $INSTALL_DIR ]]; then
+        prInfo "Backing up old Clang build..."
+        [[ -d $INSTALL_DIR-old ]] && rm -r $INSTALL_DIR-old
+        mv -f $INSTALL_DIR{,-old}
+    fi
+
+    prInfo "Extracting $NAME..."
+    tar -C /opt/kud -xf /tmp/"$NAME"
+    mv /opt/kud/"${NAME/.tar.gz/}" $INSTALL_DIR
+    # write build version
+    echo "$LATEST" >$INSTALL_DIR/ClangVersion.txt
+    rm /tmp/"$NAME"
+
+    # {29} = last 28 letters of SHA-1 + trailing right parentheses
+    VERSION=$($INSTALL_DIR/bin/clang --version | head -1 | cut -d ' ' -f 1,2,4,6 | sed -e 's/.\{29\}$//')
+    prInfo "Successfully installed $VERSION."
+}
