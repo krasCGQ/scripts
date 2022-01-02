@@ -60,9 +60,8 @@ chkSudo() {
 chkArch() {
     ARCH=$(uname -m)
     for TARGET in "$@"; do
-        [[ $ARCH == "$TARGET" ]] && return
+        [[ $ARCH == "$TARGET" ]] && break
     done
-    return 1
 }
 
 # Get Distro ID for functions that require them
