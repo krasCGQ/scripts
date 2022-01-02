@@ -90,13 +90,13 @@ isMirrorlistExist() {
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
     local ID REPO
-    chkArch x86_64 || { [[ -n $IS_TERMUX ]] && return 1 || exit 1; }
+    chkArch x86_64 || exit 1
     ID=$(getDistroID)
 
     # Prevent executing on anything other than Arch and Manjaro
     case $ID in
     arch | manjaro) ;; # ignore
-    *) prWarn "This function is only available for Arch and Manjaro." && { [[ -n $IS_TERMUX ]] && return 1 || exit 1; } ;;
+    *) prWarn "This function is only available for Arch and Manjaro." && exit 1 ;;
     esac
 
     ## Official repositories:

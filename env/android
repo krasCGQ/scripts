@@ -26,7 +26,6 @@ export SCRIPT_DIR
 source "$SCRIPT_DIR"/env/common
 
 # Drop aliases and functions meant for GNU/Linux systems
-unalias updMirrorlist
-for i in chkSudo getProtonClang rankMirrors updMirrorlist; do
+for i in chkSudo getProtonClang; do
     unset -f $i
 done
