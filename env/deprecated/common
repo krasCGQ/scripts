@@ -3,21 +3,18 @@
 # Copyright (C) 2017-2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Bash: Parse current branch in git repository
-if [[ -n $BASH ]]; then
-    parseGitBranch() {
-        local BRANCH
-        BRANCH=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/^* //')
+# Parse current branch in git repository
+parseGitBranch() {
+    local BRANCH
+    BRANCH=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/^* //')
 
-        if [[ -n $BRANCH ]]; then
-            # Don't give extra brackets if project isn't at any branch or is currently detached
-            [[ $BRANCH != "("*")" ]] && BRANCH="($BRANCH)"
-
-            # This is what we want to stdout
-            echo " $BRANCH"
-        fi
-    }
-fi
+    if [[ -n $BRANCH ]]; then
+        # Don't give extra brackets if project isn't at any branch or is currently detached
+        [[ $BRANCH != "("*")" ]] && BRANCH="($BRANCH)"
+        # This is what we want to stdout
+        echo " $BRANCH"
+    fi
+}
 
 # Get latest Proton clang from GitHub releases
 getProtonClang() {
