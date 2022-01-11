@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash -e
 # Termux environment setup
-# Copyright (C) 2019-2020 Albert I (krasCGQ)
+# Copyright (C) 2019-2020, 2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Modified styled message print from my scripts
@@ -40,7 +40,7 @@ python3 -m pip install --upgrade \
 
 # dotfiles
 prInfo "Setting up dotfiles..."
-git clone git://github.com/krasCGQ/dotfiles .files
+git clone https://github.com/krasCGQ/dotfiles.git .files
 git -C "$HOME"/.files submodule update --init scripts
 mkdir -p .config/nano
 # .zshrc

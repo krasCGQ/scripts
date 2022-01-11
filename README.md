@@ -8,7 +8,7 @@ In order to be able to use these scripts, please run these commands accordingly:
 # Some Bash scripts
 $ git submodule update --init
 # or clone this repository recursively
-$ git clone --recursive git://github.com/krasCGQ/scripts
+$ git clone --recursive https://github.com/krasCGQ/scripts.git
 
 # Python 3 scripts, from PyPI in user mode (latest version whenever possible):
 $ python3 -m pip install --user -r requirements.txt
