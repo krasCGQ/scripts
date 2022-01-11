@@ -25,7 +25,7 @@ Enjoy!
 ### All scripts in this repository (excluding dependencies as submodules):
 
 ```
-Copyright (C) 2017-2021 Albert I (krasCGQ)
+Copyright (C) 2017-2022 Albert I (krasCGQ)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ Complete license can be read [here](./LICENSE).
 ### Also applies to [snippets/rom_sign](./snippets/rom_sign):
 
 ```
-Copyright 2017-2021 Albert I (krasCGQ)
+Copyright (C) 2017-2022 Albert I (krasCGQ)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
