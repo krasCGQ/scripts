@@ -5,11 +5,13 @@
 from hashlib import sha384
 from os import environ, makedirs, remove
 from os.path import exists, join, isdir
+from re import sub as sub
 
 from argparse import ArgumentParser
+from bs4 import BeautifulSoup as bs
 from feedparser import parse
 from git import cmd as git_cmd
-from requests import post
+from requests import get as fetchurl, post
 
 # get content from a file
 def get_content(file):
@@ -176,11 +178,54 @@ def project_announce():
                 # write new version
                 write_to(cache_file, list.entries[j].title)
 
+# COVID-19 update for Sulawesi Tenggara
+def update_covid_sultra():
+    with fetchurl('https://corona.sultraprov.go.id') as r:
+        if not r.ok:
+            raise Exception("Unable to retrieve data. Status %s" %(r.status_code))
+        data = bs(r.text, 'html5lib').body
+
+    # last updated data
+    updated = data.find('span', attrs={'class': 'subheading'}).text
+    # total confirmed cases are on 2nd <h2> tag
+    new = data.find_all('h2', limit=2)[1].text
+    new = new.replace('  ', '').rstrip().split('\n')
+    # contains two <table> tags, will be further split below
+    tables = data.find_all('table', attrs={'class': 'table table-bordered'}, limit=2)
+    # stats changes are on 1st <table> tag
+    stat = sub('\n\s*\n', '\n', tables[0].text)
+    stat = stat.replace('  ', '').strip().split('\n')
+    # tracing changes are on 2nd <table> tag
+    trace = sub('\n\s*\n', '\n', tables[1].text)
+    trace = trace.replace('  (', ' (').replace('  ', '').strip().split('\n')
+
+    # parsed content to post, including disclaimer
+    msg = '*Perkembangan COVID-19 di Sulawesi Tenggara*\n'
+    # replace with less weird wording
+    msg += updated.replace('Update Terakhir :', 'Data per').replace('-', 'pukul') + '\n'
+    msg += '\n'
+    # disclaimer as what reported by central task force might be different
+    msg += '_Data yang dilaporkan dapat berbeda dengan yang tertera pada data harian pusat._\n'
+    msg += '\n'
+    msg += '*Kasus Konfirmasi:* ' + new[1] + '\n'
+    msg += '*Kasus Aktif:* ' + stat[3] + '\n'
+    msg += '*Telah Sembuh:* ' + stat[4] + '\n'
+    msg += '*Meninggal Dunia:* ' + stat[5] + '\n'
+    msg += '*Suspek:* ' + trace[3] + '\n'
+    msg += '*Kontak Erat:* ' + trace[4] + '\n'
+    # this one is essentially not required, this is relative to previous number of added cases
+    # but we report it anyways since it's listed on the website for some reason, somehow =)
+    msg += '*Kasus Baru:* ' + trace[5] + '\n'
+    msg += '\n'
+    msg += '*Sumber data:* https://corona.sultraprov.go.id'
+
+    notify(msg)
+
 # main functions
 if __name__ == '__main__':
     parser = ArgumentParser(description='All-in-one Telegram announcement script using Telegram Bot API.')
     parser.add_argument('-t', '--type', help='select announcement type desired',
-                        type=str, choices=['git', 'linux', 'project'])
+                        type=str, choices=['covid_sultra', 'git', 'linux', 'project'])
 
     args = parser.parse_args()
 
@@ -191,10 +236,13 @@ if __name__ == '__main__':
 
     path = join(path + args.type)
     # create cache directory if not exists
-    if not exists(path):
+    # since we don't save anything for posting updated data for COVID-19, don't create anything
+    if not exists(path) and not args.type.startswith('covid'):
         makedirs(path)
 
-    if args.type == 'git':
+    if args.type == 'covid_sultra':
+        update_covid_sultra()
+    elif args.type == 'git':
         git_announce()
     elif args.type == 'linux':
         linux_announce()

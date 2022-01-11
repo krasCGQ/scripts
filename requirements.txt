@@ -1,4 +1,5 @@
 GitPython
 argparse
+beautifulsoup4
 feedparser
 requests
