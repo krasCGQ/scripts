@@ -1,6 +1,6 @@
 [submodule "telegram"]
 	path = modules/telegram
-	url = git://github.com/fabianonline/telegram.sh
+	url = https://github.com/fabianonline/telegram.sh.git
 [submodule "modules/libufdt"]
 	path = modules/libufdt
 	url = https://android.googlesource.com/platform/system/libufdt
