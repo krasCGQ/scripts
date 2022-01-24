@@ -65,7 +65,7 @@ fixSdllvm() {
             rm -f $i
             ln -s clang $i
         done
-        for i in ld.lld ld64.lld{,.darwinnew} lld-link wasm-ld; do
+        for i in ld.lld ld64.lld{,.darwin{new,old}} lld-link wasm-ld; do
             [[ ! -f $i ]] && continue
             rm -f $i
             ln -s lld $i
@@ -82,6 +82,14 @@ fixSdllvm() {
         [[ -f llvm-addr2line ]] && {
             rm -f llvm-addr2line
             ln -s llvm-{symbolizer,addr2line}
+        }
+        [[ -f llvm-otool ]] && {
+            rm -f llvm-otool
+            ln -s llvm-{objdump,otool}
+        }
+        [[ -f llvm-windres ]] && {
+            rm -f llvm-windres
+            ln -s llvm-{rc,windres}
         }
         rm -f clang llvm-readelf
         ln -s clang{-"$VERSION",}
