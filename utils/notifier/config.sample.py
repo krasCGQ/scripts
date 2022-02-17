@@ -10,6 +10,11 @@ git_urls: list[str] = [
     'https://git.zx2c4.com/wireguard-linux-compat'
 ]
 
+# notifier.linux
+# Whether to notify for -next releases or not.
+# Defaults to True and can be set to False if not desired.
+linux_notify_next: bool = True
+
 # notifier.project
 # Format: <project-name>:<service-name>
 # Valid options for <service-name>: sourceforge, osdn
