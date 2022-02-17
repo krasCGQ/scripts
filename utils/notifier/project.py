@@ -20,16 +20,16 @@ def announce(path):
         service = config.project_lists[i].split(':')[1]
 
         # url of the project
-        base_url = 'https://' + service + '.net/projects/' + project
+        project_url = 'https://' + service + '.net/projects/' + project
         if service == 'sourceforge':
-            project_url = base_url + '/rss'
+            rss_url = project_url + '/rss'
         elif service == 'osdn':
-            project_url = base_url + '/storage/!rss'
+            rss_url = project_url + '/storage/!rss'
         else:
             # error out
             raise Exception(service + " isn't a valid service. Valid services: sourceforge, osdn.")
 
-        list = feedparser_parse(project_url)
+        list = feedparser_parse(rss_url)
 
         # start from the oldest
         for j in range(len(list.entries) - 1, -1, -1):
