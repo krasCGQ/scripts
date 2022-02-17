@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from feedparser import parse
 from git import cmd as git_cmd
 
-from notifier import utils
+from notifier import linux, utils
 
 # git release announcement
 def git_announce():
@@ -49,48 +49,6 @@ def git_announce():
                 utils.push_notification(msg)
                 # write tag sha
                 utils.write_to_file(tag_file, tag_sha)
-
-# linux kernel announcement
-def linux_announce():
-    # url of release rss
-    korg_url = 'https://www.kernel.org/feeds/kdist.xml'
-    list = parse(korg_url)
-
-    # from first to last
-    for i in range (0, len(list.entries)):
-        # skip linux-next; we only want stable and mainline releases
-        if 'linux-next' not in list.entries[i].title:
-            # release details is under id
-            details = list.entries[i].id.split(',')
-            digest = sha384(list.entries[i].title.encode()).hexdigest()
-
-            if 'mainline' in list.entries[i].title:
-                # mainline must be treated differently
-                version_file = join(path + '/mainline-version')
-            else:
-                release = details[2].split('.')
-                version = release[0] + '.' + release[1]
-                # version naming: x.y-version
-                version_file = join(path + '/' + version + '-version')
-
-            # announce new version
-            if utils.get_digest_from_content(version_file) != digest:
-                if 'mainline' in list.entries[i].title:
-                    msg = '*New Linux mainline release available!*\n'
-                    msg += '\n'
-                else:
-                    msg = '*New Linux ' + version + ' series release available!*\n'
-                    msg += '\n'
-                    msg += 'Release type: ' + details[1] + '\n'
-                msg += 'Version: `' + details[2] + '`\n'
-                msg += 'Release date: ' + details[3]
-                if 'mainline' not in list.entries[i].title:
-                    msg += '\n\n'
-                    msg += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[0] + '.x/ChangeLog-' + details[2] + ')'
-
-                utils.push_notification(msg)
-                # write new version
-                utils.write_to_file(version_file, list.entries[i].title)
 
 # projects (SourceForge, OSDN File Storage) announcement
 def project_announce():
@@ -166,6 +124,6 @@ if __name__ == '__main__':
     if args.type == 'git':
         git_announce()
     elif args.type == 'linux':
-        linux_announce()
+        linux.announce(path)
     elif args.type == 'project':
         project_announce()
