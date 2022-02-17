@@ -1,0 +1,18 @@
+#
+# Configuration file for KudNotifier script.
+# Please do not rename or introduce variables.
+#
+
+# notifier.git
+# Please define in either git or http(s) protocols.
+# ssh protocol isn't supported as you may want this script to run unattended.
+git_urls: list[str] = [
+    'https://git.zx2c4.com/wireguard-linux-compat'
+]
+
+# notifier.project
+# Format: <project-name>:<service-name>
+# Valid options for <service-name>: sourceforge, osdn
+project_lists: list[str] = [
+    'kudproject:osdn'
+]

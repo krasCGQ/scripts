@@ -9,20 +9,19 @@ from os.path import exists as path_exists, join as path_join
 
 from git import cmd as git_cmd
 
-from notifier import utils
+from notifier import config, utils
 
 def announce(path):
     # initialize GitPython
     git = git_cmd.Git()
-    # list of urls to announce
-    url = ['git://git.zx2c4.com/wireguard-linux-compat']
 
     # for each url...
-    for i in range (0, len(url)):
+    for i in range (0, len(config.git_urls)):
+        url = config.git_urls[i]
         # repository name
-        repo = url[i].split('/')[-1]
+        repo = url.split('/')[-1]
         # list of tags
-        tags = git.ls_remote('--tags', url[i]).split('\n')
+        tags = git.ls_remote('--tags', url).split('\n')
 
         repo_path = path_join(path + '/' + repo)
         # create repo directory if not exists
@@ -40,7 +39,7 @@ def announce(path):
             if utils.read_from_file(tag_file) != tag_sha:
                 msg = '*New Git release detected!*\n'
                 msg += '\n'
-                msg += 'Repository: [' + repo + '](' + url[i].replace('git:', 'https:') + ')' + '\n'
+                msg += 'Repository: [' + repo + '](' + url.replace('git:', 'https:') + ')' + '\n'
                 msg += 'Tag: `' + tag[3] + '` (`' + tag_sha + '`)\n'
                 msg += 'Commit: `' + tags[j + 1][:12] + '`'
 
