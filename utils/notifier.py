@@ -12,7 +12,7 @@ from os.path import exists as path_exists, isdir as path_isdir, join as path_joi
 from argparse import ArgumentParser
 
 
-if __name__ == '__main__':
+def main():
     parser = ArgumentParser(description='All-in-one Telegram announcement script using Telegram Bot API.')
     parser.add_argument('-t', '--type', help='select announcement type desired', type=str)
 
@@ -31,3 +31,7 @@ if __name__ == '__main__':
         os_makedirs(path)
 
     notifier.announce(path)
+
+
+if __name__ == '__main__':
+    main()
