@@ -9,39 +9,8 @@ from os.path import exists, join, isdir
 from argparse import ArgumentParser
 from feedparser import parse
 from git import cmd as git_cmd
-from requests import post
 
-# get content from a file
-def get_content(file):
-    try:
-        with open(file, 'rb') as file:
-            return file.read().decode()
-    except FileNotFoundError:
-        return None
-
-# get content hash from a file using sha384
-def get_hash(file):
-    content = get_content(file)
-    if content is not None:
-        return sha384(content.encode()).hexdigest()
-    return '' # assume empty
-
-# write content to a file
-def write_to(file, content):
-    with open(file, 'w+') as file:
-        file.write(content)
-
-# telegram sendMessage wrapper
-def notify(msg):
-    tg_url = 'https://api.telegram.org/bot' + environ['TELEGRAM_TOKEN'] + '/SendMessage'
-    query = {
-        'chat_id': environ['TELEGRAM_CHAT'],
-        'text': msg + '\n\n— @KudNotifier —',
-        'parse_mode': 'Markdown',
-        'disable_web_page_preview': 'true'
-    }
-
-    post(tg_url, data=query)
+from notifier import utils
 
 # git release announcement
 def git_announce():
@@ -70,16 +39,16 @@ def git_announce():
             tag_sha = tag[0][:12]
 
             # although rare since tag re-releases are uncommon, announce if tag is different
-            if get_content(tag_file) != tag_sha:
+            if utils.read_from_file(tag_file) != tag_sha:
                 msg = '*New Git release detected!*\n'
                 msg += '\n'
                 msg += 'Repository: [' + repo + '](' + url[i].replace('git:', 'https:') + ')' + '\n'
                 msg += 'Tag: `' + tag[3] + '` (`' + tag_sha + '`)\n'
                 msg += 'Commit: `' + tags[j + 1][:12] + '`'
 
-                notify(msg)
+                utils.push_notification(msg)
                 # write tag sha
-                write_to(tag_file, tag_sha)
+                utils.write_to_file(tag_file, tag_sha)
 
 # linux kernel announcement
 def linux_announce():
@@ -105,7 +74,7 @@ def linux_announce():
                 version_file = join(path + '/' + version + '-version')
 
             # announce new version
-            if get_hash(version_file) != digest:
+            if utils.get_digest_from_content(version_file) != digest:
                 if 'mainline' in list.entries[i].title:
                     msg = '*New Linux mainline release available!*\n'
                     msg += '\n'
@@ -119,9 +88,9 @@ def linux_announce():
                     msg += '\n\n'
                     msg += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[0] + '.x/ChangeLog-' + details[2] + ')'
 
-                notify(msg)
+                utils.push_notification(msg)
                 # write new version
-                write_to(version_file, list.entries[i].title)
+                utils.write_to_file(version_file, list.entries[i].title)
 
 # projects (SourceForge, OSDN File Storage) announcement
 def project_announce():
@@ -157,7 +126,7 @@ def project_announce():
             # cache file: use file name
             cache_file = join(service_path + '/' + name)
             # both hashes are different, announce it
-            if get_hash(cache_file) != digest:
+            if utils.get_digest_from_content(cache_file) != digest:
                 if services[i] == 'sourceforge':
                     msg = '*New file detected on SourceForge:* [' + projects[i] + '](' + project_url + ')\n'
                 elif services[i] == 'osdn':
@@ -172,9 +141,9 @@ def project_announce():
                     # use shortlink provided by OSDN
                     msg += '[Download](https://' + services[i] + '.net/dl/' + projects[i] + '/' + name + ')'
 
-                notify(msg)
+                utils.push_notification(msg)
                 # write new version
-                write_to(cache_file, list.entries[j].title)
+                utils.write_to_file(cache_file, list.entries[j].title)
 
 # main functions
 if __name__ == '__main__':
