@@ -5,7 +5,7 @@
 #
 
 from hashlib import sha384 as hashlib_sha384
-from os import environ as os_environ
+from os import getenv as os_getenv
 
 from requests import post as requests_post
 
@@ -50,9 +50,9 @@ def push_notification(message):
     Push a notification through Telegram Bot API containing the provided message.
     :param message: Part of a body containing the message to be sent.
     """
-    tg_url = 'https://api.telegram.org/bot' + os_environ['TELEGRAM_TOKEN'] + '/SendMessage'
+    tg_url = 'https://api.telegram.org/bot' + os_getenv('TELEGRAM_TOKEN') + '/SendMessage'
     query = {
-        'chat_id': os_environ['TELEGRAM_CHAT'],
+        'chat_id': os_getenv('TELEGRAM_CHAT'),
         'text': message + '\n\n— @KudNotifier —',
         'parse_mode': 'Markdown',
         'disable_web_page_preview': 'true'

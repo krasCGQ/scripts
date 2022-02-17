@@ -6,7 +6,7 @@
 #
 
 from importlib import import_module
-from os import environ as os_environ, makedirs as os_makedirs, remove as os_remove
+from os import getenv as os_getenv, makedirs as os_makedirs, remove as os_remove
 from os.path import exists as path_exists, isdir as path_isdir, join as path_join
 
 from argparse import ArgumentParser
@@ -20,7 +20,7 @@ def main():
 
     notifier = import_module(f'.{args.type}', 'notifier')
 
-    path = path_join(os_environ['HOME'] + '/.tg-announce/')
+    path = path_join(os_getenv('HOME') + '/.tg-announce/')
     # attempt removal of file of same name
     if path_exists(path) and not path_isdir(path):
         os_remove(path)
