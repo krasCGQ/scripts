@@ -10,6 +10,18 @@ from os import getenv as os_getenv
 from requests import post as requests_post
 
 
+def get_cache_dir():
+    """
+    Returns cache directory root that will be storing notifier data.
+    It prefers XDG_CACHE_HOME if set, otherwise default to current user's own cache directory.
+    :return: A string containing cache directory root.
+    """
+    cache_dir = os_getenv('HOME') + '/.cache'
+    if os_getenv('XDG_CACHE_HOME') is not None:
+        cache_dir = os_getenv('XDG_CACHE_HOME')
+    return cache_dir
+
+
 def read_from_file(file):
     """
     Get content from a provided file.
