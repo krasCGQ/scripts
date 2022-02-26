@@ -11,7 +11,7 @@ from git import cmd as git_cmd
 
 from notifier import config, utils
 
-def announce(path):
+def announce(path, dry_run:bool):
     # initialize GitPython
     git = git_cmd.Git()
 
@@ -43,7 +43,7 @@ def announce(path):
                 msg += 'Tag: `' + tag[3] + '` (`' + tag_sha + '`)\n'
                 msg += 'Commit: `' + tags[j + 1][:12] + '`'
 
-                utils.push_notification(msg)
-                # write tag sha
-                utils.write_to_file(tag_file, tag_sha)
+                utils.push_notification(msg, dry_run)
+                if not dry_run:
+                    utils.write_to_file(tag_file, tag_sha)
 

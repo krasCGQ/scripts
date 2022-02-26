@@ -12,7 +12,7 @@ from feedparser import parse as feedparser_parse
 from notifier import config, utils
 
 
-def announce(path):
+def announce(path, dry_run:bool):
     # url of release rss
     korg_url = 'https://www.kernel.org/feeds/kdist.xml'
     list = feedparser_parse(korg_url)
@@ -56,6 +56,6 @@ def announce(path):
                 msg += '\n\n'
                 msg += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[0] + '.x/ChangeLog-' + details[2] + ')'
 
-            utils.push_notification(msg)
-            # write new version
-            utils.write_to_file(version_file, list.entries[i].title)
+            utils.push_notification(msg, dry_run)
+            if not dry_run:
+                utils.write_to_file(version_file, list.entries[i].title)

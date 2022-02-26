@@ -57,11 +57,17 @@ def write_to_file(file, content):
         file.write(content)
 
 
-def push_notification(message):
+def push_notification(message, dry_run:bool):
     """
     Push a notification through Telegram Bot API containing the provided message.
     :param message: Part of a body containing the message to be sent.
+    :param dry_run: Boolean on whether to simulate the notification by printing it out or not.
     """
+    if dry_run:
+        print(message)
+        print()
+        return
+
     tg_url = 'https://api.telegram.org/bot' + os_getenv('TELEGRAM_TOKEN') + '/SendMessage'
     query = {
         'chat_id': os_getenv('TELEGRAM_CHAT'),

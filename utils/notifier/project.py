@@ -13,7 +13,7 @@ from feedparser import parse as feedparser_parse
 from notifier import config, utils
 
 
-def announce(path):
+def announce(path, dry_run:bool):
     for i in range(0, len(config.project_lists)):
         # parse each project and service
         project = config.project_lists[i].split(':')[0]
@@ -60,6 +60,6 @@ def announce(path):
                     # use shortlink provided by OSDN
                     msg += '[Download](https://' + service + '.net/dl/' + project + '/' + name + ')'
 
-                utils.push_notification(msg)
-                # write new version
-                utils.write_to_file(cache_file, list.entries[j].title)
+                utils.push_notification(msg, dry_run)
+                if not dry_run:
+                    utils.write_to_file(cache_file, list.entries[j].title)
