@@ -13,14 +13,15 @@ from feedparser import parse as feedparser_parse
 from notifier import config, utils
 
 
-def announce(path, dry_run:bool):
+def announce(path:str, dry_run:bool):
     for i in range(0, len(config.project_lists)):
         # parse each project and service
-        project = config.project_lists[i].split(':')[0]
-        service = config.project_lists[i].split(':')[1]
+        project: str = config.project_lists[i].split(':')[0]
+        service: str = config.project_lists[i].split(':')[1]
 
         # url of the project
-        project_url = 'https://' + service + '.net/projects/' + project
+        project_url: str = 'https://' + service + '.net/projects/' + project
+        rss_url: str
         if service == 'sourceforge':
             rss_url = project_url + '/rss'
         elif service == 'osdn':
@@ -34,32 +35,33 @@ def announce(path, dry_run:bool):
         # start from the oldest
         for j in range(len(list.entries) - 1, -1, -1):
             # get the file name instead of full path
-            name = list.entries[j].title.split('/')[-1]
-            digest = hashlib_sha384(list.entries[j].title.encode()).hexdigest()
+            name: str = list.entries[j].title.split('/')[-1]
+            digest: str = hashlib_sha384(list.entries[j].title.encode()).hexdigest()
 
-            service_path = path_join(path + '/' + service)
+            service_path: str = path_join(path + '/' + service)
             # create service directory if not exists
             if not path_exists(service_path):
                 os_makedirs(service_path)
 
             # cache file: use file name
-            cache_file = path_join(service_path + '/' + name)
+            cache_file: str = path_join(service_path + '/' + name)
             # both hashes are different, announce it
             if utils.get_digest_from_content(cache_file) != digest:
+                message: str
                 if service == 'sourceforge':
-                    msg = '*New file detected on SourceForge:* [' + project + '](' + project_url + ')\n'
+                    message = '*New file detected on SourceForge:* [' + project + '](' + project_url + ')\n'
                 elif service == 'osdn':
-                    msg = '*New file detected on OSDN File Storage:* [' + project + '](' + project_url + ')\n'
-                msg += '\n'
-                msg += 'Name: `' + name + '`\n' # avoid markdown parsing
-                msg += 'Upload date: ' + list.entries[j].published + '\n'
-                msg += '\n'
+                    message = '*New file detected on OSDN File Storage:* [' + project + '](' + project_url + ')\n'
+                message += '\n'
+                message += 'Name: `' + name + '`\n' # avoid markdown parsing
+                message += 'Upload date: ' + list.entries[j].published + '\n'
+                message += '\n'
                 if service == 'sourceforge':
-                    msg += '[Download](' + list.entries[j].link + ')'
+                    message += '[Download](' + list.entries[j].link + ')'
                 elif service == 'osdn':
                     # use shortlink provided by OSDN
-                    msg += '[Download](https://' + service + '.net/dl/' + project + '/' + name + ')'
+                    message += '[Download](https://' + service + '.net/dl/' + project + '/' + name + ')'
 
-                utils.push_notification(msg, dry_run)
+                utils.push_notification(message, dry_run)
                 if not dry_run:
                     utils.write_to_file(cache_file, list.entries[j].title)
