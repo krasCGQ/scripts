@@ -21,3 +21,7 @@ linux_notify_next: bool = True
 project_lists: list[str] = [
     'kudproject:osdn'
 ]
+
+# notifier.utils
+# Set a desired message byline. Otherwise set this to an empty string.
+utils_byline = '\n\n— @KudNotifier —'

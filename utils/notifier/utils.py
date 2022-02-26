@@ -10,6 +10,8 @@ from sys import stderr as sys_stderr
 
 from requests import post as requests_post
 
+from notifier.config import utils_byline as byline
+
 
 def get_cache_dir():
     """
@@ -79,7 +81,7 @@ def push_notification(message, dry_run:bool):
     tg_url = 'https://api.telegram.org/bot' + token + '/SendMessage'
     query = {
         'chat_id': chat_id,
-        'text': message + '\n\n— @KudNotifier —',
+        'text': message + byline,
         'parse_mode': 'Markdown',
         'disable_web_page_preview': 'true'
     }
