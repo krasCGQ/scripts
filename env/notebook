@@ -105,16 +105,31 @@ alias zramDeinit='chkSudo su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/
 # Play from HDMI capture device using mpv
 # NOTE: profile=capture-device is defined on dotfiles mpv.conf
 playCapture() {
-    ## Additional parameters for video:
-    # demuxer-lavf-o-set=input_format=mjpeg - use MJPEG video input format
-    # av://v4l2:/dev/v4l/by-id/X - path to capture device to play using Video4Linux v2
-    # av://alsa:default:CARD=X - card ID/name to play from using ALSA
+    PARAMS=()
+    local DEVICE PARAMS
+
+    if [[ -e /dev/v4l/by-id/usb-AVerMedia_AVerMedia_USB_Device_53106217017740-video-index0 ]]; then
+        # Video4Linux v2 device and its audio sink
+        DEVICE="AVerMedia_AVerMedia_USB_Device_53106217017740"
+        # Use 1920x1080 output (mpv always picks up 640x480, doesn't happen with VLC)
+        PARAMS+=("--demuxer-lavf-o-append=video_size=1920x1080")
+    elif [[ -e /dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0 ]]; then
+        # Video4Linux v2 device and its audio sink
+        DEVICE="MACROSILICON_USB_Video"
+        # Explicitly use MJPEG output format (it defaults to H.264 1080p5)
+        PARAMS+=("--demuxer-lavf-o-append=input_format=mjpeg")
+        # Force 30 frames per second due to tearing issues with this capture device
+        PARAMS+=("--demuxer-lavf-o-append=framerate=30")
+        PARAMS+=("--fps=30")
+        PARAMS+=("--override-display-fps=30")
+    else
+        prWarn "No capture device found for this session." && return
+    fi
+
     mpv --profile=capture-device \
-        --fps=30 --override-display-fps=30 \
-        --demuxer-lavf-o-append=input_format=mjpeg \
-        --demuxer-lavf-o-append=framerate=30 \
         --demuxer-lavf-o-append=timestamps=2 \
-        --audio-file=av://pulse:alsa_input.usb-MACROSILICON_USB_Video-02.analog-stereo \
-        av://v4l2:/dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0 \
+        "${PARAMS[@]}" \
+        --audio-file=av://pulse:alsa_input.usb-"$DEVICE"-02.analog-stereo \
+        av://v4l2:/dev/v4l/by-id/usb-"$DEVICE"-video-index0 \
         "$@"
 }
