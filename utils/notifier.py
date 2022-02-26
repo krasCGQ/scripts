@@ -8,9 +8,15 @@
 from importlib import import_module
 from os import makedirs as os_makedirs, remove as os_remove
 from os.path import exists as path_exists, isdir as path_isdir, join as path_join
+from sys import modules as sys_modules
 
 from argparse import ArgumentParser, BooleanOptionalAction
 
+try:
+    from notifier import config
+    del sys_modules["notifier.config"]
+except ImportError or ModuleNotFoundError:
+    raise Exception("No config file was found. Copy the sample file and try again.")
 from notifier import utils
 
 
