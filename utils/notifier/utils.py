@@ -6,6 +6,7 @@
 
 from hashlib import sha384 as hashlib_sha384
 from os import getenv as os_getenv
+from sys import stderr as sys_stderr
 
 from requests import post as requests_post
 
@@ -63,14 +64,21 @@ def push_notification(message, dry_run:bool):
     :param message: Part of a body containing the message to be sent.
     :param dry_run: Boolean on whether to simulate the notification by printing it out or not.
     """
+    chat_id: str = os_getenv('TELEGRAM_CHAT')
+    token: str = os_getenv('TELEGRAM_TOKEN')
+    if (chat_id is None or token is None) and not dry_run:
+        print('Unable to retrieve Telegram token or target chat ID. Assuming dry run.',
+              file=sys_stderr)
+        dry_run = True
+
     if dry_run:
         print(message)
         print()
         return
 
-    tg_url = 'https://api.telegram.org/bot' + os_getenv('TELEGRAM_TOKEN') + '/SendMessage'
+    tg_url = 'https://api.telegram.org/bot' + token + '/SendMessage'
     query = {
-        'chat_id': os_getenv('TELEGRAM_CHAT'),
+        'chat_id': chat_id,
         'text': message + '\n\n— @KudNotifier —',
         'parse_mode': 'Markdown',
         'disable_web_page_preview': 'true'
