@@ -21,9 +21,10 @@ from notifier import utils
 
 
 def main():
-    parser = ArgumentParser(description='All-in-one Telegram announcement script using Telegram Bot API.')
-    parser.add_argument('--dry-run', help='simulate what would have been announced', action=BooleanOptionalAction)
+    parser = ArgumentParser(description='Universal Telegram notifier bot script that makes use of Bot API.')
     parser.add_argument('-t', '--type', help='select announcement type desired', type=str)
+    parser.add_argument('--dry-run', help='simulate what would have been announced',
+                        action=BooleanOptionalAction)
 
     args = parser.parse_args()
 
