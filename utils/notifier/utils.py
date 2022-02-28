@@ -64,8 +64,12 @@ def push_notification(message:str, dry_run:bool):
     """
     Push a notification through Telegram Bot API containing the provided message.
     :param message: Part of a body containing the message to be sent.
-    :param dry_run: Boolean on whether to simulate the notification by printing it out or not.
+    :param dry_run: Boolean on whether to simulate the notification by printing to stdout or not.
+                    This is assumed to be True if either token or chat ID aren't given.
+                    Defaults to False.
     :return: Boolean indicating status of this function.
+             Dry running will always return False, otherwise this depends on whether POST succeeds
+             or not. We're not parsing why POST fails because it isn't informative for us.
     """
     chat_id: str = os_getenv('TELEGRAM_CHAT')
     token: str = os_getenv('TELEGRAM_TOKEN')
