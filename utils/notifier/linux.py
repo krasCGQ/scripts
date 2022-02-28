@@ -58,6 +58,5 @@ def announce(path:str, dry_run:bool):
                 message += '\n\n'
                 message += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[0] + '.x/ChangeLog-' + details[2] + ')'
 
-            utils.push_notification(message, dry_run)
-            if not dry_run:
+            if utils.push_notification(message, dry_run):
                 utils.write_to_file(version_file, list.entries[i].title)

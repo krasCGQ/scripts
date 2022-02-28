@@ -43,7 +43,6 @@ def announce(path:str, dry_run:bool):
                 message += 'Tag: `' + tag[3] + '` (`' + tag_sha + '`)\n'
                 message += 'Commit: `' + tags[j + 1][:12] + '`'
 
-                utils.push_notification(message, dry_run)
-                if not dry_run:
+                if utils.push_notification(message, dry_run):
                     utils.write_to_file(tag_file, tag_sha)
 

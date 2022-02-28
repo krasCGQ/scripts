@@ -62,6 +62,5 @@ def announce(path:str, dry_run:bool):
                     # use shortlink provided by OSDN
                     message += '[Download](https://' + service + '.net/dl/' + project + '/' + name + ')'
 
-                utils.push_notification(message, dry_run)
-                if not dry_run:
+                if utils.push_notification(message, dry_run):
                     utils.write_to_file(cache_file, list.entries[j].title)

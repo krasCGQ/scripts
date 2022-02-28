@@ -65,6 +65,7 @@ def push_notification(message:str, dry_run:bool):
     Push a notification through Telegram Bot API containing the provided message.
     :param message: Part of a body containing the message to be sent.
     :param dry_run: Boolean on whether to simulate the notification by printing it out or not.
+    :return: Boolean indicating status of this function.
     """
     chat_id: str = os_getenv('TELEGRAM_CHAT')
     token: str = os_getenv('TELEGRAM_TOKEN')
@@ -76,7 +77,7 @@ def push_notification(message:str, dry_run:bool):
     if dry_run:
         print(message)
         print()
-        return
+        return not dry_run
 
     api_url: str = 'https://api.telegram.org/bot' + token + '/SendMessage'
     query: dict = {
@@ -86,4 +87,5 @@ def push_notification(message:str, dry_run:bool):
         'disable_web_page_preview': 'true'
     }
 
-    requests_post(api_url, data=query)
+    r = requests_post(api_url, data=query)
+    return not dry_run and r.status_code == 200
