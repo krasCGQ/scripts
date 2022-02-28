@@ -60,7 +60,7 @@ def write_to_file(file:str, content:str):
         file.write(content)
 
 
-def push_notification(message:str, dry_run:bool):
+def push_notification(message:str, dry_run:bool=False):
     """
     Push a notification through Telegram Bot API containing the provided message.
     :param message: Part of a body containing the message to be sent.
