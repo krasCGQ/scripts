@@ -35,8 +35,22 @@ if [[ -z $TMUX ]]; then
     [[ -d $HOME/.files ]] && PATH=$HOME/.files/bin:$PATH
     # Export new PATH containing Android SDK binaries
     ANDROID_SDK=/opt/android-sdk
-    [[ -d $ANDROID_SDK/build-tools/30.0.2 ]] && PATH=$PATH:$ANDROID_SDK/build-tools/30.0.2
-    [[ -d $ANDROID_SDK/platform-tools ]] && PATH=$PATH:$ANDROID_SDK/platform-tools
+    if [[ -d $ANDROID_SDK/build-tools ]]; then
+        # No way this will fail after passing the check above, but shellcheck is too noisy as usual
+        pushd $ANDROID_SDK/build-tools >/dev/null || true
+        for VERSION in ./*; do
+            VERSION=${VERSION/.\//}
+            # Filter out anything that doesn't consist of only integers
+            [[ $VERSION =~ [0-9.] ]] && {
+                PATH=$PATH:$ANDROID_SDK/build-tools/$VERSION
+                break
+            }
+        done
+        popd >/dev/null || true
+    fi
+    # There are instances where platform-tools might have been added to PATH already
+    [[ -d $ANDROID_SDK/platform-tools && ! $PATH =~ $ANDROID_SDK/platform-tools ]] &&
+        PATH=$PATH:$ANDROID_SDK/platform-tools
     unset ANDROID_SDK
     export PATH
 fi
