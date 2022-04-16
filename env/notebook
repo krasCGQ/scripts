@@ -27,7 +27,6 @@ source "$SCRIPT_DIR"/env/common
 
 # Aliases
 alias ak-build='$SCRIPT_DIR/tasks/kernel.bash'
-alias neofetch='neofetch --os_arch off --speed_shorthand on --cpu_temp C --cpu_cores off --uptime_shorthand tiny --color_blocks off'
 alias sys2sbin='sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
