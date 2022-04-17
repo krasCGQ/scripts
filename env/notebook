@@ -28,7 +28,6 @@ source "$SCRIPT_DIR"/env/common
 # Aliases
 alias ak-build='$SCRIPT_DIR/tasks/kernel.bash'
 alias sys2sbin='sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
-alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
 if [[ -z $TMUX ]]; then
     # Export new PATH containing local binaries
