@@ -12,7 +12,7 @@ if [[ -n $BASH ]]; then
     SCRIPT_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 elif [[ -n $ZSH_VERSION ]]; then
     # Zsh
-    # shellcheck disable=SC2154
+    # shellcheck disable=SC2154,SC2296
     SCRIPT_DIR=$(dirname "${(%):-%x}")
 else
     echo "! Unsupported shell. Exiting." >&2
