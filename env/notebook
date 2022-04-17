@@ -83,9 +83,6 @@ function zramInit() { (
     # Get amount of physical memory (in kB)
     MEMSIZE=$(grep MemTotal /proc/meminfo | awk '{print $2$3}')
 
-    # Turn off HDD swap first
-    swapoff /dev/sda1
-
     # Setup zRAM as swap
     modprobe zram
     # Write same amount of physical memory
@@ -106,9 +103,6 @@ zramDeinit() { (
     # Turn off zRAM
     swapoff /dev/zram0
     rmmod zram
-
-    # Turn back on HDD swap
-    swapon -p -2 /dev/sda1
 
     # Set swappiness to 1
     sysctl vm.swappiness=1
