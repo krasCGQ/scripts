@@ -155,4 +155,8 @@ sysUpdate() {
         ;;
     *) prWarn "This distribution (${ID:-unknown}) is currently not supported." ;;
     esac
+    [[ -n $(command -v flatpak) ]] && chkSudo flatpak -y update
+    # Snap usually updates packages automatically and unattended
+    [[ -n $(command -v snap) ]] && chkSudo snap refresh
+    return 0
 }
