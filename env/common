@@ -131,15 +131,22 @@ fixSdllvm() {
 # sudo: Shortcut to do system update; completely depends on distribution
 sysUpdate() {
     case $ID in
+    almalinux | centos | fedora | rhel | rocky)
+        # Overriding sudo will somehow break RPM package managers, so don't do that
+        # Only DNF is supported for this function, RPM and YUM won't
+        chkSudo dnf --refresh distro-sync
+        ;;
     alpine)
         chkSudo su -c "apk update && apk upgrade"
         ;;
     arch | manjaro)
         # AUR, please fuck yourself
         [[ -n $(command -v powerpill) ]] && UPD=powerpill || UPD=pacman
+        # Always synchronize package databases with pacman
         chkSudo su -c "pacman -Sy && $UPD -Su --noconfirm"
         ;;
     debian | ubuntu)
+        # No apt-get gang
         chkSudo su -c "apt update && apt dist-upgrade -y"
         ;;
     termux)
