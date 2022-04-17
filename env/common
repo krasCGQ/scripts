@@ -12,7 +12,6 @@ ID=$(getDistroID)
 export ID
 
 # Aliases
-alias nano='nano -au'
 alias update-grub='chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
 alias wget='wget -c -t 0 --retry-connrefused'
 
