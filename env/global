@@ -74,3 +74,28 @@ getDistroID() {
 
     echo "$ID"
 }
+
+# A wrapper so we don't redundantly create an alias to non-existing binary
+createAlias() {
+    local ALIAS COMMAND EXEC
+    ALIAS=$1
+    COMMAND=$2
+
+    # Determine executable binary first
+    EXEC=$(echo -n "$COMMAND" | cut -d\  -f1)
+    # Proceed to next executable if we get superuser binary
+    [[ $EXEC == chkSudo || $EXEC == sudo || $EXEC == doas ]] &&
+        EXEC=$(echo -n "$COMMAND" | cut -d\  -f2)
+
+    # Unset already set alias if present
+    alias "$ALIAS" &>/dev/null && unalias "$ALIAS"
+    # Bail out silently if target binary doesn't exist or isn't executable
+    [[ -x $(command -v "$EXEC") ]] || return
+    # To avoid SC2139 (warning): This expands when defined, not when used. Consider escaping.
+    eval "alias $ALIAS='$COMMAND'"
+}
+
+createSelfAlias() {
+    # Shortcut to create an alias to binary itself, done to avoid redefining most stuffs above
+    createAlias "$1" "$1 $2"
+}
