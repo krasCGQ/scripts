@@ -151,7 +151,7 @@ updMirrorlist() {
     if isMirrorlistExist archlinuxcn; then
         prInfo "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
-            sed -e s/#Server/Server/g -e /##/d |
+            sed -e s/#\ Server/Server/g -e /##/d |
             rankMirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
     fi
 
