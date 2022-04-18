@@ -13,7 +13,7 @@ export ID
 
 # Aliases
 alias update-grub='chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
-alias wget='wget -c -t 0 --retry-connrefused'
+alias wget='wget --retry-connrefused -c'
 
 # Required for GPG signing
 GPG_TTY=$(tty)
