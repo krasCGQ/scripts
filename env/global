@@ -64,6 +64,7 @@ chkArch() {
 # Get Distro ID for functions that require them
 getDistroID() {
     # Try to obtain Distro ID from /etc/os-release
+    # shellcheck source=/dev/null
     source <(grep '^ID' /etc/os-release 2>/dev/null)
     # If Distro ID returns empty, check possibility of running Termux on Android
     # This shouldn't interfere with (ch|pr)oot-ed environment
