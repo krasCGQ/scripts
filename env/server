@@ -23,7 +23,7 @@ export SCRIPT_DIR
 source "$SCRIPT_DIR"/env/common
 
 # Aliases
-alias tmux='force_color_prompt=yes tmux'
+createAlias tmux 'force_color_prompt=yes tmux'
 
 # Shortcut for ssh-agent setup
 sshSetup() {

@@ -86,6 +86,8 @@ createAlias() {
         EXEC=$(echo -n "$COMMAND" | cut -d\  -f"$NUM")
         # Proceed to next executable if we get superuser binary
         [[ $EXEC == chkSudo || $EXEC == sudo || $EXEC == doas ]] && continue
+        # Also if we encounter environment variables being set at the beginning
+        [[ $EXEC =~ = ]] && continue
         # Bail out silently if target binary doesn't exist or isn't executable
         [[ -x $(command -v "$EXEC") ]] && break || return
     done
