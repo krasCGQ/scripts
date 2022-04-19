@@ -78,16 +78,17 @@ createAlias() {
     ALIAS=$1
     COMMAND=$2
 
-    # Determine executable binary first
-    EXEC=$(echo -n "$COMMAND" | cut -d\  -f1)
-    # Proceed to next executable if we get superuser binary
-    [[ $EXEC == chkSudo || $EXEC == sudo || $EXEC == doas ]] &&
-        EXEC=$(echo -n "$COMMAND" | cut -d\  -f2)
-
     # Unset already set alias if present
     alias "$ALIAS" &>/dev/null && unalias "$ALIAS"
-    # Bail out silently if target binary doesn't exist or isn't executable
-    [[ -x $(command -v "$EXEC") ]] || return
+    # limit is rather arbitrary but we most likely won't pass 1337 parameters
+    for NUM in {1..9}; do
+        # Determine executable binary first
+        EXEC=$(echo -n "$COMMAND" | cut -d\  -f"$NUM")
+        # Proceed to next executable if we get superuser binary
+        [[ $EXEC == chkSudo || $EXEC == sudo || $EXEC == doas ]] && continue
+        # Bail out silently if target binary doesn't exist or isn't executable
+        [[ -x $(command -v "$EXEC") ]] && break || return
+    done
     # To avoid SC2139 (warning): This expands when defined, not when used. Consider escaping.
     eval "alias $ALIAS='$COMMAND'"
 }
