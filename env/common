@@ -13,7 +13,7 @@ export ID
 
 # Aliases
 createAlias update-grub 'chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
-createSelfAlias wget '--retry-connrefused -c'
+createSelfAlias wget '--retry-connrefused -U "curl/7.82.0" -c'
 
 # Required for GPG signing
 GPG_TTY=$(tty)
