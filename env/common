@@ -1,5 +1,4 @@
 #!/hint/bash
-# shellcheck source=/dev/null
 # Common environment setup
 # Copyright (C) 2017-2022 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later

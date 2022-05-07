@@ -19,7 +19,6 @@ SCRIPT_DIR=$(dirname "$SCRIPT_DIR")
 export SCRIPT_DIR
 
 # Import common environment script
-# shellcheck source=/dev/null
 source "$SCRIPT_DIR"/env/common
 
 # Aliases

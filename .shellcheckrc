@@ -1,0 +1,10 @@
+# Allow shellcheck to follow arbitrary paths in sources
+external-sources=true
+
+# List of directories shellcheck should look for sourced files
+source-path=SCRIPTDIR/env
+source-path=SCRIPTDIR/snippets
+source-path=SCRIPTDIR/tasks
+
+# List of absolute paths shellcheck should look for sourced files
+source=/etc/os-release

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck source=/dev/null
 # KudProject kernel build tasks
 # Copyright (C) 2018-2021 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later

@@ -22,7 +22,6 @@ export SCRIPT_DIR
 [[ -n $DESKTOP_SESSION ]] && { eval "$(gnome-keyring-daemon --start)" && export SSH_AUTH_SOCK; }
 
 # Import common environment script
-# shellcheck source=/dev/null
 source "$SCRIPT_DIR"/env/common
 
 # Aliases

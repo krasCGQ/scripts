@@ -10,7 +10,6 @@ if ! (return 2>/dev/null); then
 fi
 
 ## Import common environment script
-# shellcheck source=/dev/null
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/../env/common
 
 ## Functions
