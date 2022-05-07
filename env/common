@@ -13,6 +13,9 @@ export ID
 
 # Aliases
 createAlias update-grub 'chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
+createAlias aria2cd 'aria2c --uri-selector=adaptive -R -U "curl/7.82.0" -c -m 0 -x 16'
+createAlias aria2ct 'aria2c --enable-dht6=true'
+createSelfAlias axel '-U "curl/7.82.0" -c -n 16'
 createSelfAlias wget '--retry-connrefused -U "curl/7.82.0" -c'
 
 # Required for GPG signing
