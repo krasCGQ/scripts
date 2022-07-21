@@ -27,13 +27,13 @@ export GPG_TTY KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
 if [[ -z $IS_TERMUX ]]; then
     # Export new PATH containing local binaries
-    PATH=$HOME/.local/bin:$PATH
+    [[ $(basename "$SHELL") == "$CURRENT_SHELL" ]] && export PATH=$HOME/.local/bin:$PATH
     # Export HOME as USER_DIR for use with sudo commands when required
     USER_DIR=$HOME
     # GNU nano for text editor
     EDITOR=nano
     # Export variables to satisfy shellcheck requirements
-    export PATH USER_DIR EDITOR
+    export USER_DIR EDITOR
 fi
 
 # Include Arch Linux-specific snippets for Arch-based distros

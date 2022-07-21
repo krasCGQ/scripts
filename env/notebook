@@ -27,7 +27,8 @@ alias ak-build='$SCRIPT_DIR/tasks/kernel.bash'
 
 if [[ -z $TMUX ]]; then
     # Export new PATH containing local binaries
-    [[ -d $HOME/.files ]] && PATH=$HOME/.files/bin:$PATH
+    [[ $(basename "$SHELL") == "$CURRENT_SHELL" ]] && [[ -d $HOME/.files ]] &&
+        export PATH=$HOME/.files/bin:$PATH
     # Export new PATH containing Android SDK binaries
     ANDROID_SDK=/opt/android-sdk
     if [[ -d $ANDROID_SDK/build-tools ]]; then
@@ -47,7 +48,6 @@ if [[ -z $TMUX ]]; then
     [[ -d $ANDROID_SDK/platform-tools && ! $PATH =~ $ANDROID_SDK/platform-tools ]] &&
         PATH=$PATH:$ANDROID_SDK/platform-tools
     unset ANDROID_SDK
-    export PATH
 fi
 
 # Convert all FLAC, WAV, and/or AIFF files to Opus
