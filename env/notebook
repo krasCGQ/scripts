@@ -18,9 +18,6 @@ fi
 SCRIPT_DIR=$(dirname "$SCRIPT_DIR")
 export SCRIPT_DIR
 
-# Initialize GNOME Keyring for non-GTK environments
-[[ -n $DESKTOP_SESSION ]] && { eval "$(gnome-keyring-daemon --start)" && export SSH_AUTH_SOCK; }
-
 # Import common environment script
 source "$SCRIPT_DIR"/env/common
 
