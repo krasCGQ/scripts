@@ -46,34 +46,6 @@ rankMirrors() {
     rm "$OUT"
 }
 
-# Filter an existing mirrorlist to only include exactly one protocol from same server
-# Usage: filterMirrorlist <mirrorlist>
-filterMirrorlist() {
-    local DEL LINE MIRRORLIST NEXT_SRV PREV_PROTO PREV_SRV SED
-    MIRRORLIST=$1
-
-    # Bail out early if path to mirrorlist isn't supplied
-    [[ -z $MIRRORLIST ]] && { prWarn "Incorrect usage!" && return 1; }
-
-    # seq allows dynamic number of lines to be checked
-    for LINE in $(seq "$(wc <"$MIRRORLIST" -l)"); do
-        PREV_SRV=$(sed "${LINE}q;d" "$MIRRORLIST" | cut -d'/' -f3)
-        NEXT_SRV=$(sed "$((LINE + 1))q;d" "$MIRRORLIST" | cut -d'/' -f3)
-        # If server name doesn't match between the two, don't proceed any further
-        [[ $PREV_SRV != "$NEXT_SRV" ]] && continue
-
-        PREV_PROTO=$(sed "${LINE}q;d" "$MIRRORLIST" | cut -d':' -f1 | cut -d' ' -f3)
-        # Determine which line to be discarded, that's HTTP
-        [[ $PREV_PROTO == http ]] && DEL=$LINE || DEL=$((LINE + 1))
-        # We discard this HTTP version
-        SED+=(-e "${DEL}"d)
-    done
-    # Write the result to exact same mirrorlist file, overwriting it
-    # FIXME: sed: can't read : No such file or directory
-    sed "${SED[@]}" -i "$MIRRORLIST" 2>/dev/null
-    return 0
-}
-
 # To check whether a specific repo has mirrorlist package installed or file exists
 # This function will read exactly one argument and specifying nothing always returns false
 # Usage: isMirrorlistExist <repo> (don't specify `-mirrorlist` at the end!)
@@ -103,11 +75,9 @@ updMirrorlist() {
     prInfo "Updating official mirrorlist..."
     case $ID in
     arch)
-        if curl -s https://archlinux.org/mirrorlist/\?use_mirror_status=on >/tmp/arch-mirrorlist; then
+        if curl -s https://archlinux.org/mirrorlist/\?protocol=https\&use_mirror_status=on >/tmp/arch-mirrorlist; then
             # Delete every single comment then uncomment all server lists
             sed -e /##/d -e s/#Server/Server/g -i /tmp/arch-mirrorlist
-            # Filter HTTP mirrors out when HTTPS counterparts are available
-            filterMirrorlist /tmp/arch-mirrorlist
             # Prefer rankmirrors script provided by pacman-contrib, as rankMirrors() is still too
             # slow even when almost a third have been filtered out. This also allows interrupting
             # the ranking process without ended up having no listed servers; something currently not
@@ -157,4 +127,4 @@ updMirrorlist() {
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f filterMirrorlist getDistroID isMirrorlistExist rankMirrors updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f getDistroID isMirrorlistExist rankMirrors updMirrorlist) && updMirrorlist"'
