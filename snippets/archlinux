@@ -11,6 +11,7 @@ rankMirrors() {
     REPO=$1
     MIRRORLIST=$2
     ARCH=$(uname -m)
+    readonly ARCH MIRRORLIST OUT REPO
 
     # Bail out early if no repo name
     [[ -z $REPO ]] && { prWarn "Incorrect usage!" && return 1; }
@@ -52,7 +53,7 @@ rankMirrors() {
 # Usage: isMirrorlistExist <repo> (don't specify `-mirrorlist` at the end!)
 isMirrorlistExist() {
     local REPO
-    REPO=$1
+    readonly REPO=$1
 
     [[ -n $REPO ]] && {
         pacman -Qq "$REPO"-mirrorlist &>/dev/null || test -f /etc/pacman.d/"$REPO"-mirrorlist
@@ -65,6 +66,7 @@ updMirrorlist() {
     local ID REPO
     chkArch x86_64 || exit 1
     ID=$(getDistroID)
+    readonly ID
 
     # Prevent executing on anything other than Arch and Manjaro
     case $ID in
