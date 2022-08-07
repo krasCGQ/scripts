@@ -43,7 +43,7 @@ rankMirrors() {
         echo "Server = $URL"
     done < <(sort -n "$OUT" | cut -d' ' -f3)
     # Delete temporary file afterwards
-    rm "$OUT"
+    rm -f "$OUT"
 }
 
 # To check whether a specific repo has mirrorlist package installed or file exists
@@ -91,7 +91,7 @@ updMirrorlist() {
                     rankMirrors core /tmp/arch-mirrorlist
                 fi
             } >/etc/pacman.d/mirrorlist
-            rm /tmp/arch-mirrorlist
+            rm -f /tmp/arch-mirrorlist
         else
             prWarn "Unable to retrieve mirrorlist to rank, skipping."
         fi
