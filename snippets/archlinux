@@ -7,8 +7,8 @@
 #
 
 # A wannabe rankmirrors that doesn't expect repository name being exist on URI
-# Usage: rankMirrors <repo name> <mirrorlist or stdin>
-rankMirrors() {
+# Usage: _rank_mirrors <repo name> <mirrorlist or stdin>
+_rank_mirrors() {
     local ARCH MIRRORLIST NEW_URL OLD_URL OUT REPO REPO_URL RESULT STATUS URL
     OUT=/tmp/$0
     REPO=$1
@@ -53,8 +53,8 @@ rankMirrors() {
 
 # To check whether a specific repo has mirrorlist package installed or file exists
 # This function will read exactly one argument and specifying nothing always returns false
-# Usage: isMirrorlistExist <repo> (don't specify `-mirrorlist` at the end!)
-isMirrorlistExist() {
+# Usage: _check_mirrorlist <repo> (don't specify `-mirrorlist` at the end!)
+_check_mirrorlist() {
     local REPO
     readonly REPO=$1
 
@@ -86,7 +86,7 @@ updMirrorlist() {
             sed -e /##/d -e s/#Server/Server/g -i /tmp/arch-mirrorlist
             # Known to peer one or more out-of-date mirrors despite being considered otherwise
             sed -e /i3d.net/d -i /tmp/arch-mirrorlist
-            # Prefer rankmirrors script provided by pacman-contrib, as rankMirrors() is still too
+            # Prefer rankmirrors script provided by pacman-contrib, as _rank_mirrors() is still too
             # slow even when almost a third have been filtered out. This also allows interrupting
             # the ranking process without ended up having no listed servers; something currently not
             # implemented by the latter.
@@ -96,7 +96,7 @@ updMirrorlist() {
                 else
                     prWarn "Continuing with rankMirrors() (most likely very slow)..."
                     # core repository has the smallest database size
-                    rankMirrors core /tmp/arch-mirrorlist
+                    _rank_mirrors core /tmp/arch-mirrorlist
                 fi
             } >/etc/pacman.d/mirrorlist
             rm -f /tmp/arch-mirrorlist
@@ -110,29 +110,29 @@ updMirrorlist() {
 
     # CachyOS
     for REPO in cachyos{,-v3}; do
-        if isMirrorlistExist $REPO; then
+        if _check_mirrorlist $REPO; then
             prInfo "Updating CachyOS mirrorlist ($REPO)..."
             curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/$REPO-mirrorlist/$REPO-mirrorlist |
-                sed /##/d | rankMirrors ${REPO/os/os-desktop} - >/etc/pacman.d/$REPO-mirrorlist
+                sed /##/d | _rank_mirrors ${REPO/os/os-desktop} - >/etc/pacman.d/$REPO-mirrorlist
         fi
     done
 
     # Chaotic-AUR - discard both geo-located and CDN mirrors
-    if isMirrorlistExist chaotic; then
+    if _check_mirrorlist chaotic; then
         prInfo "Updating Chaotic-AUR mirrorlist..."
         curl -s https://aur.chaotic.cx/mirrorlist.txt |
             sed -e /geo-mirror/d -e /cdn-mirror/d -e '/# /d' |
-            rankMirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
+            _rank_mirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
     fi
 
     # Arch Linux CN
-    if isMirrorlistExist archlinuxcn; then
+    if _check_mirrorlist archlinuxcn; then
         prInfo "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
             sed -e s/#\ Server/Server/g -e /repo.archlinuxcn/d -e /##/d |
-            rankMirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
+            _rank_mirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
     fi
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f getDistroID isMirrorlistExist rankMirrors updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f _check_mirrorlist _rank_mirrors getDistroID updMirrorlist) && updMirrorlist"'
