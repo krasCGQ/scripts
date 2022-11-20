@@ -63,6 +63,34 @@ _check_mirrorlist() {
     }
 }
 
+# Replicate behavior of Arch Linux's use_mirror_status flag for ArchLinuxCN mirrorlist
+_archlinuxcn_mirror_status() {
+    local LAST_UPDATED MIRROR MIRRORLIST
+    MIRRORLIST=$1
+    # Fetch the main mirror's Unix timestamp, this is assumed to be latest
+    LAST_UPDATED=$(curl -s https://repo.archlinuxcn.org/lastupdate)
+    # Mark variables read only from this point
+    readonly LAST_UPDATED MIRRORLIST
+
+    # Bail out if we are unable to fetch it, since it'll be awkward
+    [[ -n $LAST_UPDATED ]] ||
+        { prWarn "Unable to determine last updated timestamp. Aborting." && return 1; }
+
+    while IFS= read -r MIRROR; do
+        # Sanitize output by skipping empty lines
+        [[ -n $MIRROR ]] || continue
+        # Add directly to filtered output if we encounter the main mirror
+        if ! [[ $MIRROR =~ repo.archlinuxcn.org ]]; then
+            # Fetch the mirror's Unix timestamp
+            MIRROR_TIMESTAMP=$(curl -sL "${MIRROR/\$arch/lastupdate}")
+            # Skip this mirror if it's older or inaccessible
+            [[ -n $MIRROR_TIMESTAMP && $MIRROR_TIMESTAMP -ge $LAST_UPDATED ]] || continue
+        fi
+        # Print this latest mirror to stdout
+        echo "Server = $MIRROR"
+    done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
+}
+
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
@@ -130,9 +158,9 @@ updMirrorlist() {
         prInfo "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
             sed -e s/#\ Server/Server/g -e /repo.archlinuxcn/d -e /##/d |
-            _rank_mirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
+            _archlinuxcn_mirror_status - | _rank_mirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
     fi
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f _check_mirrorlist _rank_mirrors getDistroID updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f _archlinuxcn_mirror_status _check_mirrorlist _rank_mirrors getDistroID updMirrorlist) && updMirrorlist"'
