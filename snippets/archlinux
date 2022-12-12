@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-# A wannabe rankmirrors that doesn't expect repository name being exist on URI
+# A wannabe rankmirrors that doesn't expect repository name being exist on URL
 # Usage: _rank_mirrors <repo name> <mirrorlist or stdin>
 _rank_mirrors() {
     local ARCH MIRRORLIST NEW_URL OLD_URL OUT REPO REPO_URL RESULT STATUS URL
@@ -20,11 +20,11 @@ _rank_mirrors() {
     [[ -z $REPO ]] && { prWarn "Incorrect usage!" && return 1; }
 
     # Parse every URL in the mirrorlist
-    while read -r URL; do
-        # Skip empty lines; no point on checking that
-        [[ -z $URL ]] && continue
+    while IFS= read -r MIRROR; do
+        # Sanitize output by skipping empty lines
+        [[ -z $MIRROR ]] && continue
         # Convert to base repository URL
-        REPO_URL=$(echo "$URL" | sed -e "s/\$repo/$REPO/" -e "s/\$arch/$ARCH/")
+        REPO_URL=$(echo "$MIRROR" | sed -e "s/\$repo/$REPO/" -e "s/\$arch/$ARCH/")
         STATUS=$(curl -sw '%{http_code}' "$REPO_URL"/ -o /dev/null)
         if [[ $STATUS =~ 30[12378]{1} ]]; then
             # Handle redirections here as tracking can't be done while following it
@@ -39,13 +39,13 @@ _rank_mirrors() {
         # Track status code and time required to download database
         RESULT=$(curl -sw '%{time_total} %{http_code}' "$REPO_URL"/"$REPO".db -o /dev/null)
         # Only save to temporary file if it can be downloaded
-        [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $URL" >>"$OUT"
+        [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $MIRROR" >>"$OUT"
     done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
     [[ ! -f $OUT ]] && { prWarn "Nothing to rank?" && return 1; }
 
     # Convert back and rank mirrors by fastest download time
-    while read -r URL; do
-        echo "Server = $URL"
+    while read -r MIRROR; do
+        echo "Server = $MIRROR"
     done < <(sort -n "$OUT" | cut -d' ' -f3)
     # Delete temporary file afterwards
     rm -f "$OUT"
