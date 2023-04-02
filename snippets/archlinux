@@ -9,7 +9,7 @@
 # A wannabe rankmirrors that doesn't expect repository name being exist on URL
 # Usage: _rank_mirrors <repo name> <mirrorlist or stdin>
 _rank_mirrors() {
-    local ARCH MIRRORLIST NEW_URL OLD_URL OUT REPO REPO_URL RESULT STATUS URL
+    local ARCH MIRRORLIST NEW_URL OLD_URL OUT REPO REPO_URL RESULT STATUS
     OUT=/tmp/$0
     REPO=$1
     MIRRORLIST=$2
@@ -25,11 +25,11 @@ _rank_mirrors() {
         [[ -z $MIRROR ]] && continue
         # Convert to base repository URL
         REPO_URL=$(echo "$MIRROR" | sed -e "s/\$repo/$REPO/" -e "s/\$arch/$ARCH/")
-        STATUS=$(curl -sw '%{http_code}' "$REPO_URL"/ -o /dev/null)
+        STATUS=$(curl -s -w '%{http_code}' "$REPO_URL/" -o /dev/null)
         if [[ $STATUS =~ 30[12378]{1} ]]; then
             # Handle redirections here as tracking can't be done while following it
             OLD_URL=$(echo "$REPO_URL" | cut -d'/' -f3)
-            NEW_URL=$(curl -sI "$REPO_URL" | grep -iw location: | cut -d' ' -f2 |
+            NEW_URL=$(curl -s -I "$REPO_URL" | grep -i -w location: | cut -d' ' -f2 |
                 sed -e 's|http[s?]://||' -e "s|/$REPO||" -e "s|/$ARCH||" -e 's/[[:space:]]//g')
             REPO_URL=${REPO_URL/$OLD_URL/$NEW_URL}
         elif [[ $STATUS != 200 ]]; then
@@ -37,7 +37,7 @@ _rank_mirrors() {
             continue
         fi
         # Track status code and time required to download database
-        RESULT=$(curl -sw '%{time_total} %{http_code}' "$REPO_URL"/"$REPO".db -o /dev/null)
+        RESULT=$(curl -s -w '%{time_total} %{http_code}' "$REPO_URL/$REPO.db" -o /dev/null)
         # Only save to temporary file if it can be downloaded
         [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $MIRROR" >>"$OUT"
     done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
@@ -59,7 +59,7 @@ _check_mirrorlist() {
     readonly REPO=$1
 
     [[ -n $REPO ]] && {
-        pacman -Qq "$REPO"-mirrorlist &>/dev/null || test -f /etc/pacman.d/"$REPO"-mirrorlist
+        pacman -Qq "$REPO-mirrorlist" &>/dev/null || test -f "/etc/pacman.d/$REPO-mirrorlist"
     }
 }
 
@@ -71,7 +71,7 @@ _filter_by_mirror_status() {
     REFERENCE_URL=$1
     MIRRORLIST=$2
     # Fetch the reference mirror's Unix timestamp, this is assumed to be latest
-    LAST_UPDATED=$(curl -sL "$REFERENCE_URL/lastupdate")
+    LAST_UPDATED=$(curl -s -L "$REFERENCE_URL/lastupdate")
     # Mark variables read-only from this point on
     readonly LAST_UPDATED MIRRORLIST REFERENCE_URL
 
@@ -92,7 +92,7 @@ _filter_by_mirror_status() {
             # Just copy MIRROR to SANITIZED_MIRROR if this is empty so we don't bail out
             SANITIZED_MIRROR=${SANITIZED_MIRROR:-$MIRROR}
             # Fetch the mirror's Unix timestamp
-            MIRROR_TIMESTAMP=$(curl -sL "${SANITIZED_MIRROR/\$arch/lastupdate}")
+            MIRROR_TIMESTAMP=$(curl -s -L "${SANITIZED_MIRROR/\$arch/lastupdate}")
             # Skip this mirror if it's either inaccessible or returns an invalid value
             [[ -n $MIRROR_TIMESTAMP && -z ${MIRROR_TIMESTAMP//[0-9]/} ]] || continue
             # Also do the same if the mirror is older than reference
@@ -152,10 +152,10 @@ updMirrorlist() {
 
     # CachyOS
     for REPO in cachyos{,-v3}; do
-        if _check_mirrorlist $REPO; then
+        if _check_mirrorlist "$REPO"; then
             prInfo "Updating CachyOS mirrorlist ($REPO)..."
-            curl -s https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/$REPO-mirrorlist/$REPO-mirrorlist |
-                sed /##/d | _rank_mirrors ${REPO/os/os-desktop} - >/etc/pacman.d/$REPO-mirrorlist
+            curl -s "https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/$REPO-mirrorlist/$REPO-mirrorlist" |
+                sed /##/d | _rank_mirrors "${REPO/os/os-desktop}" - >"/etc/pacman.d/$REPO-mirrorlist"
         fi
     done
 
