@@ -1,7 +1,7 @@
 #!/hint/bash
 # Arch Linux-specific snippets
 #
-# Copyright (C) 2021-2022 Albert I (krasCGQ)
+# Copyright (C) 2021-2023 Albert I (krasCGQ)
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
@@ -63,14 +63,17 @@ _check_mirrorlist() {
     }
 }
 
-# Replicate behavior of Arch Linux's use_mirror_status flag for ArchLinuxCN mirrorlist
-_archlinuxcn_mirror_status() {
-    local LAST_UPDATED MIRROR MIRRORLIST
-    MIRRORLIST=$1
-    # Fetch the main mirror's Unix timestamp, this is assumed to be latest
-    LAST_UPDATED=$(curl -s https://repo.archlinuxcn.org/lastupdate)
-    # Mark variables read only from this point
-    readonly LAST_UPDATED MIRRORLIST
+# Replicate behavior of Arch Linux's use_mirror_status flag for use with repositories that provide
+# Unix timestamp of the latest mirror update
+# Usage: _filter_by_mirror_status <reference-url without /lastupdate> <mirrorlist-file or stdout>
+_filter_by_mirror_status() {
+    local HAS_REPO_PLACEHOLDER LAST_UPDATED MIRROR MIRRORLIST REFERENCE_URL SANITIZED_MIRROR
+    REFERENCE_URL=$1
+    MIRRORLIST=$2
+    # Fetch the reference mirror's Unix timestamp, this is assumed to be latest
+    LAST_UPDATED=$(curl -sL "$REFERENCE_URL/lastupdate")
+    # Mark variables read-only from this point on
+    readonly LAST_UPDATED MIRRORLIST REFERENCE_URL
 
     # Bail out if we are unable to fetch it, since it'll be awkward
     [[ -n $LAST_UPDATED ]] ||
@@ -79,15 +82,26 @@ _archlinuxcn_mirror_status() {
     while IFS= read -r MIRROR; do
         # Sanitize output by skipping empty lines
         [[ -n $MIRROR ]] || continue
+        # Set flag if this mirror has "$repo" placeholder
+        [[ $MIRROR =~ "\$repo" ]] && HAS_REPO_PLACEHOLDER=1
         # Add directly to filtered output if we encounter the main mirror
-        if ! [[ $MIRROR =~ repo.archlinuxcn.org ]]; then
+        if ! [[ $MIRROR =~ $REFERENCE_URL ]]; then
+            # This is stupid since $(basename) built-in shell command is meant to get file name from
+            # a defined path, but it always works on anything as long as it contains slashes
+            SANITIZED_MIRROR=${HAS_REPO_PLACEHOLDER:+${MIRROR/\$repo/"$(basename "$REFERENCE_URL")"}}
+            # Just copy MIRROR to SANITIZED_MIRROR if this is empty so we don't bail out
+            SANITIZED_MIRROR=${SANITIZED_MIRROR:-$MIRROR}
             # Fetch the mirror's Unix timestamp
-            MIRROR_TIMESTAMP=$(curl -sL "${MIRROR/\$arch/lastupdate}")
-            # Skip this mirror if it's older or inaccessible
-            [[ -n $MIRROR_TIMESTAMP && $MIRROR_TIMESTAMP -ge $LAST_UPDATED ]] || continue
+            MIRROR_TIMESTAMP=$(curl -sL "${SANITIZED_MIRROR/\$arch/lastupdate}")
+            # Skip this mirror if it's either inaccessible or returns an invalid value
+            [[ -n $MIRROR_TIMESTAMP && -z ${MIRROR_TIMESTAMP//[0-9]/} ]] || continue
+            # Also do the same if the mirror is older than reference
+            [[ $MIRROR_TIMESTAMP -ge $LAST_UPDATED ]] || continue
         fi
         # Print this latest mirror to stdout
         echo "Server = $MIRROR"
+        # Unset flag before moving to next mirror entry
+        unset HAS_REPO_PLACEHOLDER
     done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
 }
 
@@ -150,6 +164,7 @@ updMirrorlist() {
         prInfo "Updating Chaotic-AUR mirrorlist..."
         curl -s https://aur.chaotic.cx/mirrorlist.txt |
             sed -e /geo-mirror/d -e /cdn-mirror/d -e '/# /d' |
+            _filter_by_mirror_status https://cdn-mirror.chaotic.cx/no-failover/chaotic-aur - |
             _rank_mirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
     fi
 
@@ -158,9 +173,10 @@ updMirrorlist() {
         prInfo "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
             sed -e s/#\ Server/Server/g -e /repo.archlinuxcn/d -e /##/d |
-            _archlinuxcn_mirror_status - | _rank_mirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
+            _filter_by_mirror_status https://repo.archlinuxcn.org - |
+            _rank_mirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
     fi
 
     prInfo "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f _archlinuxcn_mirror_status _check_mirrorlist _rank_mirrors getDistroID updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f _check_mirrorlist _filter_by_mirror_status _rank_mirrors getDistroID updMirrorlist) && updMirrorlist"'
