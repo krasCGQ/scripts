@@ -1,6 +1,6 @@
 #!/hint/bash
 # Common environment setup (deprecated functions)
-# Copyright (C) 2017-2022 Albert I (krasCGQ)
+# Copyright (C) 2017-2023 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Parse current branch in git repository
@@ -57,4 +57,89 @@ getProtonClang() {
     # {29} = last 28 letters of SHA-1 + trailing right parentheses
     VERSION=$($INSTALL_DIR/bin/clang --version | head -1 | cut -d ' ' -f 1,2,4,6 | sed -e 's/.\{29\}$//')
     prInfo "Successfully installed $VERSION."
+}
+
+# Fix Snapdragon LLVM permissions and symlinks; prebuilts extracted from BSP
+fixSdllvm() {
+    local VERSION
+    chkArch x86_64 || return 1
+    pushd "$1" >/dev/null || return
+
+    # try to get Clang major version
+    [[ ! -x bin/clang ]] && chmod +x bin/clang
+    VERSION=$(bin/clang --version | head -1 | cut -d' ' -f3 | cut -d. -f1)
+
+    prInfo "Fixing permissions and symlinks..."
+    (
+        cd bin || return 1
+        [[ -f ld.qcld ]] && {
+            for i in {a{arch64,rm},riscv,x86}-link; do
+                [[ ! -f $i ]] && continue
+                rm -f $i
+                ln -s ld.qcld $i
+            done
+        }
+        for i in clang{++,-c{l,pp}}; do
+            rm -f $i
+            ln -s clang $i
+        done
+        for i in ld.lld ld64.lld{,.darwin{new,old}} lld-link wasm-ld; do
+            [[ ! -f $i ]] && continue
+            rm -f $i
+            ln -s lld $i
+        done
+        for i in llvm-{dlltool,{,ran}lib}; do
+            rm -f $i
+            ln -s llvm-ar $i
+        done
+        for i in llvm-{install-name-tool,{bitcode-,}strip}; do
+            [[ ! -f $i ]] && continue
+            rm -f $i
+            ln -s llvm-objcopy $i
+        done
+        [[ -f llvm-addr2line ]] && {
+            rm -f llvm-addr2line
+            ln -s llvm-{symbolizer,addr2line}
+        }
+        [[ -f llvm-otool ]] && {
+            rm -f llvm-otool
+            ln -s llvm-{objdump,otool}
+        }
+        [[ -f llvm-windres ]] && {
+            rm -f llvm-windres
+            ln -s llvm-{rc,windres}
+        }
+        rm -f clang llvm-readelf
+        ln -s clang{-"$VERSION",}
+        ln -s llvm-{readobj,readelf}
+    )
+    (
+        cd lib || return 1
+        for i in LTO LW; do
+            rm -f lib$i.so
+            ln -s lib$i.so{."$VERSION",}
+        done
+        rm -f libc++.so{,.1} libc++abi.so{,.1}
+        ln -s libc++.so{.1,}
+        ln -s libc++.so.1{.0,}
+        ln -s libc++abi.so{.1,}
+        ln -s libc++abi.so.1{.0,}
+        # only present on 12+
+        [[ -f libprotobuf-lite.so ]] && {
+            VERSION=$(find . -name 'libprotobuf-lite.so.*' | rev | cut -d. -f-4 | rev)
+            rm -f libprotobuf-lite.so
+            ln -s libprotobuf-lite.so{."$VERSION",}
+        }
+        [[ -f libprotoc.so ]] && {
+            VERSION=$(find . -name 'libprotoc.so.*' | rev | cut -d. -f-4 | rev)
+            rm -f libprotoc.so
+            ln -s libprotoc.so{."$VERSION",}
+        }
+    )
+    find ./**/bin -type f -exec test ! -x {} \; -exec chmod +x {} \;
+    find lib -maxdepth 1 -type f -exec test ! -x {} \; -exec chmod +x {} \;
+    find libexec -type f -exec test ! -x {} \; -exec chmod +x {} \;
+
+    prInfo "Done."
+    popd >/dev/null || true
 }
