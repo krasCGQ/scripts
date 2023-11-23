@@ -1,0 +1,3 @@
+# Don't bother checking config file formatting
+notifier/config.sample.py
+notifier/config.py
