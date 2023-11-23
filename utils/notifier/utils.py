@@ -5,47 +5,12 @@
 #
 
 from hashlib import sha384 as hashlib_sha384
-from os import getenv as os_getenv, getlogin as os_getlogin
-from random import randrange as random_randrange
+from os import getenv as os_getenv
 from sys import stderr as sys_stderr
 
 from requests import post as requests_post
 
 from notifier.config import utils_byline as byline
-
-
-class GloryToXiJinping(Exception):
-    """Glory to the CCP, Glory to Xi Jinping!"""
-    credit: int = random_randrange(10000, 65535)
-    name: str = os_getlogin()
-
-    print("⣿⣿⣿⣿⣿⠟⠋⠄⠄⠄⠄⠄⠄⠄⢁⠈⢻⢿⣿⣿⣿⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⣿⠃⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⡀⠭⢿⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⡟⠄⢀⣾⣿⣿⣿⣷⣶⣿⣷⣶⣶⡆⠄⠄⠄⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⡇⢀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠄⠄⢸⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⣇⣼⣿⣿⠿⠶⠙⣿⡟⠡⣴⣿⣽⣿⣧⠄⢸⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⣿⣾⣿⣿⣟⣭⣾⣿⣷⣶⣶⣴⣶⣿⣿⢄⣿⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⣿⣿⣿⣿⡟⣩⣿⣿⣿⡏⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⣿⣿⣹⡋⠘⠷⣦⣀⣠⡶⠁⠈⠁⠄⣿⣿⣿⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⣿⣿⣍⠃⣴⣶⡔⠒⠄⣠⢀⠄⠄⠄⡨⣿⣿⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⣿⣿⣿⣦⡘⠿⣷⣿⠿⠟⠃⠄⠄⣠⡇⠈⠻⣿⣿⣿⣿")
-    print("⣿⣿⣿⣿⡿⠟⠋⢁⣷⣠⠄⠄⠄⠄⣀⣠⣾⡟⠄⠄⠄⠄⠉⠙⠻")
-    print("⡿⠟⠋⠁⠄⠄⠄⢸⣿⣿⡯⢓⣴⣾⣿⣿⡟⠄⠄⠄⠄⠄⠄⠄⠄")
-    print("⠄⠄⠄⠄⠄⠄⠄⣿⡟⣷⠄⠹⣿⣿⣿⡿⠁⠄⠄⠄⠄⠄⠄⠄⠄")
-    print("ATTENTION {0}! {0} 注意!" .format(name))
-    print("This is the Central Intelligentsia of the Chinese Communist Party.")
-    print("您的 Internet 浏览器历史记录和活动引起了我们的注意。")
-    print("YOUR INTERNET ACTIVITY HAS ATTRACTED OUR ATTENTION.")
-    print("因此，您的个人资料中的 {0} (-{0} Social Credits) 个社会积分将打折。" .format(credit))
-    print("DO NOT DO THIS AGAIN! 不要再这样做!")
-    print("If you do not hesitate, more Social Credits (-{0} Social Credits) will be subtracted "
-          "from your profile, resulting in the subtraction of ration supplies. "
-          "(由人民供应部重新分配 CCP)" .format(credit))
-    print("You'll also be sent into a re-education camp in the Xinjiang Uyghur Autonomous Zone.")
-    print("如果您毫不犹豫，更多的社会信用将从您的个人资料中打折，从而导致口粮供应减少。")
-    print("您还将被送到新疆维吾尔自治区的再教育营。")
-    print("为党争光! Glory to the CCP!")
-    print()
 
 
 def get_cache_dir():
@@ -128,7 +93,3 @@ def push_notification(message:str, dry_run:bool=False):
 
     r = requests_post(api_url, data=query)
     return not dry_run and r.status_code == 200
-
-
-def announce(path:str='/dev/null', dry_run:bool=False):
-    raise GloryToXiJinping('Execution date 伊势海')
