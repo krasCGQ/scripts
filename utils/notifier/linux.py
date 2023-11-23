@@ -66,6 +66,34 @@ def compare_release(previous_file: str, current: str):
     return False  # up to date for this series
 
 
+def prepare_message(version: str, release_type: str, release_date: str):
+    """
+    This is the message that will be sent by announce() below.
+    :param version: Kernel version string.
+    :param release_type: Kernel release type string.
+    :param release_date: Kernel release date string.
+    :return: A string that is the formatted message of template below.
+    """
+    # common parts for all types of releases
+    message: str = """*New Linux kernel release available!*
+
+Version: `{}` ({})
+Date: {}"""
+
+    # currently specific to stable or longterm releases
+    if release_type == 'stable' or release_type == 'longterm':
+        # extract the major version out so we can link to plain text changelog
+        version_major: int = version.split('.')[0]
+
+        message += """
+
+[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v{}.x/ChangeLog-{})"""
+
+        return message.format(version, release_type, release_date, version_major, version)
+
+    return message.format(version, release_type, release_date)
+
+
 def announce(path: str, dry_run: bool):
     # official link of the RSS feed
     korg_url: str = 'https://www.kernel.org/feeds/kdist.xml'
@@ -109,22 +137,6 @@ def announce(path: str, dry_run: bool):
 
         # announce new version
         if compare_release(version_file, version):
-            message: str
-            if release_type == 'mainline':
-                message = '*New Linux mainline release available!*\n'
-                message += '\n'
-            elif release_type == 'linux-next':
-                message = '*New linux-next release available!*\n'
-                message += '\n'
-            else:
-                message = '*New Linux ' + series + ' series release available!*\n'
-                message += '\n'
-                message += 'Release type: ' + release_type + '\n'
-            message += 'Version: `' + version + '`\n'
-            message += 'Release date: ' + release_date
-            if release_type != 'mainline' and release_type != 'linux-next':
-                message += '\n\n'
-                message += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + version_major + '.x/ChangeLog-' + version + ')'
-
+            message = prepare_message(version, release_type, release_date)
             if utils.push_notification(message, dry_run):
                 utils.write_to_file(version_file, version)
