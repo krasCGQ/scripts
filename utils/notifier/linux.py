@@ -1,15 +1,68 @@
 #
-# Copyright (C) 2021-2022 Albert I (krasCGQ)
+# Copyright (C) 2021-2023 Albert I (krasCGQ)
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-from hashlib import sha384 as hashlib_sha384
 from os.path import join as path_join
 
 from feedparser import parse as feedparser_parse
 
 from notifier import config, utils
+
+
+def compare_release(previous_file: str, current: str):
+    """
+    Compare between two different release versions to determine if we need to announce.
+    :param previous_file: Path to cached file containing exactly the previous version string.
+    :param current: A string which is the current version we are going to compare against.
+    :return: Boolean status, True if needs announcing otherwise False and thus skipping
+             announcement for this particular kernel version.
+    """
+    previous: str = utils.read_from_file(previous_file)
+    if previous is None:  # this is new to us
+        return True
+
+    if 'mainline' in previous_file:
+        # compare major version first
+        old_version: int = previous.split('.')[0]
+        new_version: int = current.split('.')[0]
+        if new_version > old_version:
+            return True
+
+        # compare patchlevel changes next if major version remains the same
+        old_patchlevel: int = previous.split('.')[1].split('-')[0]
+        new_patchlevel: int = current.split('.')[1].split('-')[0]
+        if new_patchlevel > old_patchlevel:
+            return True
+
+        try:
+            # compare changes to release candidate number if possible
+            old_candidate: str = previous.split('-')[1]
+            new_candidate: str = current.split('-')[1]
+            if new_candidate != old_candidate:
+                return True
+        except IndexError:
+            # if we encounter IndexError, there are two possibilities:
+            # - it's the first candidate for next stable release
+            # - it's the final mainline release, ready for stable branching
+            return True
+
+    elif 'next' in previous_file:
+        # compare timestamp for linux-next
+        old_date: int = previous.split('-')[1]
+        new_date: int = current.split('-')[1]
+        if new_date > old_date:
+            return True
+
+    else:  # stable or longterm
+        # compare only kernel sublevel for stable and longterm releases
+        old_sublevel: int = previous.split('.')[2]
+        new_sublevel: int = current.split('.')[2]
+        if new_sublevel > old_sublevel:
+            return True
+
+    return False  # up to date for this series
 
 
 def announce(path: str, dry_run: bool):
@@ -25,7 +78,6 @@ def announce(path: str, dry_run: bool):
 
         # release details is under id
         details: list[str] = list.entries[i].id.split(',')
-        digest: str = hashlib_sha384(list.entries[i].title.encode()).hexdigest()
 
         # mainline and -next must be treated differently
         version_file: str
@@ -40,7 +92,7 @@ def announce(path: str, dry_run: bool):
             version_file = path_join(path + '/' + version + '-version')
 
         # announce new version
-        if utils.get_digest_from_content(version_file) != digest:
+        if compare_release(version_file, details[2]):
             message: str
             if 'mainline' in list.entries[i].title:
                 message = '*New Linux mainline release available!*\n'
@@ -60,4 +112,4 @@ def announce(path: str, dry_run: bool):
                     0] + '.x/ChangeLog-' + details[2] + ')'
 
             if utils.push_notification(message, dry_run):
-                utils.write_to_file(version_file, list.entries[i].title)
+                utils.write_to_file(version_file, details[2])
