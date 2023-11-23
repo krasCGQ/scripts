@@ -1,4 +1,3 @@
 GitPython
-argparse
 feedparser
 requests
