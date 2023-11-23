@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+from datetime import datetime
 from os.path import join as path_join
 
 from feedparser import parse as feedparser_parse
@@ -66,50 +67,64 @@ def compare_release(previous_file: str, current: str):
 
 
 def announce(path: str, dry_run: bool):
-    # url of release rss
+    # official link of the RSS feed
     korg_url: str = 'https://www.kernel.org/feeds/kdist.xml'
     releases: dict = feedparser_parse(korg_url)
 
+    # date and time format used within published tag
+    date_format: str = '%a, %d %b %Y %H:%M:%S %z'
+
     # from first to last
     for i in range(0, len(releases.entries)):
+        # get release type and kernel version from id tag
+        release_type: str
+        version: str
+        [_, release_type, version, _, *_] = releases.entries[i].id.split(',')
+
         # if notifying for -next releases is undesired, stop and continue the list
-        if config.linux_notify_next is False and 'linux-next' in releases.entries[i].title:
+        if config.linux_notify_next is False and release_type == 'linux-next':
             continue
 
-        # release details is under id
-        details: list[str] = releases.entries[i].id.split(',')
+        # get release date from published tag and convert to ISO format
+        release_date: str = datetime.strptime(releases.entries[i].published,
+                                              date_format).isoformat()
 
         # mainline and -next must be treated differently
         version_file: str
-        if 'mainline' in releases.entries[i].title:
+
+        if release_type == 'mainline':
             version_file = path_join(path + '/mainline-version')
-        elif 'linux-next' in releases.entries[i].title:
+
+        elif release_type == 'linux-next':
             version_file = path_join(path + '/next-version')
+
         else:
-            release: list[str] = details[2].split('.')
-            version: str = release[0] + '.' + release[1]
-            # version naming: x.y-version
-            version_file = path_join(path + '/' + version + '-version')
+            version_major: int
+            version_minor: int
+            [version_major, version_minor, _, *_] = version.split('.')
+
+            # stable version caching must conform to x.y-version format
+            series: str = version_major + '.' + version_minor
+            version_file = path_join(path + '/' + series + '-version')
 
         # announce new version
-        if compare_release(version_file, details[2]):
+        if compare_release(version_file, version):
             message: str
-            if 'mainline' in releases.entries[i].title:
+            if release_type == 'mainline':
                 message = '*New Linux mainline release available!*\n'
                 message += '\n'
-            elif 'linux-next' in releases.entries[i].title:
+            elif release_type == 'linux-next':
                 message = '*New linux-next release available!*\n'
                 message += '\n'
             else:
-                message = '*New Linux ' + version + ' series release available!*\n'
+                message = '*New Linux ' + series + ' series release available!*\n'
                 message += '\n'
-                message += 'Release type: ' + details[1] + '\n'
-            message += 'Version: `' + details[2] + '`\n'
-            message += 'Release date: ' + details[3]
-            if 'mainline' not in releases.entries[i].title and 'linux-next' not in releases.entries[i].title:
+                message += 'Release type: ' + release_type + '\n'
+            message += 'Version: `' + version + '`\n'
+            message += 'Release date: ' + release_date
+            if release_type != 'mainline' and release_type != 'linux-next':
                 message += '\n\n'
-                message += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[
-                    0] + '.x/ChangeLog-' + details[2] + ')'
+                message += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + version_major + '.x/ChangeLog-' + version + ')'
 
             if utils.push_notification(message, dry_run):
-                utils.write_to_file(version_file, details[2])
+                utils.write_to_file(version_file, version)
