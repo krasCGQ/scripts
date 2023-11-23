@@ -25,7 +25,7 @@ def get_cache_dir():
     return cache_dir
 
 
-def read_from_file(file:str):
+def read_from_file(file: str):
     """
     Get content from a provided file.
     :param file: File to read the content from.
@@ -38,7 +38,7 @@ def read_from_file(file:str):
         return None
 
 
-def get_digest_from_content(file:str):
+def get_digest_from_content(file: str):
     """
     Get digest of a content from provided file.
     :param file: File to read the content from.
@@ -50,7 +50,7 @@ def get_digest_from_content(file:str):
     return ''
 
 
-def write_to_file(file:str, content:str):
+def write_to_file(file: str, content: str):
     """
     Write the provided content to a file.
     :param file: File to write the content to.
@@ -60,7 +60,7 @@ def write_to_file(file:str, content:str):
         file.write(content)
 
 
-def push_notification(message:str, dry_run:bool=False):
+def push_notification(message: str, dry_run: bool = False):
     """
     Push a notification through Telegram Bot API containing the provided message.
     :param message: Part of a body containing the message to be sent.

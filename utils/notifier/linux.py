@@ -12,13 +12,13 @@ from feedparser import parse as feedparser_parse
 from notifier import config, utils
 
 
-def announce(path:str, dry_run:bool):
+def announce(path: str, dry_run: bool):
     # url of release rss
     korg_url: str = 'https://www.kernel.org/feeds/kdist.xml'
     list = feedparser_parse(korg_url)
 
     # from first to last
-    for i in range (0, len(list.entries)):
+    for i in range(0, len(list.entries)):
         # if notifying for -next releases is undesired, stop and continue the list
         if config.linux_notify_next is False and 'linux-next' in list.entries[i].title:
             continue
@@ -56,7 +56,8 @@ def announce(path:str, dry_run:bool):
             message += 'Release date: ' + details[3]
             if 'mainline' not in list.entries[i].title and 'linux-next' not in list.entries[i].title:
                 message += '\n\n'
-                message += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[0] + '.x/ChangeLog-' + details[2] + ')'
+                message += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[
+                    0] + '.x/ChangeLog-' + details[2] + ')'
 
             if utils.push_notification(message, dry_run):
                 utils.write_to_file(version_file, list.entries[i].title)

@@ -13,7 +13,7 @@ from feedparser import parse as feedparser_parse
 from notifier import config, utils
 
 
-def announce(path:str, dry_run:bool):
+def announce(path: str, dry_run: bool):
     for i in range(0, len(config.project_lists)):
         # parse each project and service
         project: str = config.project_lists[i].split(':')[0]
@@ -53,7 +53,7 @@ def announce(path:str, dry_run:bool):
                 elif service == 'osdn':
                     message = '*New file detected on OSDN File Storage:* [' + project + '](' + project_url + ')\n'
                 message += '\n'
-                message += 'Name: `' + name + '`\n' # avoid markdown parsing
+                message += 'Name: `' + name + '`\n'  # avoid markdown parsing
                 message += 'Upload date: ' + list.entries[j].published + '\n'
                 message += '\n'
                 if service == 'sourceforge':
