@@ -68,22 +68,22 @@ def compare_release(previous_file: str, current: str):
 def announce(path: str, dry_run: bool):
     # url of release rss
     korg_url: str = 'https://www.kernel.org/feeds/kdist.xml'
-    list = feedparser_parse(korg_url)
+    releases: dict = feedparser_parse(korg_url)
 
     # from first to last
-    for i in range(0, len(list.entries)):
+    for i in range(0, len(releases.entries)):
         # if notifying for -next releases is undesired, stop and continue the list
-        if config.linux_notify_next is False and 'linux-next' in list.entries[i].title:
+        if config.linux_notify_next is False and 'linux-next' in releases.entries[i].title:
             continue
 
         # release details is under id
-        details: list[str] = list.entries[i].id.split(',')
+        details: list[str] = releases.entries[i].id.split(',')
 
         # mainline and -next must be treated differently
         version_file: str
-        if 'mainline' in list.entries[i].title:
+        if 'mainline' in releases.entries[i].title:
             version_file = path_join(path + '/mainline-version')
-        elif 'linux-next' in list.entries[i].title:
+        elif 'linux-next' in releases.entries[i].title:
             version_file = path_join(path + '/next-version')
         else:
             release: list[str] = details[2].split('.')
@@ -94,10 +94,10 @@ def announce(path: str, dry_run: bool):
         # announce new version
         if compare_release(version_file, details[2]):
             message: str
-            if 'mainline' in list.entries[i].title:
+            if 'mainline' in releases.entries[i].title:
                 message = '*New Linux mainline release available!*\n'
                 message += '\n'
-            elif 'linux-next' in list.entries[i].title:
+            elif 'linux-next' in releases.entries[i].title:
                 message = '*New linux-next release available!*\n'
                 message += '\n'
             else:
@@ -106,7 +106,7 @@ def announce(path: str, dry_run: bool):
                 message += 'Release type: ' + details[1] + '\n'
             message += 'Version: `' + details[2] + '`\n'
             message += 'Release date: ' + details[3]
-            if 'mainline' not in list.entries[i].title and 'linux-next' not in list.entries[i].title:
+            if 'mainline' not in releases.entries[i].title and 'linux-next' not in releases.entries[i].title:
                 message += '\n\n'
                 message += '[Changes from previous release](https://cdn.kernel.org/pub/linux/kernel/v' + release[
                     0] + '.x/ChangeLog-' + details[2] + ')'
