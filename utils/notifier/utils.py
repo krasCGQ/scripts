@@ -6,7 +6,8 @@
 
 from datetime import datetime
 from hashlib import sha384 as hashlib_sha384
-from os import getenv as os_getenv
+from os import getenv as os_getenv, makedirs as os_makedirs
+from os.path import exists as path_exists
 from sys import stderr as sys_stderr
 from time import struct_time, strftime as time_strftime
 
@@ -71,6 +72,16 @@ def date_from_struct_time(time_value: struct_time):
     time_format: str = '%Y-%m-%dT%H:%M:%S%z'
     time: str = time_strftime(time_format, time_value)
     return datetime.strptime(time, time_format).isoformat()
+
+
+def create_dir_if_not_exist(path: str):
+    """
+    Create a directory if it doesn't exist.
+    :param path: A string containing the desired path.
+    :return: None.
+    """
+    if not path_exists(path):
+        os_makedirs(path)
 
 
 def push_notification(message: str, dry_run: bool = False):

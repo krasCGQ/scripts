@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2019-2022 Albert I (krasCGQ)
+# Copyright (C) 2019-2023 Albert I (krasCGQ)
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
 from importlib import import_module
-from os import makedirs as os_makedirs, remove as os_remove
+from os import remove as os_remove
 from os.path import exists as path_exists, isdir as path_isdir, join as path_join
 from sys import modules as sys_modules
 
@@ -38,9 +38,7 @@ def main():
         os_remove(path)
 
     path = path_join(path + args.type)
-    # create cache directory if not exists
-    if not path_exists(path):
-        os_makedirs(path)
+    utils.create_dir_if_not_exist(path)
 
     notifier.announce(path, args.dry_run)
 
