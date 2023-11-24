@@ -112,3 +112,7 @@ def push_notification(message: str, dry_run: bool = False):
 
     r = requests_post(api_url, data=query)
     return not dry_run and r.status_code == 200
+
+
+def announce(path: str = '/dev/null', dry_run: bool = False):
+    raise Exception('Notifier call should not be called from utils.py')
