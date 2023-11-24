@@ -16,30 +16,36 @@ def announce(path: str, dry_run: bool):
     # initialize GitPython
     git = git_cmd.Git()
 
-    # for each url...
+    # repeat process for each url...
     for i in range(0, len(config.git_urls)):
-        url: str = config.git_urls[i]
-        # repository name
-        repo: str = url.split('/')[-1]
-        # list of tags
-        tags: list[str] = git.ls_remote('--tags', url).split('\n')
+        git_url: str = config.git_urls[i]
+        # this is the repository name
+        git_repo: str = git_url.split('/')[-1]
+        # get list of tags
+        tags: list[str] = git.ls_remote('--tags', git_url).split('\n')
 
-        repo_path: str = path_join('{}/{}'.format(path, repo))
+        repo_path: str = path_join('{}/{}'.format(path, git_repo))
         # create repo directory if not exists
         if not path_exists(repo_path):
             os_makedirs(repo_path)
 
         # parse every 2 entries, next one is tagged commit
         for j in range(0, len(tags), 2):
-            tag: list[str] = tags[j].replace('/', '\t').split('\t')
-            tag_file: str = path_join('{}/{}'.format(repo_path, tag[3]))
-            # short SHA-1 format – first 12 letters
-            tag_sha: str = tag[0][:12]
+            tag_sha1: str
+            tag_name: str
+            # extract tag SHA-1 and name out from list of tags
+            [tag_sha1, _, _, tag_name, *_] = tags[j].replace('\t', '/').split('/')
+
+            # we will cache tag SHA-1 under the tag name itself
+            tag_file: str = path_join('{}/{}'.format(repo_path, tag_name))
+
+            # get the first 12 characters of tagged commit for notification purposes
+            tagged_commit: str = tags[j + 1].split('\t')[0][:12]
 
             # although rare since tag re-releases are uncommon, announce if tag is different
-            if utils.read_from_file(tag_file) != tag_sha:
-                if 'git:' in url:
-                    url = url.replace('git:', 'https:')
+            if utils.read_from_file(tag_file) != tag_sha1:
+                if 'git:' in git_url:
+                    git_url = git_url.replace('git:', 'https:')
 
                 message: str = """*New git release detected!*
 
@@ -47,6 +53,8 @@ Repository: [{}]({})
 Tag: `{}` (`{}`)
 Commit: `{}`"""
 
-                message = message.format(repo, url, tag[3], tag_sha, tags[j + 1][:12])
+                # when announcing, we only need first 12 characters of tag SHA-1
+                message = message.format(git_repo, git_url, tag_name, tag_sha1[:12], tagged_commit)
                 if utils.push_notification(message, dry_run):
-                    utils.write_to_file(tag_file, tag_sha)
+                    # however, we still cache the full SHA-1
+                    utils.write_to_file(tag_file, tag_sha1)
