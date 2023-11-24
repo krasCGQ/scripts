@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-from os import makedirs as os_makedirs
-from os.path import exists as path_exists, join as path_join
+from os.path import join as path_join
 
 from git import cmd as git_cmd
 
@@ -39,9 +38,7 @@ def announce(path: str, dry_run: bool):
         tags: list[str] = git.ls_remote('--tags', git_url).split('\n')
 
         repo_path: str = path_join('{}/{}'.format(path, git_repo))
-        # create repo directory if not exists
-        if not path_exists(repo_path):
-            os_makedirs(repo_path)
+        utils.create_dir_if_not_exist(repo_path)
 
         # parse every 2 entries, next one is tagged commit
         for j in range(0, len(tags), 2):
