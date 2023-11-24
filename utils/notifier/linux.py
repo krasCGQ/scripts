@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-from datetime import datetime
 from os.path import join as path_join
 
 from feedparser import parse as feedparser_parse
@@ -99,9 +98,6 @@ def announce(path: str, dry_run: bool):
     korg_url: str = 'https://www.kernel.org/feeds/kdist.xml'
     releases: dict = feedparser_parse(korg_url)
 
-    # date and time format used within published tag
-    date_format: str = '%a, %d %b %Y %H:%M:%S %z'
-
     # from first to last
     for i in range(0, len(releases.entries)):
         # get release type and kernel version from id tag
@@ -112,10 +108,6 @@ def announce(path: str, dry_run: bool):
         # if notifying for -next releases is undesired, stop and continue the list
         if config.linux_notify_next is False and release_type == 'linux-next':
             continue
-
-        # get release date from published tag and convert to ISO format
-        release_date: str = datetime.strptime(releases.entries[i].published,
-                                              date_format).isoformat()
 
         version_file: str  # declare it first
 
@@ -133,6 +125,9 @@ def announce(path: str, dry_run: bool):
 
         # announce new version
         if compare_release(version_file, version):
+            # use time value sequence converted into ISO 8601 format instead
+            release_date: str = utils.date_from_struct_time(releases.entries[i].published_parsed)
+
             message = prepare_message(version, release_type, release_date)
             if utils.push_notification(message, dry_run):
                 utils.write_to_file(version_file, version)
