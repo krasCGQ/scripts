@@ -117,14 +117,11 @@ def announce(path: str, dry_run: bool):
         release_date: str = datetime.strptime(releases.entries[i].published,
                                               date_format).isoformat()
 
-        # mainline and -next must be treated differently
-        version_file: str
+        version_file: str  # declare it first
 
-        if release_type == 'mainline':
-            version_file = path_join('{}/mainline-version'.format(path))
-
-        elif release_type == 'linux-next':
-            version_file = path_join('{}/next-version'.format(path))
+        # mainline and linux-next must be treated differently
+        if release_type == 'mainline' or release_type == 'linux-next':
+            version_file = path_join('{}/{}-version'.format(path, release_type))
 
         else:
             version_major: int
