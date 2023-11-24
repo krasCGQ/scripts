@@ -29,17 +29,17 @@ Upload date: {}
 
 def announce(path: str, dry_run: bool):
     # catch for any unsupported service and bail out early
-    for i in range(0, len(config.project_lists)):
-        service: str = config.project_lists[i].split(':')[1]
+    for i in range(0, len(config.projects_list)):
+        service: str = config.projects_list[i].split(':')[1]
         if service != 'sourceforge' and service != 'osdn':
             raise Exception(
                 'Expected sourceforge or osdn for project service, found {}'.format(service))
 
-    for i in range(0, len(config.project_lists)):
+    for i in range(0, len(config.projects_list)):
         project: str
         service: str
         # parse each project and service
-        [project, service, *_] = config.project_lists[i].split(':')
+        [project, service, *_] = config.projects_list[i].split(':')
 
         # create project directory
         project_path: str = path_join('{}/{}/{}'.format(path, service, project))

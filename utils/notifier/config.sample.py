@@ -16,9 +16,9 @@ git_urls: list[str] = [
 linux_notify_next: bool = True
 
 # notifier.project
-# Format: <project-name>:<service-name>
-# Valid options for <service-name>: sourceforge, osdn
-project_lists: list[str] = [
+# List of projects it should monitor in format of <project-name>:<service-name>.
+# Valid options for <service-name> are (only so far) sourceforge and osdn.
+projects_list: list[str] = [
     'kudproject:osdn'
 ]
 
