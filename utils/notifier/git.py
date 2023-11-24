@@ -56,8 +56,11 @@ def announce(path: str, dry_run: bool):
             # get the first 12 characters of tagged commit for notification purposes
             tagged_commit: str = tags[j + 1].split('\t')[0][:12]
 
-            # although rare since tag re-releases are uncommon, announce if tag is different
+            # we announce availability of new tags when either of these conditions are met:
+            # - the tag is just newly pushed
+            # - the tag's SHA-1 is updated due to a force push, albeit rarely
             if utils.read_from_file(tag_file) != tag_sha1:
+                # replace git with https when needed
                 if 'git:' in git_url:
                     git_url = git_url.replace('git:', 'https:')
 
