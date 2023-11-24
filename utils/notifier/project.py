@@ -14,6 +14,13 @@ from notifier import config, utils
 
 
 def announce(path: str, dry_run: bool):
+    # catch for any unsupported service and bail out early
+    for i in range(0, len(config.project_lists)):
+        service: str = config.project_lists[i].split(':')[1]
+        if service != 'sourceforge' and service != 'osdn':
+            raise Exception(
+                'Expected sourceforge or osdn for project service, found {}'.format(service))
+
     for i in range(0, len(config.project_lists)):
         project: str
         service: str
@@ -27,10 +34,6 @@ def announce(path: str, dry_run: bool):
             project_rss = '{}/rss'.format(project_url)
         elif service == 'osdn':
             project_rss = '{}/storage/!rss'.format(project_url)
-        else:
-            # error out
-            raise Exception(
-                '{} is not a supported service. Valid services: sourceforge, osdn.'.format(service))
 
         list = feedparser_parse(project_rss)
 
