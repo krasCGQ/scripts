@@ -12,6 +12,20 @@ from git import cmd as git_cmd
 from notifier import config, utils
 
 
+def prepare_message():
+    """
+    This is the message that will be sent by announce() below.
+    :return: A string that is the template below.
+    """
+    message: str = """*New git release detected!*
+
+Repository: [{}]({})
+Tag: `{}` (`{}`)
+Commit: `{}`"""
+
+    return message
+
+
 def announce(path: str, dry_run: bool):
     # initialize GitPython
     git = git_cmd.Git()
@@ -47,14 +61,9 @@ def announce(path: str, dry_run: bool):
                 if 'git:' in git_url:
                     git_url = git_url.replace('git:', 'https:')
 
-                message: str = """*New git release detected!*
-
-Repository: [{}]({})
-Tag: `{}` (`{}`)
-Commit: `{}`"""
-
                 # when announcing, we only need first 12 characters of tag SHA-1
-                message = message.format(git_repo, git_url, tag_name, tag_sha1[:12], tagged_commit)
+                message: str = prepare_message.format(git_repo, git_url, tag_name, tag_sha1[:12],
+                                                      tagged_commit)
                 if utils.push_notification(message, dry_run):
                     # however, we still cache the full SHA-1
                     utils.write_to_file(tag_file, tag_sha1)
