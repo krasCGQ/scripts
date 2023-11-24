@@ -19,6 +19,7 @@ linux_notify_next: bool = True
 # List of projects it should monitor in format of <project-name>:<service-name>.
 # Valid options for <service-name> are (only so far) sourceforge and osdn.
 projects_list: list[str] = [
+    'aimroms:sourceforge',
     'kudproject:osdn'
 ]
 
