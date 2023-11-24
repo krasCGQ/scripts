@@ -5,8 +5,7 @@
 #
 
 from hashlib import sha384 as hashlib_sha384
-from os import makedirs as os_makedirs
-from os.path import exists as path_exists, join as path_join
+from os.path import join as path_join
 
 from feedparser import parse as feedparser_parse
 
@@ -42,6 +41,10 @@ def announce(path: str, dry_run: bool):
         # parse each project and service
         [project, service, *_] = config.project_lists[i].split(':')
 
+        # create project directory
+        project_path: str = path_join('{}/{}/{}'.format(path, service, project))
+        utils.create_dir_if_not_exist(project_path)
+
         # URL of the project
         project_url: str = 'https://{}.net/projects/{}'.format(service, project)
 
@@ -62,19 +65,19 @@ def announce(path: str, dry_run: bool):
 
         # start from the oldest
         for j in range(len(list.entries) - 1, -1, -1):
-            # get the file name instead of full path
-            file_name: str = list.entries[j].title.split('/')[-1]
-            digest: str = hashlib_sha384(list.entries[j].title.encode()).hexdigest()
+            # title is remote path of the file itself, so save it as so first
+            file_path: str = list.entries[j].title
+            # extract file name out from remote path
+            file_name: str = file_path.split('/')[-1]
 
-            service_path: str = path_join('{}/{}'.format(path, service))
-            # create service directory if not exists
-            if not path_exists(service_path):
-                os_makedirs(service_path)
+            # hash the remote path for comparison purposes
+            path_digest: str = hashlib_sha384(file_path.encode()).hexdigest()
 
-            # cache file: use file name
-            cache_file: str = path_join('{}/{}'.format(service_path, file_name))
-            # both hashes are different, announce it
-            if utils.get_digest_from_content(cache_file) != digest:
+            # use the whole remote path as cached file name, but replace unsupported characters
+            cache_name: str = file_path.replace('/', '_')
+            cache_file: str = path_join('{}/{}'.format(project_path, cache_name))
+
+            if utils.get_digest_from_content(cache_file) != path_digest:
                 # use time value sequence converted into ISO 8601 format instead
                 upload_date: str = utils.date_from_struct_time(list.entries[j].published_parsed)
 
@@ -88,4 +91,4 @@ def announce(path: str, dry_run: bool):
                 message = message.format(service_name, project, project_url, file_name, upload_date,
                                          download_url)
                 if utils.push_notification(message, dry_run):
-                    utils.write_to_file(cache_file, list.entries[j].title)
+                    utils.write_to_file(cache_file, file_path)
