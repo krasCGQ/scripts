@@ -13,6 +13,21 @@ from feedparser import parse as feedparser_parse
 from notifier import config, utils
 
 
+def prepare_message():
+    """
+    This is the message that will be sent by announce() below.
+    :return: A string that is the template below.
+    """
+    message: str = """*New file detected on {}:* [{}]({})
+
+Name: `{}`
+Upload date: {}
+
+[Download]({})"""
+
+    return message
+
+
 def announce(path: str, dry_run: bool):
     # catch for any unsupported service and bail out early
     for i in range(0, len(config.project_lists)):
@@ -27,14 +42,22 @@ def announce(path: str, dry_run: bool):
         # parse each project and service
         [project, service, *_] = config.project_lists[i].split(':')
 
-        # url of the project
+        # URL of the project
         project_url: str = 'https://{}.net/projects/{}'.format(service, project)
+
+        # declare variables first
         project_rss: str
+        service_name: str
+
         if service == 'sourceforge':
             project_rss = '{}/rss'.format(project_url)
+            service_name = 'SourceForge'
+
         elif service == 'osdn':
             project_rss = '{}/storage/!rss'.format(project_url)
+            service_name = 'OSDN File Storage'
 
+        # only provide latest 20 (OSDN) or 100 (SourceForge) files uploaded to the service
         list = feedparser_parse(project_rss)
 
         # start from the oldest
@@ -52,20 +75,14 @@ def announce(path: str, dry_run: bool):
             cache_file: str = path_join('{}/{}'.format(service_path, file_name))
             # both hashes are different, announce it
             if utils.get_digest_from_content(cache_file) != digest:
-                message: str
-                if service == 'sourceforge':
-                    message = '*New file detected on SourceForge:* [' + project + '](' + project_url + ')\n'
-                elif service == 'osdn':
-                    message = '*New file detected on OSDN File Storage:* [' + project + '](' + project_url + ')\n'
-                message += '\n'
-                message += 'Name: `' + file_name + '`\n'  # avoid markdown parsing
-                message += 'Upload date: ' + list.entries[j].published + '\n'
-                message += '\n'
-                if service == 'sourceforge':
-                    message += '[Download](' + list.entries[j].link + ')'
-                elif service == 'osdn':
-                    # use shortlink provided by OSDN
-                    message += '[Download](https://' + service + '.net/dl/' + project + '/' + file_name + ')'
+                if service == 'osdn':
+                    # use shortlink for OSDN File Storage
+                    download_url = 'https://osdn.net/dl/{}/{}'.format(project, file_name)
+                else:
+                    download_url = list.entries[j].link
 
+                message: str = prepare_message()  # why we need this workaround?
+                message = message.format(service_name, project, project_url, file_name,
+                                         list.entries[j].published, download_url)
                 if utils.push_notification(message, dry_run):
                     utils.write_to_file(cache_file, list.entries[j].title)
