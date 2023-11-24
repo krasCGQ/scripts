@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Albert I (krasCGQ)
+# Copyright (C) 2019-2023 Albert I (krasCGQ)
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
@@ -24,7 +24,7 @@ def announce(path: str, dry_run: bool):
         # list of tags
         tags: list[str] = git.ls_remote('--tags', url).split('\n')
 
-        repo_path: str = path_join(path + '/' + repo)
+        repo_path: str = path_join('{}/{}'.format(path, repo))
         # create repo directory if not exists
         if not path_exists(repo_path):
             os_makedirs(repo_path)
@@ -32,18 +32,21 @@ def announce(path: str, dry_run: bool):
         # parse every 2 entries, next one is tagged commit
         for j in range(0, len(tags), 2):
             tag: list[str] = tags[j].replace('/', '\t').split('\t')
-            tag_file: str = path_join(repo_path + '/' + tag[3])
+            tag_file: str = path_join('{}/{}'.format(repo_path, tag[3]))
             # short SHA-1 format – first 12 letters
             tag_sha: str = tag[0][:12]
 
             # although rare since tag re-releases are uncommon, announce if tag is different
             if utils.read_from_file(tag_file) != tag_sha:
-                message: str = '*New Git release detected!*\n'
-                message += '\n'
-                message += 'Repository: [' + repo + '](' + url.replace('git:',
-                                                                       'https:') + ')' + '\n'
-                message += 'Tag: `' + tag[3] + '` (`' + tag_sha + '`)\n'
-                message += 'Commit: `' + tags[j + 1][:12] + '`'
+                if 'git:' in url:
+                    url = url.replace('git:', 'https:')
 
+                message: str = """*New git release detected!*
+
+Repository: [{}]({})
+Tag: `{}` (`{}`)
+Commit: `{}`"""
+
+                message = message.format(repo, url, tag[3], tag_sha, tags[j + 1][:12])
                 if utils.push_notification(message, dry_run):
                     utils.write_to_file(tag_file, tag_sha)
