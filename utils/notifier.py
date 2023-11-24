@@ -14,9 +14,9 @@ from argparse import ArgumentParser, BooleanOptionalAction
 
 try:
     from notifier import config
-    del sys_modules["notifier.config"]
+    del sys_modules['notifier.config']
 except ImportError or ModuleNotFoundError:
-    raise Exception("No config file was found. Copy the sample file and try again.")
+    raise Exception('No config file was found. Copy the sample file and try again.')
 from notifier import utils
 
 
@@ -32,7 +32,7 @@ def main():
 
     notifier = import_module(f'.{args.type}', 'notifier')
 
-    path = path_join(utils.get_cache_dir() + '/kud-notifier/')
+    path: str = path_join('{}/kud-notifier/'.format(utils.get_cache_dir()))
     # attempt removal of file of same name
     if path_exists(path) and not path_isdir(path):
         os_remove(path)

@@ -103,7 +103,7 @@ def push_notification(message: str, dry_run: bool = False):
         print()
         return not dry_run
 
-    api_url: str = 'https://api.telegram.org/bot' + token + '/SendMessage'
+    api_url: str = 'https://api.telegram.org/bot{}/SendMessage'.format(token)
     query: dict = {
         'chat_id': chat_id,
         'text': message + byline,
