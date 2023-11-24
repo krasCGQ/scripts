@@ -22,10 +22,8 @@ def get_cache_dir():
     It prefers XDG_CACHE_HOME if set, otherwise default to current user's own cache directory.
     :return: A string containing cache directory root.
     """
-    cache_dir: str = os_getenv('HOME') + '/.cache'
-    if os_getenv('XDG_CACHE_HOME') is not None:
-        cache_dir = os_getenv('XDG_CACHE_HOME')
-    return cache_dir
+    return os_getenv('XDG_CACHE_HOME') if os_getenv(
+        'XDG_CACHE_HOME') is not None else '{}/.cache'.format(os_getenv('HOME'))
 
 
 def read_from_file(file: str):
@@ -48,9 +46,7 @@ def get_digest_from_content(file: str):
     :return: A digest derived from provided content, or empty if nothing is supplied.
     """
     content: str = read_from_file(file)
-    if content is not None:
-        return hashlib_sha384(content.encode()).hexdigest()
-    return ''
+    return hashlib_sha384(content.encode()).hexdigest() if content is not None else ''
 
 
 def write_to_file(file: str, content: str):
