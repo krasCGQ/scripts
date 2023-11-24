@@ -1,12 +1,14 @@
 #
-# Copyright (C) 2019-2022 Albert I (krasCGQ)
+# Copyright (C) 2019-2023 Albert I (krasCGQ)
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+from datetime import datetime
 from hashlib import sha384 as hashlib_sha384
 from os import getenv as os_getenv
 from sys import stderr as sys_stderr
+from time import struct_time, strftime as time_strftime
 
 from requests import post as requests_post
 
@@ -58,6 +60,17 @@ def write_to_file(file: str, content: str):
     """
     with open(file, 'w+') as file:
         file.write(content)
+
+
+def date_from_struct_time(time_value: struct_time):
+    """
+    Convert a given time value sequence into an ISO 8601 format in UTC.
+    :param time_value: A named tuple containing the time value sequence given.
+    :return: A string that represents said time.
+    """
+    time_format: str = '%Y-%m-%dT%H:%M:%S%z'
+    time: str = time_strftime(time_format, time_value)
+    return datetime.strptime(time, time_format).isoformat()
 
 
 def push_notification(message: str, dry_run: bool = False):
