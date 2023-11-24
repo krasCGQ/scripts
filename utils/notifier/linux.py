@@ -121,10 +121,10 @@ def announce(path: str, dry_run: bool):
         version_file: str
 
         if release_type == 'mainline':
-            version_file = path_join(path + '/mainline-version')
+            version_file = path_join('{}/mainline-version'.format(path))
 
         elif release_type == 'linux-next':
-            version_file = path_join(path + '/next-version')
+            version_file = path_join('{}/next-version'.format(path))
 
         else:
             version_major: int
@@ -132,8 +132,7 @@ def announce(path: str, dry_run: bool):
             [version_major, version_minor, _, *_] = version.split('.')
 
             # stable version caching must conform to x.y-version format
-            series: str = version_major + '.' + version_minor
-            version_file = path_join(path + '/' + series + '-version')
+            version_file = path_join('{}/{}.{}-version'.format(path, version_major, version_minor))
 
         # announce new version
         if compare_release(version_file, version):
