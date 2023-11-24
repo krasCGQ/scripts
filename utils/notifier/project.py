@@ -70,14 +70,16 @@ def announce(path: str, dry_run: bool):
             # extract file name out from remote path
             file_name: str = file_path.split('/')[-1]
 
-            # hash the remote path for comparison purposes
-            path_digest: str = hashlib_sha384(file_path.encode()).hexdigest()
+            # hash the published date for comparison purposes
+            date_published: str = list.entries[j].published
+            date_digest: str = hashlib_sha384(date_published.encode()).hexdigest()
 
             # use the whole remote path as cached file name, but replace unsupported characters
             cache_name: str = file_path.replace('/', '_')
             cache_file: str = path_join('{}/{}'.format(project_path, cache_name))
 
-            if utils.get_digest_from_content(cache_file) != path_digest:
+            # file doesn't exist previously or reuploaded, announce it
+            if utils.get_digest_from_content(cache_file) != date_digest:
                 # use time value sequence converted into ISO 8601 format instead
                 upload_date: str = utils.date_from_struct_time(list.entries[j].published_parsed)
 
@@ -91,4 +93,4 @@ def announce(path: str, dry_run: bool):
                 message = message.format(service_name, project, project_url, file_name, upload_date,
                                          download_url)
                 if utils.push_notification(message, dry_run):
-                    utils.write_to_file(cache_file, file_path)
+                    utils.write_to_file(cache_file, date_published)
