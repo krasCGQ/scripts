@@ -75,6 +75,9 @@ def announce(path: str, dry_run: bool):
             cache_file: str = path_join('{}/{}'.format(service_path, file_name))
             # both hashes are different, announce it
             if utils.get_digest_from_content(cache_file) != digest:
+                # use time value sequence converted into ISO 8601 format instead
+                upload_date: str = utils.date_from_struct_time(list.entries[j].published_parsed)
+
                 if service == 'osdn':
                     # use shortlink for OSDN File Storage
                     download_url = 'https://osdn.net/dl/{}/{}'.format(project, file_name)
@@ -82,7 +85,7 @@ def announce(path: str, dry_run: bool):
                     download_url = list.entries[j].link
 
                 message: str = prepare_message()  # why we need this workaround?
-                message = message.format(service_name, project, project_url, file_name,
-                                         list.entries[j].published, download_url)
+                message = message.format(service_name, project, project_url, file_name, upload_date,
+                                         download_url)
                 if utils.push_notification(message, dry_run):
                     utils.write_to_file(cache_file, list.entries[j].title)
