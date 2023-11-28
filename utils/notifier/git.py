@@ -43,8 +43,10 @@ def announce(path: str, dry_run: bool):
         for j in range(0, len(tags), 2):
             tag_sha1: str
             tag_name: str
-            # extract tag SHA-1 and name out from list of tags
-            [tag_sha1, _, _, tag_name, *_] = tags[j].replace('\t', '/').split('/')
+            # split tag SHA-1 and name from list of tags
+            [tag_sha1, tag_name, *_] = tags[j].split('\t')
+            # omit first occurrence of "refs/tags/" from tag name
+            tag_name = tag_name.replace('refs/tags/', '', 1)
 
             # we will cache tag SHA-1 under the tag name itself
             tag_file: str = path_join('{}/{}'.format(repo_path, tag_name))
