@@ -64,7 +64,7 @@ def compare_release(previous_file: str, current: str):
     return False  # up to date for this series
 
 
-def prepare_message(version: str, release_type: str, release_date: str):
+def prepare_message(version: str, release_type: str, release_date: str, is_eol: bool):
     """
     This is the message that will be sent by announce() below.
     :param version: Kernel version string.
@@ -78,8 +78,12 @@ def prepare_message(version: str, release_type: str, release_date: str):
 Version: `{}` ({})
 Date: {}"""
 
+    # mark final releases if necessary
+    if is_eol:
+        release_type += ", EOL"
+
     # currently specific to stable or longterm releases
-    if release_type == 'stable' or release_type == 'longterm':
+    if 'stable' in release_type or 'longterm' in release_type:
         # extract the major version out so we can link to plain text changelog
         version_major: int = version.split('.')[0]
 
@@ -108,6 +112,9 @@ def announce(path: str, dry_run: bool):
         if config.linux_notify_next is False and release_type == 'linux-next':
             continue
 
+        # whether this is the final release for said kernel series
+        is_eol: bool = True if 'EOL' in releases.entries[i].summary else False
+
         version_file: str  # declare it first
 
         # mainline and linux-next must be treated differently
@@ -127,6 +134,6 @@ def announce(path: str, dry_run: bool):
             # use time value sequence converted into ISO 8601 format instead
             release_date: str = utils.date_from_struct_time(releases.entries[i].published_parsed)
 
-            message = prepare_message(version, release_type, release_date)
+            message = prepare_message(version, release_type, release_date, is_eol)
             if utils.push_notification(message, dry_run):
                 utils.write_to_file(version_file, version)
