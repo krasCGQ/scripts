@@ -63,8 +63,8 @@ def announce(path: str, dry_run: bool):
                     git_url = git_url.replace('git:', 'https:')
 
                 # when announcing, we only need first 12 characters of tag SHA-1
-                message: str = prepare_message.format(git_repo, git_url, tag_name, tag_sha1[:12],
-                                                      tagged_commit)
+                message: str = prepare_message()  # why we need this workaround?
+                message = message.format(git_repo, git_url, tag_name, tag_sha1[:12], tagged_commit)
                 if utils.push_notification(message, dry_run):
                     # however, we still cache the full SHA-1
                     utils.write_to_file(tag_file, tag_sha1)
