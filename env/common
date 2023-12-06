@@ -19,6 +19,9 @@ createSelfAlias axel "-U \"$_curl_version\" -c -n 16"
 createSelfAlias wget "--retry-connrefused -U \"$_curl_version\" -c"
 unset _curl_version
 
+# Make sorting disregard any set LC_ALL and LC_COLLATE options
+createAlias sort 'LC_ALL= LC_COLLATE=C sort'
+
 # Required for GPG signing
 GPG_TTY=$(tty)
 # My kernel identity in nutshell
