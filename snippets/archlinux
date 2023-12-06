@@ -126,8 +126,9 @@ updMirrorlist() {
         if curl -s https://archlinux.org/mirrorlist/\?protocol=https\&use_mirror_status=on >/tmp/arch-mirrorlist; then
             # Delete every single comment then uncomment all server lists
             sed -e /##/d -e s/#Server/Server/g -i /tmp/arch-mirrorlist
-            # Known to peer one or more out-of-date mirrors despite being considered otherwise
-            sed -e /i3d.net/d -i /tmp/arch-mirrorlist
+            # i3d.net: Known to peer out-of-date mirrors despite being considered otherwise
+            # jingk.ai: Random files keep getting missing on the otherwise up-to-date mirror
+            sed '/i3d.net/d;/jingk.ai/d' -i /tmp/arch-mirrorlist
             # Prefer rankmirrors script provided by pacman-contrib, as _rank_mirrors() is still too
             # slow even when almost a third have been filtered out. This also allows interrupting
             # the ranking process without ended up having no listed servers; something currently not
