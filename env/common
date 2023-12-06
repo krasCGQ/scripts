@@ -30,6 +30,18 @@ KBUILD_BUILD_HOST=KudProject
 # Export variables to satisfy shellcheck requirements
 export GPG_TTY KBUILD_BUILD_USER KBUILD_BUILD_HOST
 
+# Make the running gnome-keyring SSH daemon visible to terminal session - useful on non-GNOME
+if [[ -z $SSH_AUTH_SOCK ]] && command -v systemctl >/dev/null; then
+    if systemctl --user is-active gnome-keyring-daemon &>/dev/null; then
+        SSH_AUTH_SOCK=$(systemctl --user show gnome-keyring-daemon | grep ^ExecStart= |
+            grep -o '\--control-directory=[^ ]*' | cut -d= -f2)
+        SSH_AUTH_SOCK=$SSH_AUTH_SOCK/ssh
+        export SSH_AUTH_SOCK
+    fi
+    # Unset SSH_AUTH_SOCK if it's not what we want
+    [[ -S $SSH_AUTH_SOCK ]] || unset SSH_AUTH_SOCK
+fi
+
 if [[ -z $IS_TERMUX ]]; then
     # Export new PATH containing local binaries
     [[ $(basename "$SHELL") == "$CURRENT_SHELL" ]] && export PATH=$HOME/.local/bin:$PATH
