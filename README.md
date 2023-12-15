@@ -1,24 +1,38 @@
-# Kud's Personal Scripts
+# Kras' Personal Scripts
 
-This repository hosts personal scripts I often use on my PCs and server(s). If you feel any of these scripts suit your needs, feel free to use, star this repository and revisit whenever the scripts get updated. Adjustments _might be_ required for some (if not most or all) scripts, however.
+This repository hosts personal scripts I often use on my working environments. If you feel any of these scripts suit your needs, feel free to use, star this repository and revisit whenever the scripts get updated. Adjustments _might be_ required for some (if not most or all) scripts, however.
 
-In order to be able to use these scripts, please run these commands accordingly:
+To clone this repository, at least to use only Bash or Zsh scripts, this command should be enough:
 
-```
-# Some Bash scripts
-$ git submodule update --init
-# or clone this repository recursively
-$ git clone --recursive https://github.com/krasCGQ/scripts.git
-
-# Python 3 scripts, from PyPI in user mode (latest version whenever possible):
-$ python3 -m pip install --user -r requirements.txt
-# or from ones provided by distro (recommended, but not all may be available):
-$ sudo pacman -S $(for i in $(< requirements.txt); do echo python-${i,,}; done) # Arch Linux
+```bash
+git clone --recursive-submodules https://github.com/krasCGQ/scripts.git
 ```
 
-Some scripts (with `.ion` extension) requires [latest development version of Ion Shell](https://gitlab.redox-os.org/redox-os/ion/#compile-instructions-for-distribution) installed. Follow given instructions, except that you need to install them in `/usr/local` unless you're using distro-provided package.
 
-Enjoy!
+## Python-specific
+
+* Python 3.9+ is required to execute the notifier's main part (`notifier.py`) in `utils` folder.
+
+* Modules written for the notifier script however, might require even newer version of Python depending on when they were introduced or last modified. As of December 2023, the notifier script and all of their currently present modules are known to work on both Python 3.11 (on Arch Linux) and 3.12 (on Void Linux).
+
+* All explicitly listed dependencies are pinned to ensure stability of all scripts.
+
+Installation of dependencies via PyPI is the only officially supported option, and it's strongly recommended to do so within a virtual environment. The following commands assume that you're executing them within `utils` folder:
+
+```bash
+python -m virtualenv .virtualenv
+source .virtualenv/bin/activate
+python -m pip install -U pip setuptools
+python -m pip install -r requirements.txt
+```
+
+
+## Ion Shell-specific
+
+Scripts with `.ion` extension are written for Ion. Such scripts require [the development version of Ion Shell](https://gitlab.redox-os.org/redox-os/ion/#installation) installed. However, given its WIP status, shell syntax(es) may change at any time and will end up breaking some or all of these scripts.
+
+Alternatively for Arch Linux and derivatives, [`ion-git`](https://aur.archlinux.org/packages/ion-git) can be installed from AUR.
+
 
 ## Licensing
 
