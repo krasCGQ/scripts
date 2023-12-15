@@ -20,51 +20,12 @@ Some scripts (with `.ion` extension) requires [latest development version of Ion
 
 Enjoy!
 
-## License
+## Licensing
 
-### All scripts in this repository (excluding dependencies as submodules):
+A copy of the following mentioned licenses are provided in this repository for reference.
 
-```
-Copyright (C) 2017-2022 Albert I (krasCGQ)
+* Excluding script dependencies and stated otherwise, all scripts in this repository are licensed under GPLv3+.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+* `snippets/rom_sign` is additionally licensed under Apache 2.0 to acknowledge the fact that some parts of the script are direct adaptation of examples provided in AOSP documentation ([also Apache-licensed](https://source.android.com/license)).
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-```
-
-Complete license can be read [here](./LICENSE).
-
-### Also applies to [snippets/rom_sign](./snippets/rom_sign):
-
-```
-Copyright (C) 2017-2022 Albert I (krasCGQ)
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
-
-Complete license can be read [here](./LICENSE.rom_sign).
-
-### Prebuilt dtbToolLineage:
-
-dtbToolLineage is based on initial dtbTool source by Code Aurora Forum (CAF),
-which is licensed under a modified BSD 3-Clause license, which can be read
-[here](./LICENSE.dtbTool).
+* Prebuilt `dtbToolLineage` from [the LineageOS Project](https://www.lineageos.org) hosted in this repository is instead licensed under BSD 3-Clause license, used by Code Aurora Forum (now known as [CodeLinaro](https://www.codelinaro.org)) for the original dtbTool project.
