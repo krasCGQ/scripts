@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: 2021-2023 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2021-2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
@@ -35,17 +35,20 @@ def compare_release(previous_file: str, current: str):
         if new_patchlevel > old_patchlevel:
             return True
 
-        try:
-            # compare changes to release candidate number if possible
-            old_candidate: str = previous.split('-')[1]
-            new_candidate: str = current.split('-')[1]
-            if new_candidate != old_candidate:
-                return True
-        except IndexError:
-            # if we encounter IndexError, there are two possibilities:
-            # - it's the first candidate for next stable release
-            # - it's the final mainline release, ready for stable branching
-            return True
+        if 'rc' in current or 'rc' in previous:
+            # although the handling of old_candidate is somewhat incorrect, an exception handler
+            # is never actually needed since by time we arrive at this comparison, it will always be
+            # a release candidate tag
+            old_candidate: str = previous.split('-')[1].replace('rc', '')
+            try:
+                # attempt to extract new release candidate number
+                new_candidate: str = current.split('-')[1].replace('rc', '')
+            except IndexError:
+                return True  # this is the final release for stable branching
+            else:
+                # compare changes to release candidate number if possible
+                if new_candidate > old_candidate:
+                    return True
 
     elif 'next' in previous_file:
         # compare timestamp for linux-next
