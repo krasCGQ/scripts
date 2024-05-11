@@ -13,7 +13,7 @@ export ID
 # Aliases
 _curl_version=$(curl -V | grep -o 'curl [^ ]*' | sed 's|[[:space:]]|/|')
 createAlias update-grub 'chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
-createAlias aria2cd "aria2c --uri-selector=adaptive -R -U \"$_curl_version\" -c -m 0 -x 16"
+createAlias aria2cd "aria2c --uri-selector=adaptive -R -U \"$_curl_version\" -c -m 0 -s 16 -x 16"
 createAlias aria2ct 'aria2c --enable-dht6=true'
 createSelfAlias axel "-U \"$_curl_version\" -c -n 16"
 createSelfAlias wget "--hsts-file=${XDG_CACHE_HOME:-$HOME/.cache}/wget-hsts --retry-connrefused -U \"$_curl_version\" -c"
