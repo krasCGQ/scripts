@@ -151,12 +151,13 @@ updMirrorlist() {
     manjaro) pacman-mirrors --fasttrack -q ;;
     esac
 
-    # CachyOS
-    for REPO in cachyos{,-v3}; do
+    # CachyOS - discard R2 "mirror"
+    for REPO in cachyos{,-v{3,4}}; do
         if _check_mirrorlist "$REPO"; then
             prInfo "Updating CachyOS mirrorlist ($REPO)..."
-            curl -s "https://gitlab.com/cachyos/PKGBUILDS/-/raw/master/$REPO-mirrorlist/$REPO-mirrorlist" |
-                sed /##/d | _rank_mirrors "${REPO/os/os-desktop}" - >"/etc/pacman.d/$REPO-mirrorlist"
+            curl -s "https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/$REPO-mirrorlist/$REPO-mirrorlist" |
+                sed -e /##/d -e /cdn.cachyos/d |
+                _rank_mirrors "$REPO" - >"/etc/pacman.d/$REPO-mirrorlist"
         fi
     done
 
