@@ -20,9 +20,8 @@ git clone --recursive-submodules https://github.com/krasCGQ/scripts.git
 Installation of dependencies via PyPI is the only officially supported option, and it's strongly recommended to do so within a virtual environment. The following commands assume that you're executing them within `utils` folder:
 
 ```bash
-python -m virtualenv .virtualenv
-source .virtualenv/bin/activate
-python -m pip install -U pip setuptools
+python -m venv .venv --upgrade-deps
+source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
