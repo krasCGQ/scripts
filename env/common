@@ -1,7 +1,10 @@
 #!/hint/bash
-# Common environment setup
-# Copyright (C) 2017-2023 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2017-2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Common environment setup
+#
 
 # Import treewide environment script
 source "$SCRIPT_DIR"/env/global
@@ -57,6 +60,38 @@ fi
 [[ $ID == arch || $ID == manjaro ]] && source "$SCRIPT_DIR"/snippets/archlinux
 # Source Telegram-specific script if exists
 [[ -f $SCRIPT_DIR/env/telegram ]] && source "$SCRIPT_DIR"/env/telegram
+
+# Download MIUI full OTA or fastboot firmware from multiple sources using aria2.
+#
+# This function accepts exactly one argument, which is name of the firmware package itself (e.g.
+# miui_PERIDOT_OS1.0.13.0.UNPCNXM_713afcfba9_14.0.zip). If this points to a URL, a sanitization
+# will be made so only the file name will be processed further.
+#
+# Any extra arguments will be purposefully ignored.
+if command -v aria2c >/dev/null; then
+    miui_download() {
+        unset OTA_LINKS
+
+        local MIUI_PACKAGE MIUI_VERSION
+        MIUI_PACKAGE=$(echo -n "$1" | rev | cut -d/ -f1 | rev)
+        MIUI_VERSION=$(echo "$MIUI_PACKAGE" | grep -o '[OS|V][^_]*')
+
+        # A fixed list of available mirrors
+        local OTA_URL_LIST=(
+            'bigota.d.miui.com'
+            'bn.d.miui.com'
+            'hugeota.d.miui.com'
+        )
+
+        # Construct download links from available mirrors
+        for OTA_URL in "${OTA_URL_LIST[@]}"; do
+            OTA_LINKS+=("https://${OTA_URL}/${MIUI_VERSION}/${MIUI_PACKAGE}")
+        done
+
+        # Important: Replace aria2cd with aria2c if you don't wish to inherit above alias
+        aria2cd "${OTA_LINKS[@]}"
+    }
+fi
 
 # Wrapper to automatically merge latest Linux stable revision to working branch
 # Usage: korg_merge <revision-to-merge>
