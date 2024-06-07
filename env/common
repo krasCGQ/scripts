@@ -29,11 +29,7 @@ createAlias sort 'LC_ALL= LC_COLLATE=C sort'
 
 # Required for GPG signing
 GPG_TTY=$(tty)
-# My kernel identity in nutshell
-KBUILD_BUILD_USER=krasCGQ
-KBUILD_BUILD_HOST=KudProject
-# Export variables to satisfy shellcheck requirements
-export GPG_TTY KBUILD_BUILD_USER KBUILD_BUILD_HOST
+export GPG_TTY
 
 # Make the running gnome-keyring SSH daemon visible to terminal session - useful on non-GNOME
 if [[ -z $SSH_AUTH_SOCK ]] && command -v systemctl >/dev/null; then
@@ -60,8 +56,6 @@ fi
 
 # Include Arch Linux-specific snippets for Arch-based distros
 [[ $ID == arch || $ID == manjaro ]] && source "$SCRIPT_DIR"/snippets/archlinux
-# Source Telegram-specific script if exists
-[[ -f $SCRIPT_DIR/env/telegram ]] && source "$SCRIPT_DIR"/env/telegram
 
 # Download MIUI full OTA or fastboot firmware from multiple sources using aria2.
 #
@@ -94,10 +88,6 @@ if command -v aria2c >/dev/null; then
         aria2cd "${OTA_LINKS[@]}"
     }
 fi
-
-# Wrapper to automatically merge latest Linux stable revision to working branch
-# Usage: korg_merge <revision-to-merge>
-korgMerge() { git pull git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux v"$1" --signoff; }
 
 # sudo: Shortcut to do system update; completely depends on distribution
 sysUpdate() {
