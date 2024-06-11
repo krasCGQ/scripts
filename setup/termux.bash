@@ -33,12 +33,6 @@ pkg install --no-install-recommends -y \
     wget \
     zsh
 
-# Python 3 modules, since outdated versions are installed by default
-prInfo "Upgrading Python 3 modules..."
-python3 -m pip install --upgrade \
-    pip \
-    setuptools
-
 # dotfiles
 prInfo "Setting up dotfiles..."
 git clone https://github.com/krasCGQ/dotfiles.git .files
