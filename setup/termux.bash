@@ -13,9 +13,13 @@ prInfo() { echo "[-] $*"; }
 
 # List of basic packages to be installed
 readonly _basic_pkglist=(
+    # Both of these packages have to be installed to have functioning pip.
+    # Python is implicitly installed as a dependency for both packages
+    'python-ensurepip-wheels'
+    'python-pip'
+
     'axel'    # alternative CLI download manager
     'git'     # version control system
-    'python'  # Python 3
     'wget'    # CLI download manager
     'zsh'     # Unix shell
 )
