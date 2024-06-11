@@ -20,7 +20,6 @@ pkg update -o Dpkg::Options::="--force-confnew" -y
 
 ## Install a number of basic packages
 # Explainer:
-# - antibody: Zsh plugin manager
 # - axel: alternative CLI download manager
 # - git: version control system
 # - nano: CLI text editor
@@ -29,7 +28,6 @@ pkg update -o Dpkg::Options::="--force-confnew" -y
 # - zsh: Unix shell
 prInfo "Installing basic packages..."
 pkg install --no-install-recommends -y \
-    antibody \
     axel \
     git \
     nano \
