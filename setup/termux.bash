@@ -41,8 +41,8 @@ mkdir -p .config/nano
 # .zshrc
 ln -sf "$HOME"/.files/.zshrc-android "$HOME"/.zshrc
 # nanorc
-<"$HOME"/.files/.config/nano/nanorc |
-    sed -e "s|/usr|$PREFIX|" >"$HOME"/.config/nano/nanorc
+sed "s|include \"/usr|include \"$PREFIX|g;/nano-syntax-highlighting/d;s|\~|$HOME/.files|" \
+    "$HOME/.files/.config/nano/nanorc" >"$HOME/.config/nano/nanorc"
 
 # Move to zsh
 prInfo "Moving to Zsh..."
