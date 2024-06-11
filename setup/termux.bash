@@ -11,6 +11,15 @@ set -e
 # Modified styled message print from my scripts
 prInfo() { echo "[-] $*"; }
 
+# List of basic packages to be installed
+readonly _basic_pkglist=(
+    'axel'    # alternative CLI download manager
+    'git'     # version control system
+    'python'  # Python 3
+    'wget'    # CLI download manager
+    'zsh'     # Unix shell
+)
+
 # Move to home directory just in case
 cd "$HOME" || exit 1
 
@@ -18,20 +27,8 @@ cd "$HOME" || exit 1
 prInfo "Executing system update..."
 pkg update -o Dpkg::Options::="--force-confnew" -y
 
-## Install a number of basic packages
-# Explainer:
-# - axel: alternative CLI download manager
-# - git: version control system
-# - python: Python 3
-# - wget: CLI download manager
-# - zsh: Unix shell
 prInfo "Installing basic packages..."
-pkg install --no-install-recommends -y \
-    axel \
-    git \
-    python \
-    wget \
-    zsh
+pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
 # dotfiles
 prInfo "Setting up dotfiles..."
