@@ -36,8 +36,7 @@ pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
 # dotfiles
 prInfo "Setting up dotfiles..."
-git clone https://github.com/krasCGQ/dotfiles.git .files
-git -C "$HOME"/.files submodule update --init scripts
+git clone --recurse-submodules https://github.com/krasCGQ/dotfiles.git .files
 mkdir -p .config/nano
 # .zshrc
 ln -sf "$HOME"/.files/.zshrc-android "$HOME"/.zshrc
