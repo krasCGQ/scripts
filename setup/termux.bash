@@ -24,29 +24,27 @@ readonly _basic_pkglist=(
     'zsh'     # Unix shell
 )
 
-# Move to home directory just in case
+# This script is expected to be run on home directory
 cd "$HOME" || exit 1
 
-# Initiate system update
 prInfo "Executing system update..."
 pkg update -o Dpkg::Options::="--force-confnew" -y
 
 prInfo "Installing basic packages..."
 pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
-prInfo "Setting up dotfiles..."
+prInfo "Cloning dotfiles repo..."
 if [[ ! -d .files/.git ]]; then
-    rm -rf .files
+    rm -rf .files  # ensure nothing gets in our way
     git clone --recurse-submodules https://github.com/krasCGQ/dotfiles.git .files
 fi
+
+prInfo "Creating and fixing nanorc for Termux..."
 mkdir -p .config/nano
-# nanorc
 sed "s|include \"/usr|include \"$PREFIX|g;/nano-syntax-highlighting/d;s|\~|$HOME/.files|" \
     "$HOME/.files/.config/nano/nanorc" >"$HOME/.config/nano/nanorc"
 
-# Move to zsh
 prInfo "Moving to Zsh..."
 chsh -s zsh
 
-# Done!
-prInfo "Done."
+prInfo "Done. Please restart Termux manually."
