@@ -38,8 +38,6 @@ pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 prInfo "Setting up dotfiles..."
 git clone --recurse-submodules https://github.com/krasCGQ/dotfiles.git .files
 mkdir -p .config/nano
-# .zshrc
-ln -sf "$HOME"/.files/.zshrc-android "$HOME"/.zshrc
 # nanorc
 sed "s|include \"/usr|include \"$PREFIX|g;/nano-syntax-highlighting/d;s|\~|$HOME/.files|" \
     "$HOME/.files/.config/nano/nanorc" >"$HOME/.config/nano/nanorc"
