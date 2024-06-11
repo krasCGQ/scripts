@@ -1,7 +1,12 @@
-#!/data/data/com.termux/files/usr/bin/bash -e
-# Termux environment setup
-# Copyright (C) 2019-2020, 2022 Albert I (krasCGQ)
+#!/data/data/com.termux/files/usr/bin/bash
+#
+# SPDX-FileCopyrightText: 2019-2020, 2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Termux environment setup
+#
+
+set -e
 
 # Modified styled message print from my scripts
 prInfo() { echo "[-] $*"; }
