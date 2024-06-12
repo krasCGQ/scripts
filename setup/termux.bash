@@ -34,9 +34,11 @@ pkg update -o Dpkg::Options::="--force-confnew" -y
 prInfo "Installing basic packages..."
 pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
-# dotfiles
 prInfo "Setting up dotfiles..."
-git clone --recurse-submodules https://github.com/krasCGQ/dotfiles.git .files
+if [[ ! -d .files/.git ]]; then
+    rm -rf .files
+    git clone --recurse-submodules https://github.com/krasCGQ/dotfiles.git .files
+fi
 mkdir -p .config/nano
 # nanorc
 sed "s|include \"/usr|include \"$PREFIX|g;/nano-syntax-highlighting/d;s|\~|$HOME/.files|" \
