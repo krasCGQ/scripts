@@ -34,6 +34,10 @@ pkg update -o Dpkg::Options::="--force-confnew" -y
 pr_info "Installing basic packages..."
 pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
+pr_info "Installing / updating pipx..."
+python -m pip install -U pipx
+python -m pipx ensurepath
+
 pr_info "Updating nano-syntax-highlighting..."
 wget --https-only -O nano-syntax-highlighting-master.zip -nc \
     https://github.com/galenguyer/nano-syntax-highlighting/archive/refs/heads/master.zip
