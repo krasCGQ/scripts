@@ -6,8 +6,6 @@
 # Termux environment setup
 #
 
-set -e
-
 # List of basic packages to be installed
 readonly _basic_pkglist=(
     # Both of these packages have to be installed to have functioning pip.
@@ -23,6 +21,16 @@ readonly _basic_pkglist=(
 
 # Mimic Termux's custom message output
 pr_info() { echo "[-] $*"; }
+
+# This is triggered upon completion or failure
+clean_up() {
+    _status=$?
+    test -d .files/.git || rm -rf .files
+    rm -f nano-syntax-highlighting-master.zip
+    exit ${_status}
+}
+
+trap clean_up ERR EXIT INT
 
 
 # This script is expected to be run on home directory
