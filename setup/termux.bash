@@ -29,7 +29,7 @@ pr_info() { echo "[-] $*"; }
 cd "$HOME" || exit 1
 
 pr_info "Executing system update..."
-pkg update -o Dpkg::Options::="--force-confnew" -y
+pkg upgrade -o Dpkg::Options::='--force-confnew' -y
 
 pr_info "Installing basic packages..."
 pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
