@@ -5,7 +5,7 @@ This repository hosts personal scripts I often use on my working environments. I
 To clone this repository, at least to use only Bash or Zsh scripts, this command should be enough:
 
 ```bash
-git clone --recursive-submodules https://github.com/krasCGQ/scripts.git
+git clone --recurse-submodules https://github.com/krasCGQ/scripts.git
 ```
 
 
