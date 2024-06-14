@@ -38,6 +38,15 @@ pr_info "Installing / updating pipx..."
 python -m pip install -U pipx
 python -m pipx ensurepath
 
+if command -v yt-dlp >/dev/null; then
+    pr_info "Updating yt-dlp..."
+    python -m pipx upgrade --pip-args='--pre' yt-dlp
+else
+    pr_info "Installing yt-dlp..."
+    python -m pipx install --pip-args='--pre' yt-dlp
+    pkg install --no-install-recommends -y ffmpeg
+fi
+
 pr_info "Updating nano-syntax-highlighting..."
 wget --https-only -O nano-syntax-highlighting-master.zip -nc \
     https://github.com/galenguyer/nano-syntax-highlighting/archive/refs/heads/master.zip
