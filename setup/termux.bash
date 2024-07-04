@@ -47,7 +47,7 @@ pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
 pr_info "Installing / updating pipx..."
 python -m pip install -U pipx
-python -m pipx ensurepath
+python -m pipx ensurepath  # affects Bash only
 
 if command -v yt-dlp >/dev/null; then
     pr_info "Updating yt-dlp..."
