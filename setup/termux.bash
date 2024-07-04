@@ -78,6 +78,9 @@ pr_info "Creating and fixing nanorc for Termux..."
 sed -e "s|/usr/share/nano-s|$HOME/.config/nano/s|;s|^include \"/usr|include \"$PREFIX|g" \
     -e "s|\~|$HOME/.files|" .files/.config/nano/nanorc >.config/nano/nanorc
 
+pr_info "Symlinking wgetrc..."
+ln -sf .files/.config/wgetrc .config/wgetrc
+
 # If Sheldon config file exists (in case of updating), don't try to add or update plugins
 if [[ ! -f .config/sheldon/plugins.toml ]]; then
     pr_info "Configuring Zsh plugins..."
