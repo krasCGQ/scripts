@@ -16,6 +16,7 @@ readonly _basic_pkglist=(
     'axel'      # alternative CLI download manager
     'git'       # version control system
     'mediainfo' # check media information
+    'sheldon'   # shell plugin manager
     'wget'      # CLI download manager
     'zsh'       # Unix shell
 )
@@ -26,6 +27,7 @@ pr_info() { echo "[-] $*"; }
 # This is triggered upon completion or failure
 clean_up() {
     _status=$?
+    test -f .config/sheldon/plugins.toml || rm -rf .config/sheldon
     test -d .files/.git || rm -rf .files
     rm -f nano-syntax-highlighting-master.zip
     exit ${_status}
@@ -72,6 +74,17 @@ fi
 pr_info "Creating and fixing nanorc for Termux..."
 sed -e "s|/usr/share/nano-s|$HOME/.config/nano/s|;s|^include \"/usr|include \"$PREFIX|g" \
     -e "s|\~|$HOME/.files|" .files/.config/nano/nanorc >.config/nano/nanorc
+
+# If Sheldon config file exists (in case of updating), don't try to add or update plugins
+if [[ ! -f .config/sheldon/plugins.toml ]]; then
+    pr_info "Configuring Zsh plugins..."
+    yes | sheldon init --shell zsh
+    sheldon add --github zsh-users/zsh-autosuggestions autosuggestions
+    sheldon add --github zdharma-continuum/fast-syntax-highlighting fsyh
+    sheldon add --github NickKaramoff/ohmyzsh-key-bindings keybindings
+    # Pure should always be the last one to be sourced
+    sheldon add --github sindresorhus/pure --use async.zsh pure.zsh -- pure
+fi
 
 pr_info "Moving to Zsh..."
 chsh -s zsh
