@@ -65,8 +65,11 @@ test -d .config/nano/syntax-highlighting || mkdir -p .config/nano/syntax-highlig
 rm -f .config/nano/syntax-highlighting/*.nanorc  # always clean prior installs
 unzip -j nano-syntax-highlighting-master.zip '*/*.nanorc' -d .config/nano/syntax-highlighting
 
-pr_info "Cloning dotfiles repo..."
-if [[ ! -d .files/.git ]]; then
+if [[ -d .files/.git ]]; then
+    pr_info "Updating dotfiles repo..."
+    git -C .files pull --recurse-submodules || true  # skip if not possible in current state
+else
+    pr_info "Cloning dotfiles repo..."
     rm -rf .files  # ensure nothing gets in our way
     git clone --recurse-submodules https://github.com/krasCGQ/dotfiles.git .files
 fi
