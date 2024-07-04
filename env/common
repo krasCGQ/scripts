@@ -51,6 +51,9 @@ if ! command -v update-grub >/dev/null; then
     createAlias update-grub 'chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
 fi
 
+# Export new PATH containing local binaries
+[[ $(basename "$SHELL") == "$CURRENT_SHELL" ]] && export PATH=$HOME/.local/bin:$PATH
+
 # Export Distro ID to be picked up by distro-specific functions
 ID=$(getDistroID) && export ID
 
@@ -70,8 +73,6 @@ if [[ -z $SSH_AUTH_SOCK ]] && command -v systemctl >/dev/null; then
 fi
 
 if [[ -z $TERMUX_VERSION ]]; then
-    # Export new PATH containing local binaries
-    [[ $(basename "$SHELL") == "$CURRENT_SHELL" ]] && export PATH=$HOME/.local/bin:$PATH
     # Export HOME as USER_DIR for use with sudo commands when required
     USER_DIR=$HOME
     # GNU nano for text editor
