@@ -51,8 +51,8 @@ if ! command -v update-grub >/dev/null; then
     createAlias update-grub 'chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
 fi
 
-# Export new PATH containing local binaries
-[[ $(basename "$SHELL") == "$CURRENT_SHELL" ]] && export PATH=$HOME/.local/bin:$PATH
+# Export new PATH containing local binaries, if it wasn't added before
+[[ $PATH =~ $HOME/.local/bin ]] || export PATH=$HOME/.local/bin:$PATH
 
 # Export Distro ID to be picked up by distro-specific functions
 ID=$(getDistroID) && export ID
