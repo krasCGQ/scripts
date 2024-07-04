@@ -25,7 +25,4 @@ export SCRIPT_DIR
 source "$SCRIPT_DIR"/env/common
 
 # Drop aliases and functions meant for GNU/Linux systems
-unalias update-grub
-for i in chkSudo; do
-    unset -f $i
-done
+unset -f chkSudo
