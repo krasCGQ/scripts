@@ -13,10 +13,11 @@ readonly _basic_pkglist=(
     'python-ensurepip-wheels'
     'python-pip'
 
-    'axel'    # alternative CLI download manager
-    'git'     # version control system
-    'wget'    # CLI download manager
-    'zsh'     # Unix shell
+    'axel'      # alternative CLI download manager
+    'git'       # version control system
+    'mediainfo' # check media information
+    'wget'      # CLI download manager
+    'zsh'       # Unix shell
 )
 
 # Mimic Termux's custom message output
