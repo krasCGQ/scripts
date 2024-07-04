@@ -34,6 +34,9 @@ createAlias aria2ct 'aria2c --enable-dht6=true'
 # Make sorting disregard any set LC_ALL and LC_COLLATE options
 createAlias sort 'LC_ALL= LC_COLLATE=C sort'
 
+# If this takes time considered to be intolerably long, append less intensive parameters
+createSelfAlias optipng '-backup -fix -preserve -o7 -zm1-9 -zw32k'
+
 # Any other aliases, mostly to stick together all parameters I personally use
 createSelfAlias cjxl "--brotli_effort 10 --lossless_jpeg=1 --num_threads 0 -d 0 -e 10"
 createSelfAlias flac "--keep-foreign-metadata-if-present -V -e -f -p -8"
