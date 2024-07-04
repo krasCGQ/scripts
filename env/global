@@ -1,7 +1,10 @@
 #!/hint/bash
-# Treewide environment setup
-# Copyright (C) 2017-2022 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2017-2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Treewide environment setup
+#
 
 # Text styles
 if [[ -n $(command -v tput) ]]; then
@@ -65,9 +68,11 @@ chkArch() {
 getDistroID() {
     # Try to obtain Distro ID from /etc/os-release
     source <(grep '^ID' /etc/os-release 2>/dev/null)
-    # If Distro ID returns empty, check possibility of running Termux on Android
+    #
+    # If Distro ID returns empty, check if this is a Termux environment.
     # This shouldn't interfere with (ch|pr)oot-ed environment
-    [[ -z $ID ]] && [[ -n $IS_TERMUX ]] && ID=termux
+    #
+    [[ -z $ID && -n $TERMUX_VERSION ]] && ID=termux
 
     echo "$ID"
 }

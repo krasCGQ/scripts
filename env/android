@@ -1,10 +1,10 @@
 #!/hint/bash
-# Android (Termux) environment setup
-# Copyright (C) 2020-2022 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2020-2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-# Do we run on Termux?
-[[ -n $PREFIX && $PREFIX =~ com.termux ]] && export IS_TERMUX=true
+#
+# Android (Termux) environment setup
+#
 
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
