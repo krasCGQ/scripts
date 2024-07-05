@@ -1,9 +1,9 @@
 #!/hint/bash
-# Arch Linux-specific snippets
 #
-# Copyright (C) 2021-2023 Albert I (krasCGQ)
-#
+# SPDX-FileCopyrightText: 2021-2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Arch Linux-specific snippets
 #
 
 # A wannabe rankmirrors that doesn't expect repository name being exist on URL
@@ -17,7 +17,7 @@ _rank_mirrors() {
     readonly ARCH MIRRORLIST OUT REPO
 
     # Bail out early if no repo name
-    [[ -z $REPO ]] && { prWarn "Incorrect usage!" && return 1; }
+    [[ -z $REPO ]] && { _pr_warn "Incorrect usage!" && return 1; }
 
     # Parse every URL in the mirrorlist
     while IFS= read -r MIRROR; do
@@ -41,7 +41,7 @@ _rank_mirrors() {
         # Only save to temporary file if it can be downloaded
         [[ $(echo "$RESULT" | cut -d' ' -f2) -eq 200 ]] && echo "$RESULT $MIRROR" >>"$OUT"
     done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
-    [[ ! -f $OUT ]] && { prWarn "Nothing to rank?" && return 1; }
+    [[ ! -f $OUT ]] && { _pr_warn "Nothing to rank?" && return 1; }
 
     # Convert back and rank mirrors by fastest download time
     while read -r MIRROR; do
@@ -77,7 +77,7 @@ _filter_by_mirror_status() {
 
     # Bail out if we are unable to fetch it, since it'll be awkward
     [[ -n $LAST_UPDATED ]] ||
-        { prWarn "Unable to determine last updated timestamp. Aborting." && return 1; }
+        { _pr_warn "Unable to determine last updated timestamp. Aborting." && return 1; }
 
     while IFS= read -r MIRROR; do
         # Sanitize output by skipping empty lines
@@ -109,18 +109,18 @@ _filter_by_mirror_status() {
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
     local ID REPO
-    chkArch x86_64 || exit 1
-    ID=$(getDistroID)
+    _assert_arch x86_64 || exit 1
+    ID=$(get_distid)
     readonly ID
 
     # Prevent executing on anything other than Arch and Manjaro
     case $ID in
     arch | manjaro) ;; # ignore
-    *) prWarn "This function is only available for Arch and Manjaro." && exit 1 ;;
+    *) _pr_warn "This function is only available for Arch and Manjaro." && exit 1 ;;
     esac
 
     ## Official repositories:
-    prInfo "Updating official mirrorlist..."
+    _pr_info "Updating official mirrorlist..."
     case $ID in
     arch)
         if curl -s https://archlinux.org/mirrorlist/\?protocol=https\&use_mirror_status=on >/tmp/arch-mirrorlist; then
@@ -137,14 +137,14 @@ updMirrorlist() {
                 if pacman -Qq pacman-contrib &>/dev/null || command -v rankmirrors >/dev/null; then
                     rankmirrors /tmp/arch-mirrorlist
                 else
-                    prWarn "Continuing with rankMirrors() (most likely very slow)..."
+                    _pr_warn "Continuing with rankMirrors() (most likely very slow)..."
                     # core repository has the smallest database size
                     _rank_mirrors core /tmp/arch-mirrorlist
                 fi
             } >/etc/pacman.d/mirrorlist
             rm -f /tmp/arch-mirrorlist
         else
-            prWarn "Unable to retrieve mirrorlist to rank, skipping."
+            _pr_warn "Unable to retrieve mirrorlist to rank, skipping."
         fi
         ;;
     # Use official pacman-mirrors tool installed by default on Manjaro
@@ -154,7 +154,7 @@ updMirrorlist() {
     # CachyOS - discard R2 "mirror"
     for REPO in cachyos{,-v{3,4}}; do
         if _check_mirrorlist "$REPO"; then
-            prInfo "Updating CachyOS mirrorlist ($REPO)..."
+            _pr_info "Updating CachyOS mirrorlist ($REPO)..."
             curl -s "https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/$REPO-mirrorlist/$REPO-mirrorlist" |
                 sed -e /##/d -e /cdn.cachyos/d |
                 _rank_mirrors "$REPO" - >"/etc/pacman.d/$REPO-mirrorlist"
@@ -163,7 +163,7 @@ updMirrorlist() {
 
     # Chaotic-AUR - discard both geo-located and CDN mirrors
     if _check_mirrorlist chaotic; then
-        prInfo "Updating Chaotic-AUR mirrorlist..."
+        _pr_info "Updating Chaotic-AUR mirrorlist..."
         curl -s https://aur.chaotic.cx/mirrorlist.txt |
             sed -e /geo-mirror/d -e /cdn-mirror/d -e '/# /d' |
             _filter_by_mirror_status https://cdn-mirror.chaotic.cx/no-failover/chaotic-aur - |
@@ -172,13 +172,13 @@ updMirrorlist() {
 
     # Arch Linux CN
     if _check_mirrorlist archlinuxcn; then
-        prInfo "Updating Arch Linux CN mirrorlist..."
+        _pr_info "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
             sed -e s/#\ Server/Server/g -e /repo.archlinuxcn/d -e /##/d |
             _filter_by_mirror_status https://repo.archlinuxcn.org - |
             _rank_mirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
     fi
 
-    prInfo "Done."
+    _pr_info "Done."
 }
-alias updMirrorlist='chkSudo su -c ". $SCRIPT_DIR/env/global && $(declare -f _check_mirrorlist _filter_by_mirror_status _rank_mirrors getDistroID updMirrorlist) && updMirrorlist"'
+alias updMirrorlist='_su_exec su -c ". $SCRIPT_DIR/env/global && $(declare -f _check_mirrorlist _filter_by_mirror_status _rank_mirrors get_distid updMirrorlist) && updMirrorlist"'

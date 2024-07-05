@@ -1,7 +1,10 @@
 #!/hint/bash
-# Collection of Private Internet Access-related commands
-# Copyright (C) 2019-2020, 2022 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2019-2020, 2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Collection of Private Internet Access-related commands
+#
 
 # Setup Private Internet Access configuration files for OpenVPN
 piaOvpnSetup() {
@@ -21,7 +24,7 @@ piaOvpnSetup() {
     }' ERR INT TERM
 
     # Make sure OpenVPN is installed
-    [[ -z $(command -v openvpn) ]] && { prWarn "Please install openvpn package before continuing." && return 1; }
+    [[ -z $(command -v openvpn) ]] && { _pr_warn "Please install openvpn package before continuing." && return 1; }
 
     # Parse parameters
     # Only one type at a time, latter function will override already assigned
@@ -45,7 +48,7 @@ piaOvpnSetup() {
 
         # Unrecognized parameter, skip
         *)
-            prWarn "Unrecognized parameter specified: \"${1}\""
+            _pr_warn "Unrecognized parameter specified: \"${1}\""
             ;;
         esac
         shift
@@ -56,7 +59,7 @@ piaOvpnSetup() {
     cd $TMP_DIR || return 1
 
     # Fetch recommended configuration files
-    prInfo "Fetching configuration files..."
+    _pr_info "Fetching configuration files..."
     [[ $MODE == tcp ]] && EXTRA_ARGS+=-tcp
     if [[ -n $AEAD ]]; then
         EXTRA_ARGS+=-aead
@@ -67,24 +70,24 @@ piaOvpnSetup() {
     fi
 
     # Extract configuration files and remove the archive
-    prInfo "Extracting configuration files..."
+    _pr_info "Extracting configuration files..."
     unzip -q openvpn$EXTRA_ARGS.zip
     rm -f openvpn$EXTRA_ARGS.zip
 
     # sed configuration files to include auth-user-pass file path
-    prInfo "Patching configuration files..."
+    _pr_info "Patching configuration files..."
     for CONFIG in ./*.ovpn; do
         # Single quote doesn't expand things
         sed -i 's|auth-user-pass|auth-user-pass /etc/openvpn/pia-auth.conf|' "$CONFIG"
     done
 
     # Remove existing configuration files if any
-    prInfo "Removing existing configuration files..."
-    chkSudo rm -rf /etc/openvpn/client/*
+    _pr_info "Removing existing configuration files..."
+    _su_exec rm -rf /etc/openvpn/client/*
 
     # Move everything to /etc/openvpn/client and set correct permissions
-    prInfo "Moving configuration files to /etc/openvpn..."
-    chkSudo su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
+    _pr_info "Moving configuration files to /etc/openvpn..."
+    _su_exec su -c "mv -f ./* /etc/openvpn/client && chown -R root:network /etc/openvpn/client"
 
     # Go back to previous directory and remove temporary directory
     cd - >/dev/null || return 1
@@ -98,13 +101,13 @@ piaOvpnSetup() {
         read -r PASS
 
         # Save them to /etc/openvpn/pia-auth.conf and set correct permissions
-        prInfo "Saving credientials to $AUTH_FILE..."
-        echo -e "$USER\n$PASS" | chkSudo tee $AUTH_FILE >/dev/null
-        chkSudo su -c "chown root:network $AUTH_FILE && chmod 600 $AUTH_FILE"
+        _pr_info "Saving credientials to $AUTH_FILE..."
+        echo -e "$USER\n$PASS" | _su_exec tee $AUTH_FILE >/dev/null
+        _su_exec su -c "chown root:network $AUTH_FILE && chmod 600 $AUTH_FILE"
     fi
 
     # And... it's done.
-    prInfo "The operation completed successfully."
+    _pr_info "The operation completed successfully."
 }
 
 # Wrapper to connect to Private Internet Access with OpenVPN
@@ -115,14 +118,14 @@ _piaOvpnConnect() {
 
     # Make sure OpenVPN is installed
     if [[ -z $(command -v openvpn) ]]; then
-        prWarn "Please install openvpn package before continuing."
+        _pr_warn "Please install openvpn package before continuing."
         return 1
     # Warn for specification of more than a country
     elif [[ $# -gt 1 ]]; then
-        prWarn "This function uses one parameter only."
+        _pr_warn "This function uses one parameter only."
     # Exit function if no country is specified
     elif [[ $# -lt 1 ]]; then
-        prWarn "Please specify a country to connect."
+        _pr_warn "Please specify a country to connect."
         return 1
     fi
 
@@ -132,7 +135,7 @@ _piaOvpnConnect() {
     CONFIG=/etc/openvpn/client/"$COUNTRY".ovpn
     # Exit function immediately if provided country doesn't exist
     if [[ ! -f $CONFIG ]]; then
-        prWarn "Invalid country provided: $COUNTRY"
+        _pr_warn "Invalid country provided: $COUNTRY"
         return 1
     fi
 
@@ -143,7 +146,7 @@ _piaOvpnConnect() {
 
     # If .ip-address.saved is exist, probably it wasn't disconnected properly
     if [[ -f $SCRIPT_DIR/.ip-address.saved ]]; then
-        prWarn "Redundant rules detected! Disabling VPN kill switch..."
+        _pr_warn "Redundant rules detected! Disabling VPN kill switch..."
         "$SCRIPT_DIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
     fi
 
@@ -154,7 +157,7 @@ _piaOvpnConnect() {
     chattr +i /etc/resolv.conf
 
     # Enable VPN kill switch
-    prInfo "Enabling VPN kill switch..."
+    _pr_info "Enabling VPN kill switch..."
     "$SCRIPT_DIR"/utils/killswitch.bash on "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Restart name server cache daemon
@@ -169,23 +172,23 @@ _piaOvpnConnect() {
     trap 'break' INT
 
     # Connect with supplied country name in the background
-    prInfo "Establishing connection to $COUNTRY..."
+    _pr_info "Establishing connection to $COUNTRY..."
     while true; do
         openvpn --config "$CONFIG" --auth-nocache --keepalive 60 720 --remap-usr1 SIGTERM
-        prWarn "Reconnecting to $COUNTRY..."
+        _pr_warn "Reconnecting to $COUNTRY..."
     done
 
     # Upon disconnection, warn it
-    prWarn "Connection has been terminated."
+    _pr_warn "Connection has been terminated."
 
     # Disable VPN kill switch
-    prInfo "Disabling VPN kill switch..."
+    _pr_info "Disabling VPN kill switch..."
     "$SCRIPT_DIR"/utils/killswitch.bash off "$SERVER" "$PORT/$PROTOCOL" >/dev/null
 
     # Make resolv.conf read/write
     chattr -i /etc/resolv.conf
 }
-piaOvpnConnect() { chkSudo --preserve-env=SCRIPT_DIR su -c ". $SCRIPT_DIR/env/global && $(declare -f _piaOvpnConnect) && _piaOvpnConnect $*"; }
+piaOvpnConnect() { _su_exec --preserve-env=SCRIPT_DIR su -c ". $SCRIPT_DIR/env/global && $(declare -f _piaOvpnConnect) && _piaOvpnConnect $*"; }
 
 # Get latest Private Internet Access client installer
 # Currently doesn't verify against checksum provided
@@ -201,7 +204,7 @@ piaGetInstaller() {
     for i in android linux osx win32 win64; do
         [[ $OS == "$i" ]] && { PASS=true && break; }
     done
-    [[ -z $PASS ]] && { prWarn "Invalid OS selected!" && return 1; }
+    [[ -z $PASS ]] && { _pr_warn "Invalid OS selected!" && return 1; }
     unset PASS
 
     # PIA uses different structure for Windows installers
@@ -209,13 +212,13 @@ piaGetInstaller() {
     # PIA uses different base URL for Android APK
     [[ $OS == android ]] && BASE_URL=${BASE_URL/\/x/}
     # Get installer URL
-    prInfo "Fetching download URL..."
+    _pr_info "Fetching download URL..."
     URL=$(curl -s $BASE_URL"$OS" | grep refresh | cut -d'=' -f4 | sed -e 's/">//')
-    [[ -z $URL ]] && { prWarn "Unable to retrieve download URL." && return 1; }
+    [[ -z $URL ]] && { _pr_warn "Unable to retrieve download URL." && return 1; }
 
     # Download installer using Axel
     NAME=$(basename "$URL")
-    prInfo "Downloading $NAME..."
+    _pr_info "Downloading $NAME..."
     axel -n16 -o "$HOME"/Downloads/"$NAME" "$URL"
 }
 
@@ -228,14 +231,14 @@ piaSetForward() {
 
     # Forwarded port...or something else
     PORT=$(piactl get portforward)
-    [[ -n ${PORT//[0-9]/} ]] && { prWarn "Unable to retrieve forwarded port info. PIA says: $PORT" && return 1; }
+    [[ -n ${PORT//[0-9]/} ]] && { _pr_warn "Unable to retrieve forwarded port info. PIA says: $PORT" && return 1; }
 
     # UFW (whitelisting)
     # On some distros root user is required to even see ufw in PATH
-    if [[ -n $(command -v ufw || chkSudo command -v ufw) ]]; then
-        ! chkSudo su -c "ufw allow $PORT && ufw reload" && prWarn "Unable to configure UFW, skipping..."
+    if [[ -n $(command -v ufw || _su_exec command -v ufw) ]]; then
+        ! _su_exec su -c "ufw allow $PORT && ufw reload" && _pr_warn "Unable to configure UFW, skipping..."
     else
-        prWarn "Skip configuring non-existing UFW."
+        _pr_warn "Skip configuring non-existing UFW."
     fi
 
     # Deluge in client mode
@@ -249,7 +252,7 @@ piaSetForward() {
         # Restart Deluge if previously terminated
         [[ -n $DELUGE_RESTART ]] && nohup deluge-gtk &>/dev/null &
     else
-        prWarn "Skip configuring non-existing Deluge configuration."
+        _pr_warn "Skip configuring non-existing Deluge configuration."
     fi
 
     return 0

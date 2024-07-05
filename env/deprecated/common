@@ -1,7 +1,10 @@
 #!/hint/bash
-# Common environment setup (deprecated functions)
-# Copyright (C) 2017-2023 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2017-2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Common environment setup (deprecated functions)
+#
 
 # Parse current branch in git repository
 parseGitBranch() {
@@ -18,36 +21,36 @@ parseGitBranch() {
 
 # Get latest Proton clang from GitHub releases
 getProtonClang() {
-    chkArch x86_64 || return 1
+    _assert_arch x86_64 || return 1
     local INSTALL_DIR LATEST NAME REPO URL VERSION
     INSTALL_DIR=/opt/kud/proton-clang
     REPO=kdrag0n/proton-clang
 
-    prInfo "Obtaining latest version info..."
+    _pr_info "Obtaining latest version info..."
     LATEST=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep -w tag_name | cut -d ':' -f 2 | sed -e 's/[[:space:]]//' -e 's/"//g' -e 's/,//')
     if [[ $(<$INSTALL_DIR/ClangVersion.txt 2>/dev/null) -eq $LATEST ]]; then
         # we're up to date, skip.
-        prInfo "Clang build $LATEST is up to date."
+        _pr_info "Clang build $LATEST is up to date."
         rm /tmp/latest.json
         return
     fi
 
     URL=https://github.com/$REPO/archive/$LATEST.tar.gz
     NAME=$(echo $REPO | cut -d "/" -f 2)-$LATEST.tar.gz
-    prInfo "Downloading $NAME..."
+    _pr_info "Downloading $NAME..."
     if ! aria2c -d /tmp "$URL"; then
-        prWarn "Failed to download $NAME."
+        _pr_warn "Failed to download $NAME."
         rm /tmp/"$NAME"
         return 1
     fi
 
     if [[ -d $INSTALL_DIR ]]; then
-        prInfo "Backing up old Clang build..."
+        _pr_info "Backing up old Clang build..."
         [[ -d $INSTALL_DIR-old ]] && rm -r $INSTALL_DIR-old
         mv -f $INSTALL_DIR{,-old}
     fi
 
-    prInfo "Extracting $NAME..."
+    _pr_info "Extracting $NAME..."
     tar -C /opt/kud -xf /tmp/"$NAME"
     mv /opt/kud/"${NAME/.tar.gz/}" $INSTALL_DIR
     # write build version
@@ -56,20 +59,20 @@ getProtonClang() {
 
     # {29} = last 28 letters of SHA-1 + trailing right parentheses
     VERSION=$($INSTALL_DIR/bin/clang --version | head -1 | cut -d ' ' -f 1,2,4,6 | sed -e 's/.\{29\}$//')
-    prInfo "Successfully installed $VERSION."
+    _pr_info "Successfully installed $VERSION."
 }
 
 # Fix Snapdragon LLVM permissions and symlinks; prebuilts extracted from BSP
 fixSdllvm() {
     local VERSION
-    chkArch x86_64 || return 1
+    _assert_arch x86_64 || return 1
     pushd "$1" >/dev/null || return
 
     # try to get Clang major version
     [[ ! -x bin/clang ]] && chmod +x bin/clang
     VERSION=$(bin/clang --version | head -1 | cut -d' ' -f3 | cut -d. -f1)
 
-    prInfo "Fixing permissions and symlinks..."
+    _pr_info "Fixing permissions and symlinks..."
     (
         cd bin || return 1
         [[ -f ld.qcld ]] && {
@@ -118,6 +121,6 @@ fixSdllvm() {
     find lib -maxdepth 1 -type f -exec test ! -x {} \; -exec chmod +x {} \;
     find libexec -type f -exec test ! -x {} \; -exec chmod +x {} \;
 
-    prInfo "Done."
+    _pr_info "Done."
     popd >/dev/null || true
 }

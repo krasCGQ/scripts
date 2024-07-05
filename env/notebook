@@ -1,7 +1,10 @@
 #!/hint/bash
-# Environment setup for my notebook
-# Copyright (C) 2017-2022 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2017-2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Environment setup for my notebook
+#
 
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
@@ -22,7 +25,7 @@ export SCRIPT_DIR
 source "$SCRIPT_DIR"/env/common
 
 # Aliases
-createAlias sys2sbin 'sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
+mk_alias sys2sbin 'sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
 alias ak-build='$SCRIPT_DIR/tasks/kernel.bash'
 
 if [[ -z $TMUX ]]; then
@@ -53,7 +56,7 @@ fi
 # Convert all FLAC, WAV, and/or AIFF files to Opus
 opusConvert() {
     # Ask to install opus-tools package if opusenc doesn't exist
-    [[ -z $(command -v opusenc) ]] && { prWarn "Please install opus-tools package before continuing." && return 1; }
+    [[ -z $(command -v opusenc) ]] && { _pr_warn "Please install opus-tools package before continuing." && return 1; }
 
     for SONG in ./*; do
         case "$SONG" in
@@ -67,7 +70,7 @@ opusConvert() {
     done
 
     # Return non-zero status if nothing to do
-    if [[ -z $SUPPORTED ]]; then prWarn "There's nothing to do." && return 1; fi
+    if [[ -z $SUPPORTED ]]; then _pr_warn "There's nothing to do." && return 1; fi
 }
 
 # Setup zRAM to take the whole RAM size
@@ -88,7 +91,7 @@ function zramInit() { (
     # Set swappiness to 100
     sysctl vm.swappiness=100
 ) || return 1; }
-alias zramInit='chkSudo su -c "$(declare -f zramInit) && zramInit &> /dev/null"'
+alias zramInit='_su_exec su -c "$(declare -f zramInit) && zramInit &> /dev/null"'
 
 # De-init zRAM configuration set before
 alias zramDeinit &>/dev/null && unalias zramDeinit
@@ -102,7 +105,7 @@ zramDeinit() { (
     # Set swappiness to 1
     sysctl vm.swappiness=1
 ) || return 0; } # suppress non-zero exit status
-alias zramDeinit='chkSudo su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/null"'
+alias zramDeinit='_su_exec su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/null"'
 
 # Play from HDMI capture device using mpv
 # NOTE: profile=capture-device is defined on dotfiles mpv.conf
@@ -125,7 +128,7 @@ playCapture() {
         PARAMS+=("--fps=30")
         PARAMS+=("--override-display-fps=30")
     else
-        prWarn "No capture device found for this session." && return
+        _pr_warn "No capture device found for this session." && return
     fi
 
     mpv --profile=capture-device \

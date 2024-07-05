@@ -23,23 +23,23 @@ source "$SCRIPT_DIR/env/global"
 #    may cause infinite download tries if connection attempt still gets refused all the time.
 #
 _curl_version=$(curl -V | grep -o 'curl [^ ]*' | sed 's|[[:space:]]|/|')
-createAlias aria2cd "aria2c --uri-selector=adaptive -R -U \"${_curl_version}\" -c -m 0 -s 16 -x 16"
-createSelfAlias axel "-U \"${_curl_version}\" -c -n 16"
-createSelfAlias wget "--hsts-file=${XDG_CACHE_HOME:-$HOME/.cache}/wget-hsts --retry-connrefused -U \"${_curl_version}\" -c"
+mk_alias aria2cd "aria2c --uri-selector=adaptive -R -U \"${_curl_version}\" -c -m 0 -s 16 -x 16"
+mk_alias_self axel "-U \"${_curl_version}\" -c -n 16"
+mk_alias_self wget "--hsts-file=${XDG_CACHE_HOME:-$HOME/.cache}/wget-hsts --retry-connrefused -U \"${_curl_version}\" -c"
 unset _curl_version
 
 # Enable IPv6 DHT when aria2 is running as a torrent client
-createAlias aria2ct 'aria2c --enable-dht6=true'
+mk_alias aria2ct 'aria2c --enable-dht6=true'
 
 # Make sorting disregard any set LC_ALL and LC_COLLATE options
-createAlias sort 'LC_ALL= LC_COLLATE=C sort'
+mk_alias sort 'LC_ALL= LC_COLLATE=C sort'
 
 # If this takes time considered to be intolerably long, append less intensive parameters
-createSelfAlias optipng '-backup -fix -preserve -o7 -zm1-9 -zw32k'
+mk_alias_self optipng '-backup -fix -preserve -o7 -zm1-9 -zw32k'
 
 # Any other aliases, mostly to stick together all parameters I personally use
-createSelfAlias cjxl "--brotli_effort 10 --lossless_jpeg=1 --num_threads 0 -d 0 -e 10"
-createSelfAlias flac "--keep-foreign-metadata-if-present -V -e -f -p -8"
+mk_alias_self cjxl "--brotli_effort 10 --lossless_jpeg=1 --num_threads 0 -d 0 -e 10"
+mk_alias_self flac "--keep-foreign-metadata-if-present -V -e -f -p -8"
 
 #
 # Create an alias to update-grub if the wrapper script doesn't exist.
@@ -48,14 +48,14 @@ createSelfAlias flac "--keep-foreign-metadata-if-present -V -e -f -p -8"
 # itself contains and only contains this command alone, this can simply be aliased
 #
 if ! command -v update-grub >/dev/null; then
-    createAlias update-grub 'chkSudo grub-mkconfig -o /boot/grub/grub.cfg'
+    mk_alias update-grub '_su_exec grub-mkconfig -o /boot/grub/grub.cfg'
 fi
 
 # Export new PATH containing local binaries, if it wasn't added before
 [[ $PATH =~ $HOME/.local/bin ]] || export PATH=$HOME/.local/bin:$PATH
 
 # Export Distro ID to be picked up by distro-specific functions
-ID=$(getDistroID) && export ID
+ID=$(get_distid) && export ID
 
 # This is required for GPG signing
 GPG_TTY=$(tty) && export GPG_TTY
@@ -124,29 +124,29 @@ sysUpdate() {
     almalinux | centos | fedora | rhel | rocky)
         # Overriding sudo will somehow break RPM package managers, so don't do that
         # Only DNF is supported for this function, RPM and YUM won't
-        chkSudo dnf --refresh distro-sync
+        _su_exec dnf --refresh distro-sync
         ;;
     alpine)
-        chkSudo su -c "apk update && apk upgrade"
+        _su_exec su -c "apk update && apk upgrade"
         ;;
     arch | manjaro)
         # AUR, please fuck yourself
         [[ -n $(command -v powerpill) ]] && UPD=powerpill || UPD=pacman
         # Always synchronize package databases with pacman
-        chkSudo su -c "pacman -Sy && $UPD -Su --noconfirm"
+        _su_exec su -c "pacman -Sy && $UPD -Su --noconfirm"
         ;;
     debian | ubuntu)
         # No apt-get gang
-        chkSudo su -c "apt update && apt dist-upgrade -y"
+        _su_exec su -c "apt update && apt dist-upgrade -y"
         ;;
     termux)
         # Equivalent to `apt update && apt upgrade`
         pkg update -y
         ;;
-    *) prWarn "This distribution (${ID:-unknown}) is currently not supported." ;;
+    *) _pr_warn "This distribution (${ID:-unknown}) is currently not supported." ;;
     esac
-    [[ -n $(command -v flatpak) ]] && chkSudo flatpak -y update
+    [[ -n $(command -v flatpak) ]] && _su_exec flatpak -y update
     # Snap usually updates packages automatically and unattended
-    [[ -n $(command -v snap) ]] && chkSudo snap refresh
+    [[ -n $(command -v snap) ]] && _su_exec snap refresh
     return 0
 }

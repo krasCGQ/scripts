@@ -1,7 +1,9 @@
 #!/hint/bash
-# Android ROM signing wrapper
-# Copyright (C) 2017-2020, 2022 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2017-2020, 2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0
+#
+# Android ROM signing wrapper
 #
 # This snippet contains portions of code taken from AOSP documentation and has
 # been modified accordingly to make it compatible with both AOSP and custom
@@ -20,23 +22,23 @@ romSign() {
 
     # Must be run at root of ROM source
     if [[ ! -d $(pwd)/build/tools ]]; then
-        prWarn "This function must be run at root of ROM source!"
+        _pr_warn "This function must be run at root of ROM source!"
         return 1
     # If ${OUT} is empty, either we:
     # 1. haven't finished a full build; or
     # 2. exited terminal after completing a full build.
     elif [[ -z $OUT ]]; then
-        prWarn "Run this function after a complete full build!"
+        _pr_warn "Run this function after a complete full build!"
         return 1
     # Make sure only one target files package exists
     elif [[ $(find "$OUT"/obj/PACKAGING/target_files_intermediates -name '*target_files*.zip' | wc -l) -ne 1 ]]; then
-        prWarn "Less or more than one target files package detected!"
+        _pr_warn "Less or more than one target files package detected!"
         return 1
     fi
 
     # Must have signing keys in .android-certs at $HOME before proceeding
     for SIGNKEYS in {media,platform,releasekey,shared}.{pk8,x509.pem}; do
-        [[ ! -f $HOME/.android-certs/$SIGNKEYS ]] && { prWarn "Missing one or more signing keys in $HOME/.android-certs folder!" && return 1; }
+        [[ ! -f $HOME/.android-certs/$SIGNKEYS ]] && { _pr_warn "Missing one or more signing keys in $HOME/.android-certs folder!" && return 1; }
     done
 
     # Let's assume the ROM has backuptool support

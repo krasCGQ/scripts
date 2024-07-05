@@ -1,7 +1,10 @@
 #!/hint/bash
-# Environment setup for my servers
-# Copyright (C) 2017-2020, 2022 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2017-2020, 2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Environment setup for my servers
+#
 
 # Set path to script directory depending on which shell we use
 if [[ -n $BASH ]]; then
@@ -22,12 +25,12 @@ export SCRIPT_DIR
 source "$SCRIPT_DIR"/env/common
 
 # Aliases
-createAlias tmux 'force_color_prompt=yes tmux'
+mk_alias tmux 'force_color_prompt=yes tmux'
 
 # Shortcut for ssh-agent setup
 sshSetup() {
     # Do an unconditional check
-    [[ ! -f $HOME/.ssh/id_ed25519 ]] && { prWarn "Please generate an SSH key before using this command." && return 1; }
+    [[ ! -f $HOME/.ssh/id_ed25519 ]] && { _pr_warn "Please generate an SSH key before using this command." && return 1; }
 
     # The actual setup is here
     eval "$(ssh-agent -s)"

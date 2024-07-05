@@ -1,7 +1,10 @@
 #!/hint/bash
-# Common kernel functions
-# Copyright (C) 2020-2022 Albert I (krasCGQ)
+#
+# SPDX-FileCopyrightText: 2020-2022, 2024 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Common kernel functions
+#
 
 # Exit if it's being executed
 if ! (return 2>/dev/null); then
@@ -11,6 +14,8 @@ fi
 
 ## Import common environment script
 . "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"/../env/common
+alias prInfo='_pr_info'
+alias prWarn='_pr_warn'
 
 ## Functions
 

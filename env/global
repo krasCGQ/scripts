@@ -7,7 +7,7 @@
 #
 
 # Text styles
-if [[ -n $(command -v tput) ]]; then
+if command -v tput >/dev/null; then
     BLD=$(tput bold)
     RST=$(tput sgr0)
 else
@@ -18,10 +18,10 @@ fi
 export BLD RST
 
 # Enable escape sequences on Bash
-[[ -n $BASH ]] && alias echo='echo -e'
+test -n "$BASH" && alias echo='echo -e'
 
 # Prints a message with a dash
-prInfo() {
+_pr_info() {
     echo "- $1"
     while [[ $# -ge 2 ]]; do
         echo "  $2"
@@ -30,7 +30,7 @@ prInfo() {
 }
 
 # Prints a message with an exclamation point
-prWarn() {
+_pr_warn() {
     echo "! $1" >&2
     while [[ $# -ge 2 ]]; do
         echo "  $2" >&2
@@ -39,10 +39,10 @@ prWarn() {
 }
 
 # Making sure user has su rights before executing command
-chkSudo() {
-    prInfo "Checking for su rights; please enter password if prompted."
+_su_exec() {
+    _pr_info "Checking for su rights; please enter password if prompted."
     if ! (sudo -v || doas true) 2>/dev/null; then
-        prWarn "Current user doesn't have su rights!"
+        _pr_warn "Current user doesn't have su rights!"
         return 1
     fi
 
@@ -57,7 +57,7 @@ chkSudo() {
 }
 
 # Check for system architecture support
-chkArch() {
+_assert_arch() {
     ARCH=$(uname -m)
     for TARGET in "$@"; do
         [[ $ARCH == "$TARGET" ]] && break
@@ -65,7 +65,7 @@ chkArch() {
 }
 
 # Get Distro ID for functions that require them
-getDistroID() {
+get_distid() {
     # Try to obtain Distro ID from /etc/os-release
     source <(grep '^ID' /etc/os-release 2>/dev/null)
     #
@@ -78,7 +78,7 @@ getDistroID() {
 }
 
 # A wrapper so we don't redundantly create an alias to non-existing binary
-createAlias() {
+mk_alias() {
     local ALIAS COMMAND EXEC
     ALIAS=$1
     COMMAND=$2
@@ -90,7 +90,7 @@ createAlias() {
         # Determine executable binary first
         EXEC=$(echo -n "$COMMAND" | cut -d\  -f"$NUM")
         # Proceed to next executable if we get superuser binary
-        [[ $EXEC == chkSudo || $EXEC == sudo || $EXEC == doas ]] && continue
+        [[ $EXEC == _su_exec || $EXEC == sudo || $EXEC == doas ]] && continue
         # Also if we encounter environment variables being set at the beginning
         [[ $EXEC =~ = ]] && continue
         # Bail out silently if target binary doesn't exist or isn't executable
@@ -100,7 +100,7 @@ createAlias() {
     eval "alias $ALIAS='$COMMAND'"
 }
 
-createSelfAlias() {
+mk_alias_self() {
     # Shortcut to create an alias to binary itself, done to avoid redefining most stuffs above
-    createAlias "$1" "$1 $2"
+    mk_alias "$1" "$1 $2"
 }
