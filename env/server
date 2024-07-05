@@ -22,15 +22,18 @@ SCRIPT_DIR=$(dirname "$SCRIPT_DIR")
 export SCRIPT_DIR
 
 # Import common environment script
-source "$SCRIPT_DIR"/env/common
+source "$SCRIPT_DIR/env/common"
 
-# Aliases
+# Force prompts to be in color regardless of compatibility
 mk_alias tmux 'force_color_prompt=yes tmux'
 
 # Shortcut for ssh-agent setup
-sshSetup() {
+ssh_setup() {
     # Do an unconditional check
-    [[ ! -f $HOME/.ssh/id_ed25519 ]] && { _pr_warn "Please generate an SSH key before using this command." && return 1; }
+    if [[ ! -f $HOME/.ssh/id_ed25519 ]]; then
+        _pr_warn "Please generate an SSH key before using this function."
+        return 1
+    fi
 
     # The actual setup is here
     eval "$(ssh-agent -s)"
