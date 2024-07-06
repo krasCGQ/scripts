@@ -27,15 +27,37 @@ source "$SCRIPT_DIR/env/common"
 # Force prompts to be in color regardless of compatibility
 mk_alias tmux 'force_color_prompt=yes tmux'
 
-# Shortcut for ssh-agent setup
+#
+# While all this function actually does is initializing local session's ssh-agent and adding all
+# keys into the agent, it further goes into sanitizing so that only valid keys will be fed into
+#
 ssh_setup() {
-    # Do an unconditional check
-    if [[ ! -f $HOME/.ssh/id_ed25519 ]]; then
+    local KEY KEY_FOUND=() KEY_TYPE
+
+    if [[ -d $HOME/.ssh ]]; then
+        # Found keys won't be added as is, since we need to be sure the pair is actually valid
+        for KEY in $(find "$HOME/.ssh" | grep \.pub$); do
+            # Loop through lists of possible ciphers
+            # FIXME: Probably never going to be tested on FIDO2 keys
+            for KEY_TYPE in dsa ecdsa ed25519 rsa; do
+                if file -b "$KEY" | grep -iw $KEY_TYPE &&
+                    file -b "${KEY/.pub/}" | grep -iw private; then
+                    KEY_FOUND+=("${KEY/.pub/}") # add privkey, not pubkey
+                    break
+                fi
+            done
+        done
+    fi
+
+    if [[ ${#KEY_FOUND[*]} -eq 0 ]]; then
         _pr_warn "Please generate an SSH key before using this function."
         return 1
     fi
 
     # The actual setup is here
     eval "$(ssh-agent -s)"
-    ssh-add "$HOME"/.ssh/id_ed25519
+    for KEY in "${KEY_FOUND[@]}"; do
+        _pr_info "Adding the following key into ssh-agent: $(basename "$KEY")"
+        ssh-add "$KEY"
+    done
 }
