@@ -95,15 +95,17 @@ play_hdmi_capture() {
         DEVICE='AVerMedia_AVerMedia_USB_Device_53106217017740'
         # Use 1920x1080 output (mpv always picks up 640x480, doesn't happen with VLC)
         DEVICE_PARAMS+=('--demuxer-lavf-o-append=video_size=1920x1080')
+        # Select 60 fps even though these should be the default anyway
+        DEVICE_PARAMS+=('--demuxer-lavf-o-append=framerate=60')
+        DEVICE_PARAMS+=('--container-fps-override=60')
     elif [[ -e /dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0 ]]; then
         # Video4Linux v2 device and its audio sink
         DEVICE='MACROSILICON_USB_Video'
         # Explicitly use MJPEG output format (it defaults to H.264 1080p5)
         DEVICE_PARAMS+=('--demuxer-lavf-o-append=input_format=mjpeg')
-        # Force 30 frames per second due to tearing issues with this capture device
+        # Force 30 fps output due to tearing issues with this capture device
         DEVICE_PARAMS+=('--demuxer-lavf-o-append=framerate=30')
-        DEVICE_PARAMS+=('--fps=30')
-        DEVICE_PARAMS+=('--override-display-fps=30')
+        DEVICE_PARAMS+=('--container-fps-override=30')
     else
         _pr_warn "No capture device found for this session."
         return
