@@ -38,8 +38,8 @@ mk_alias sort 'LC_ALL= LC_COLLATE=C sort'
 mk_alias_self optipng '-backup -fix -preserve -o7 -zm1-9 -zw32k'
 
 # Any other aliases, mostly to stick together all parameters I personally use
-mk_alias_self cjxl "--brotli_effort 10 --lossless_jpeg=1 --num_threads 0 -d 0 -e 10"
-mk_alias_self flac "--keep-foreign-metadata-if-present -V -e -f -p -8"
+mk_alias_self cjxl '--brotli_effort 10 --lossless_jpeg 1 --num_threads 0 -d 0 -e 10'
+mk_alias_self flac '--keep-foreign-metadata-if-present -V -e -f -p -8'
 
 #
 # Create an alias to update-grub if the wrapper script doesn't exist.
@@ -47,9 +47,8 @@ mk_alias_self flac "--keep-foreign-metadata-if-present -V -e -f -p -8"
 # This primarily concerns non-Ubuntu systems using GRUB as bootloader of choice. As the wrapper
 # itself contains and only contains this command alone, this can simply be aliased
 #
-if ! command -v update-grub >/dev/null; then
+command -v update-grub >/dev/null ||
     mk_alias update-grub '_su_exec grub-mkconfig -o /boot/grub/grub.cfg'
-fi
 
 # Export new PATH containing local binaries, if it wasn't added before
 [[ $PATH =~ $HOME/.local/bin ]] || export PATH=$HOME/.local/bin:$PATH
@@ -61,7 +60,7 @@ ID=$(get_distid) && export ID
 GPG_TTY=$(tty) && export GPG_TTY
 
 # Make the running gnome-keyring SSH daemon visible to terminal session - useful on non-GNOME
-if [[ -z $SSH_AUTH_SOCK ]] && command -v systemctl >/dev/null; then
+if test -z "$SSH_AUTH_SOCK" && command -v systemctl >/dev/null; then
     if systemctl --user is-active gnome-keyring-daemon &>/dev/null; then
         SSH_AUTH_SOCK=$(systemctl --user show gnome-keyring-daemon | grep ^ExecStart= |
             grep -o '\--control-directory=[^ ]*' | cut -d= -f2)
@@ -69,16 +68,13 @@ if [[ -z $SSH_AUTH_SOCK ]] && command -v systemctl >/dev/null; then
         export SSH_AUTH_SOCK
     fi
     # Unset SSH_AUTH_SOCK if it's not what we want
-    [[ -S $SSH_AUTH_SOCK ]] || unset SSH_AUTH_SOCK
+    test -S "$SSH_AUTH_SOCK" || unset SSH_AUTH_SOCK
 fi
 
+# Avoid exporting these on Termux environment because they're unnecessary
 if [[ -z $TERMUX_VERSION ]]; then
-    # Export HOME as USER_DIR for use with sudo commands when required
-    USER_DIR=$HOME
-    # GNU nano for text editor
-    EDITOR=nano
-    # Export variables to satisfy shellcheck requirements
-    export USER_DIR EDITOR
+    export EDITOR=nano     # text editor of choice
+    export USER_DIR=$HOME  # for use with sudo when needed
 fi
 
 # Include Arch Linux-specific snippets for Arch-based distros
@@ -95,14 +91,14 @@ fi
 #
 if command -v aria2c >/dev/null; then
     miui_download() {
-        unset OTA_LINKS
+        local MIUI_PACKAGE MIUI_VERSION OTA_LINKS=() OTA_URL OTA_URL_LIST
 
-        local MIUI_PACKAGE MIUI_VERSION
+        # Get sanitized package name and MIUI version from supplied argument
         MIUI_PACKAGE=$(echo -n "$1" | rev | cut -d/ -f1 | rev)
         MIUI_VERSION=$(echo "$MIUI_PACKAGE" | grep -o '[OS|V][^_]*')
 
         # A fixed list of available mirrors
-        local OTA_URL_LIST=(
+        OTA_URL_LIST=(
             'bigota.d.miui.com'
             'bn.d.miui.com'
             'hugeota.d.miui.com'
@@ -113,40 +109,49 @@ if command -v aria2c >/dev/null; then
             OTA_LINKS+=("https://$OTA_URL/$MIUI_VERSION/$MIUI_PACKAGE")
         done
 
-        # Important: Replace aria2cd with aria2c if you don't wish to inherit above alias
+        # IMPORTANT: Replace aria2cd with aria2c if you don't wish to inherit above alias
         aria2cd "${OTA_LINKS[@]}"
     }
 fi
 
-# sudo: Shortcut to do system update; completely depends on distribution
-sysUpdate() {
+#
+# This function attempts to cover system update on as many distributions as possible, together
+# with software deployment/distribution tools like Flatpak and Snap.
+#
+# Superuser is always required, except for Termux (unnecessary) and Flatpak (not required)
+#
+update_system() {
     case $ID in
     almalinux | centos | fedora | rhel | rocky)
-        # Overriding sudo will somehow break RPM package managers, so don't do that
+        #
+        # Overriding sudo will somehow break RPM package managers, so don't do that.
         # Only DNF is supported for this function, RPM and YUM won't
+        #
         _su_exec dnf --refresh distro-sync
         ;;
     alpine)
-        _su_exec su -c "apk update && apk upgrade"
+        _su_exec su -c 'apk update && apk upgrade'
         ;;
     arch | manjaro)
         # AUR, please fuck yourself
-        [[ -n $(command -v powerpill) ]] && UPD=powerpill || UPD=pacman
+        command -v powerpill >/dev/null && UPD=powerpill || UPD=pacman
         # Always synchronize package databases with pacman
         _su_exec su -c "pacman -Sy && $UPD -Su --noconfirm"
         ;;
     debian | ubuntu)
         # No apt-get gang
-        _su_exec su -c "apt update && apt dist-upgrade -y"
+        _su_exec su -c 'apt update && apt dist-upgrade -y'
         ;;
     termux)
         # Equivalent to `apt update && apt upgrade`
         pkg update -y
         ;;
-    *) _pr_warn "This distribution (${ID:-unknown}) is currently not supported." ;;
+    *)
+        _pr_warn "This distribution (${ID:-unknown}) is currently not supported."
+        ;;
     esac
-    [[ -n $(command -v flatpak) ]] && _su_exec flatpak -y update
-    # Snap usually updates packages automatically and unattended
-    [[ -n $(command -v snap) ]] && _su_exec snap refresh
+    command -v flatpak >/dev/null && _su_exec flatpak -y update
+    # Likely to be unnecessary since Snap may periodically update all packages unattended
+    command -v snap >/dev/null && _su_exec snap refresh
     return 0
 }
