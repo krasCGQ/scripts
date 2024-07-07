@@ -22,7 +22,7 @@ SCRIPT_DIR=$(dirname "$SCRIPT_DIR")
 export SCRIPT_DIR
 
 # Import common environment script
-source "$SCRIPT_DIR"/env/common
+source "$SCRIPT_DIR/env/common"
 
 # Drop aliases and functions meant for GNU/Linux systems
 unset -f _su_exec
