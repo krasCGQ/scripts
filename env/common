@@ -153,5 +153,5 @@ update_system() {
     command -v flatpak >/dev/null && flatpak -y update
     # Likely to be unnecessary since Snap may periodically update all packages unattended
     command -v snap >/dev/null && _su_exec snap refresh
-    return 0
+    touch /dev/null
 }
