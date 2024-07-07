@@ -143,14 +143,13 @@ update_system() {
         _su_exec su -c 'apt update && apt dist-upgrade -y'
         ;;
     termux)
-        # Equivalent to `apt update && apt upgrade`
-        pkg update -y
+        pkg upgrade -y  # equals to `apt update && apt upgrade -y` on every startup
         ;;
     *)
         _pr_warn "This distribution (${ID:-unknown}) is currently not supported."
         ;;
     esac
-    command -v flatpak >/dev/null && _su_exec flatpak -y update
+    command -v flatpak >/dev/null && flatpak -y update
     # Likely to be unnecessary since Snap may periodically update all packages unattended
     command -v snap >/dev/null && _su_exec snap refresh
     return 0
