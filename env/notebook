@@ -53,7 +53,7 @@ fi
 
 # Convert all FLAC, WAV, and/or AIFF files in current folder to Opus
 convert_to_opus() {
-    local SONG SUPPORTED
+    local AUDIO IS_AUDIO_CONVERTED=false
 
     # Ask to install opus-tools package if opusenc doesn't exist
     if command -v opusenc >/dev/null; then
@@ -61,22 +61,19 @@ convert_to_opus() {
         return 1
     fi
 
-    for SONG in ./*; do
-        case "$SONG" in
+    for AUDIO in ./*; do
+        case "$AUDIO" in
         *.aiff | *.flac | *.wav)
             # Not supporting wildcards for converting
             opusenc --quiet --vbr --bitrate 192 --comp 10 --expect-loss 0 \
-                "$SONG" "$(basename "$SONG" | sed 's/\(.*\)\..*/\1/').ogg" || return 1
-            SUPPORTED=true
+                "$AUDIO" "$(basename "$AUDIO" | sed 's/\(.*\)\..*/\1/').ogg" || return 1
+            IS_AUDIO_CONVERTED=true
             ;;
         esac
     done
 
-    # Return non-zero status if nothing to do
-    if [[ -z $SUPPORTED ]]; then
-        _pr_warn "There's nothing to do."
-        return 1
-    fi
+    # If no supported files are converted, return non-zero status
+    $IS_AUDIO_CONVERTED
 }
 
 #
