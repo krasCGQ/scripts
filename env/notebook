@@ -73,40 +73,6 @@ opusConvert() {
     if [[ -z $SUPPORTED ]]; then _pr_warn "There's nothing to do." && return 1; fi
 }
 
-# Setup zRAM to take the whole RAM size
-alias zramInit &>/dev/null && unalias zramInit
-function zramInit() { (
-    [[ $(whoami) != root ]] && return 1
-    local MEMSIZE
-    # Get amount of physical memory (in kB)
-    MEMSIZE=$(grep MemTotal /proc/meminfo | awk '{print $2$3}')
-
-    # Setup zRAM as swap
-    modprobe zram
-    # Write same amount of physical memory
-    echo "$MEMSIZE" >/sys/devices/virtual/block/zram0/disksize
-    mkswap /dev/zram0
-    swapon -p 100 /dev/zram0
-
-    # Set swappiness to 100
-    sysctl vm.swappiness=100
-) || return 1; }
-alias zramInit='_su_exec su -c "$(declare -f zramInit) && zramInit &> /dev/null"'
-
-# De-init zRAM configuration set before
-alias zramDeinit &>/dev/null && unalias zramDeinit
-zramDeinit() { (
-    [[ $(whoami) != root ]] && return 1
-
-    # Turn off zRAM
-    swapoff /dev/zram0
-    rmmod zram
-
-    # Set swappiness to 1
-    sysctl vm.swappiness=1
-) || return 0; } # suppress non-zero exit status
-alias zramDeinit='_su_exec su -c "$(declare -f zramDeinit) && zramDeinit &> /dev/null"'
-
 # Play from HDMI capture device using mpv
 # NOTE: profile=capture-device is defined on dotfiles mpv.conf
 playCapture() {
