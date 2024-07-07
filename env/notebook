@@ -99,15 +99,13 @@ play_hdmi_capture() {
     )
 
     if [[ -e /dev/v4l/by-id/usb-AVerMedia_AVerMedia_USB_Device_53106217017740-video-index0 ]]; then
-        # Video4Linux v2 device and its audio sink
         DEVICE='AVerMedia_AVerMedia_USB_Device_53106217017740'
         # Select 60 fps even though these should be the default anyway
         DEVICE_PARAMS+=('--demuxer-lavf-o-append=framerate=60')
         DEVICE_PARAMS+=('--container-fps-override=60')
     elif [[ -e /dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0 ]]; then
-        # Video4Linux v2 device and its audio sink
         DEVICE='MACROSILICON_USB_Video'
-        # Explicitly use MJPEG output format (it defaults to H.264 1080p5)
+        # Select MJPEG to allow for maximum frame rate (default is H.264 at 5 fps)
         DEVICE_PARAMS+=('--demuxer-lavf-o-append=input_format=mjpeg')
         # Force 30 fps output due to tearing issues with this capture device
         DEVICE_PARAMS+=('--demuxer-lavf-o-append=framerate=30')
