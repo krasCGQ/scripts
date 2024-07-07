@@ -121,6 +121,8 @@ fi
 # Superuser is always required, except for Termux (unnecessary) and Flatpak (not required)
 #
 update_system() {
+    local MANAGER  # at the moment only used to decide package manager to use for Arch/Manjaro
+
     case $ID in
     almalinux | centos | fedora | rhel | rocky)
         #
@@ -133,14 +135,13 @@ update_system() {
         _su_exec su -c 'apk update && apk upgrade'
         ;;
     arch | manjaro)
-        # AUR, please fuck yourself
-        command -v powerpill >/dev/null && UPD=powerpill || UPD=pacman
-        # Always synchronize package databases with pacman
-        _su_exec su -c "pacman -Sy && $UPD -Su --noconfirm"
+        # Use powerpill if available; databases are always synchronized using pacman for stability
+        command -v powerpill >/dev/null && MANAGER=powerpill
+        _su_exec su -c "pacman -Sy && ${MANAGER:-pacman} -Su --noconfirm"
         ;;
     debian | ubuntu)
-        # No apt-get gang
-        _su_exec su -c 'apt update && apt dist-upgrade -y'
+        # Use apt to update databases but apt-get to do actual upgrade
+        _su_exec su -c 'apt update && apt-get dist-upgrade -y'
         ;;
     termux)
         pkg upgrade -y  # equals to `apt update && apt upgrade -y` on every startup
