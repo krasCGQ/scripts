@@ -6,6 +6,12 @@
 # Treewide environment setup
 #
 
+#
+# Enable escape sequences on Bash
+# NOTE: mk_alias() will be defined much later than the first time we need to use one here
+#
+test -n "$BASH" && alias echo='echo -e'
+
 # Text styles
 if command -v tput >/dev/null; then
     BLD=$(tput bold)
@@ -16,9 +22,6 @@ else
 fi
 # Export variables to satisfy shellcheck requirements
 export BLD RST
-
-# Enable escape sequences on Bash
-test -n "$BASH" && alias echo='echo -e'
 
 # Prints a message with a dash
 _pr_info() {
