@@ -22,26 +22,25 @@ SCRIPT_DIR=$(dirname "$SCRIPT_DIR")
 export SCRIPT_DIR
 
 # Import common environment script
-source "$SCRIPT_DIR"/env/common
+source "$SCRIPT_DIR/env/common"
 
 # Aliases
 mk_alias sys2sbin 'sed -i "s|/system/bin/linker64|/sbin/linker64\x0\x0\x0\x0\x0\x0|g"'
 alias ak-build='$SCRIPT_DIR/tasks/kernel.bash'
 
 if [[ -z $TMUX ]]; then
-    # Export new PATH containing Android SDK binaries
+    # Export new PATH containing Android SDK binaries, if present
     ANDROID_SDK=/opt/android-sdk
-    if [[ -d $ANDROID_SDK/build-tools ]]; then
-        # No way this will fail after passing the check above, but shellcheck is too noisy as usual
-        pushd $ANDROID_SDK/build-tools >/dev/null || true
+    if pushd $ANDROID_SDK/build-tools &>/dev/null; then
         for VERSION in ./*; do
             VERSION=${VERSION/.\//}
             # Filter out anything that doesn't consist of only integers
-            [[ $VERSION =~ [0-9.] ]] && {
+            if [[ $VERSION =~ [0-9.] ]]; then
                 PATH=$PATH:$ANDROID_SDK/build-tools/$VERSION
                 break
-            }
+            fi
         done
+        unset VERSION
         popd >/dev/null || true
     fi
     # There are instances where platform-tools might have been added to PATH already
@@ -50,10 +49,15 @@ if [[ -z $TMUX ]]; then
     unset ANDROID_SDK
 fi
 
-# Convert all FLAC, WAV, and/or AIFF files to Opus
-opusConvert() {
+# Convert all FLAC, WAV, and/or AIFF files in current folder to Opus
+convert_to_opus() {
+    local SONG SUPPORTED
+
     # Ask to install opus-tools package if opusenc doesn't exist
-    [[ -z $(command -v opusenc) ]] && { _pr_warn "Please install opus-tools package before continuing." && return 1; }
+    if command -v opusenc >/dev/null; then
+        _pr_warn "Please install opus-tools package before continuing."
+        return 1
+    fi
 
     for SONG in ./*; do
         case "$SONG" in
@@ -67,37 +71,42 @@ opusConvert() {
     done
 
     # Return non-zero status if nothing to do
-    if [[ -z $SUPPORTED ]]; then _pr_warn "There's nothing to do." && return 1; fi
+    if [[ -z $SUPPORTED ]]; then
+        _pr_warn "There's nothing to do."
+        return 1
+    fi
 }
 
+#
 # Play from HDMI capture device using mpv
 # NOTE: profile=capture-device is defined on dotfiles mpv.conf
-playCapture() {
-    PARAMS=()
-    local DEVICE PARAMS
+#
+play_hdmi_capture() {
+    local DEVICE PARAMS=()
 
     if [[ -e /dev/v4l/by-id/usb-AVerMedia_AVerMedia_USB_Device_53106217017740-video-index0 ]]; then
         # Video4Linux v2 device and its audio sink
-        DEVICE="AVerMedia_AVerMedia_USB_Device_53106217017740"
+        DEVICE='AVerMedia_AVerMedia_USB_Device_53106217017740'
         # Use 1920x1080 output (mpv always picks up 640x480, doesn't happen with VLC)
-        PARAMS+=("--demuxer-lavf-o-append=video_size=1920x1080")
+        PARAMS+=('--demuxer-lavf-o-append=video_size=1920x1080')
     elif [[ -e /dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0 ]]; then
         # Video4Linux v2 device and its audio sink
-        DEVICE="MACROSILICON_USB_Video"
+        DEVICE='MACROSILICON_USB_Video'
         # Explicitly use MJPEG output format (it defaults to H.264 1080p5)
-        PARAMS+=("--demuxer-lavf-o-append=input_format=mjpeg")
+        PARAMS+=('--demuxer-lavf-o-append=input_format=mjpeg')
         # Force 30 frames per second due to tearing issues with this capture device
-        PARAMS+=("--demuxer-lavf-o-append=framerate=30")
-        PARAMS+=("--fps=30")
-        PARAMS+=("--override-display-fps=30")
+        PARAMS+=('--demuxer-lavf-o-append=framerate=30')
+        PARAMS+=('--fps=30')
+        PARAMS+=('--override-display-fps=30')
     else
-        _pr_warn "No capture device found for this session." && return
+        _pr_warn "No capture device found for this session."
+        return
     fi
 
     mpv --profile=capture-device \
         --demuxer-lavf-o-append=timestamps=2 \
         "${PARAMS[@]}" \
-        --audio-file=av://pulse:alsa_input.usb-"$DEVICE"-02.analog-stereo \
-        av://v4l2:/dev/v4l/by-id/usb-"$DEVICE"-video-index0 \
+        --audio-file="av://pulse:alsa_input.usb-$DEVICE-02.analog-stereo" \
+        "av://v4l2:/dev/v4l/by-id/usb-$DEVICE-video-index0" \
         "$@"
 }
