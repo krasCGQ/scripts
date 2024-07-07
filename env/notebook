@@ -78,7 +78,7 @@ convert_to_opus() {
 
 # Play from HDMI capture device using mpv
 play_hdmi_capture() {
-    local DEFAULT_ARGS DEVICE PARAMS=()
+    local DEFAULT_ARGS DEVICE DEVICE_PARAMS=()
 
     # Default arguments that are always passed
     DEFAULT_ARGS=(
@@ -94,24 +94,23 @@ play_hdmi_capture() {
         # Video4Linux v2 device and its audio sink
         DEVICE='AVerMedia_AVerMedia_USB_Device_53106217017740'
         # Use 1920x1080 output (mpv always picks up 640x480, doesn't happen with VLC)
-        PARAMS+=('--demuxer-lavf-o-append=video_size=1920x1080')
+        DEVICE_PARAMS+=('--demuxer-lavf-o-append=video_size=1920x1080')
     elif [[ -e /dev/v4l/by-id/usb-MACROSILICON_USB_Video-video-index0 ]]; then
         # Video4Linux v2 device and its audio sink
         DEVICE='MACROSILICON_USB_Video'
         # Explicitly use MJPEG output format (it defaults to H.264 1080p5)
-        PARAMS+=('--demuxer-lavf-o-append=input_format=mjpeg')
+        DEVICE_PARAMS+=('--demuxer-lavf-o-append=input_format=mjpeg')
         # Force 30 frames per second due to tearing issues with this capture device
-        PARAMS+=('--demuxer-lavf-o-append=framerate=30')
-        PARAMS+=('--fps=30')
-        PARAMS+=('--override-display-fps=30')
+        DEVICE_PARAMS+=('--demuxer-lavf-o-append=framerate=30')
+        DEVICE_PARAMS+=('--fps=30')
+        DEVICE_PARAMS+=('--override-display-fps=30')
     else
         _pr_warn "No capture device found for this session."
         return
     fi
 
-    mpv "${DEFAULT_ARGS[@]}" \
+    mpv "${DEFAULT_ARGS[@]}" "${DEVICE_PARAMS[@]}" \
         --demuxer-lavf-o-append=timestamps=2 \
-        "${PARAMS[@]}" \
         --audio-file="av://pulse:alsa_input.usb-$DEVICE-02.analog-stereo" \
         "av://v4l2:/dev/v4l/by-id/usb-$DEVICE-video-index0" \
         "$@"
