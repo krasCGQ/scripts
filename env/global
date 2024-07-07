@@ -82,7 +82,7 @@ get_distid() {
 
 # A wrapper so we don't redundantly create an alias to non-existing binary
 mk_alias() {
-    local ALIAS COMMAND EXEC
+    local ALIAS COMMAND EXEC NUM
     ALIAS=$1
     COMMAND=$2
 
