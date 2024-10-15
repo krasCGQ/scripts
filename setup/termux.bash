@@ -14,6 +14,7 @@ readonly _basic_pkglist=(
     'python-pip'
 
     'axel'      # alternative CLI download manager
+    'b3sum'     # BLAKE3 checksum utility
     'git'       # version control system
     'mediainfo' # check media information
     'sheldon'   # shell plugin manager
