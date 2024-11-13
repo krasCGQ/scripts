@@ -35,20 +35,18 @@ def compare_release(previous_file: str, current: str):
         if new_patchlevel > old_patchlevel:
             return True
 
-        if 'rc' in current or 'rc' in previous:
-            # although the handling of old_candidate is somewhat incorrect, an exception handler
-            # is never actually needed since by time we arrive at this comparison, it will always be
-            # a release candidate tag
+        if 'rc' in current:
+            if 'rc' not in previous:
+                return True  # this is a new release candidate
+
+            # compare changes to release candidate number if possible
             old_candidate: str = previous.split('-')[1].replace('rc', '')
-            try:
-                # attempt to extract new release candidate number
-                new_candidate: str = current.split('-')[1].replace('rc', '')
-            except IndexError:
-                return True  # this is the final release for stable branching
-            else:
-                # compare changes to release candidate number if possible
-                if new_candidate > old_candidate:
-                    return True
+            new_candidate: str = current.split('-')[1].replace('rc', '')
+            if new_candidate > old_candidate:
+                return True
+
+        else:
+            return True  # final release for stable branching
 
     elif 'next' in previous_file:
         # compare timestamp for linux-next
