@@ -13,13 +13,17 @@ readonly _basic_pkglist=(
     'python-ensurepip-wheels'
     'python-pip'
 
-    'axel'      # alternative CLI download manager
-    'b3sum'     # BLAKE3 checksum utility
-    'git'       # version control system
-    'mediainfo' # check media information
-    'sheldon'   # shell plugin manager
-    'wget'      # CLI download manager
-    'zsh'       # Unix shell
+    'aria2'        # alternate CLI download manager
+    'axel'         # alternate CLI download manager
+    'b3sum'        # BLAKE3 checksum utility
+    'dnsutils'     # DNS-related utilities
+    'git'          # most commonly-used VCS
+    'inetutils'    # internet-related utilities
+    'mediainfo'    # check media information
+    'openssl-tool' # OpenSSL binary is a split package
+    'sheldon'      # shell plugin manager
+    'wget'         # CLI download manager
+    'zsh'          # preferred Unix shell
 )
 
 # Mimic Termux's custom message output
@@ -98,7 +102,8 @@ python -m pip install -U pipx
 pipx ensurepath --prepend  # without --all-shells affects only Bash
 
 pr_info "Installing external dependencies for yt-dlp..."
-pkg install --no-install-recommends -y deno ffmpeg
+pkg install --no-install-recommends -y deno
+pkg install -y ffmpeg
 
 if command -v yt-dlp >/dev/null; then
     pr_info "Updating yt-dlp..."
