@@ -13,13 +13,17 @@ readonly _basic_pkglist=(
     'python-ensurepip-wheels'
     'python-pip'
 
-    'axel'      # alternative CLI download manager
-    'b3sum'     # BLAKE3 checksum utility
-    'git'       # version control system
-    'mediainfo' # check media information
-    'sheldon'   # shell plugin manager
-    'wget'      # CLI download manager
-    'zsh'       # Unix shell
+    'aria2'        # alternate CLI download manager
+    'axel'         # alternate CLI download manager
+    'b3sum'        # BLAKE3 checksum utility
+    'dnsutils'     # DNS-related utilities
+    'git'          # most commonly-used VCS
+    'inetutils'    # internet-related utilities
+    'mediainfo'    # check media information
+    'openssl-tool' # OpenSSL binary is a split package
+    'sheldon'      # shell plugin manager
+    'wget'         # CLI download manager
+    'zsh'          # preferred Unix shell
 )
 
 # Mimic Termux's custom message output
@@ -56,7 +60,7 @@ if command -v yt-dlp >/dev/null; then
 else
     pr_info "Installing yt-dlp..."
     python -m pipx install --pip-args='--pre' yt-dlp
-    pkg install --no-install-recommends -y ffmpeg
+    pkg install -y ffmpeg
 fi
 
 pr_info "Updating nano-syntax-highlighting..."
