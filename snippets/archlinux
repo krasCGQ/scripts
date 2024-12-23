@@ -108,27 +108,60 @@ _filter_by_mirror_status() {
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
-    local ID REPO
+    local COS_UPDATE_LATER ID REPO
     _assert_arch x86_64 || exit 1
     ID=$(get_distid)
     readonly ID
 
-    # Prevent executing on anything other than Arch and Manjaro
     case $ID in
-    arch | manjaro) ;; # ignore
-    *) _pr_warn "This function is only available for Arch and Manjaro." && exit 1 ;;
+    arch | cachyos | manjaro) ;; # Supported Linux distros; ignore
+    *) _pr_warn "This function is only available for Arch, CachyOS and Manjaro." && exit 1 ;;
     esac
 
     ## Official repositories:
-    _pr_info "Updating official mirrorlist..."
     case $ID in
+    cachyos)
+        if pacman -Qq cachyos-rate-mirrors &>/dev/null; then
+            # Pretend that we are currently on Live ISO so only CachyOS mirrors will be updated
+            mkdir /run/archiso
+
+            # Ensure we have updated mirrorlist to rank
+            curl -s https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/cachyos-mirrorlist/cachyos-mirrorlist \
+                 -o /etc/pacman.d/cachyos-mirrorlist
+
+            _pr_info "Updating CachyOS mirrorlist..."
+            if cachyos-rate-mirrors &>/dev/null; then
+                for REPO in 3 4; do
+                    # Only keep level-specific mirrorlist(s) if they are actually installed
+                    pacman -Qq cachyos-v$REPO-mirrorlist &>/dev/null ||
+                        rm -f /etc/pacman.d/cachyos-v$REPO-mirrorlist
+                done
+            else
+                _pr_warn "cachyos-rate-mirrors failed to execute properly. Trying again later..."
+                COS_UPDATE_LATER=1
+            fi
+
+            # Script execution done, so remove the bogus directory
+            rm -r -f /run/archiso
+        else
+            _pr_warn "CachyOS detected, but cachyos-rate-mirrors is not installed. Continuing..."
+            COS_UPDATE_LATER=1
+        fi
+        ;&
     arch)
+        _pr_info "Updating Arch Linux mirrorlist..."
         if curl -s https://archlinux.org/mirrorlist/\?protocol=https\&use_mirror_status=on >/tmp/arch-mirrorlist; then
             # Delete every single comment then uncomment all server lists
             sed -e /##/d -e s/#Server/Server/g -i /tmp/arch-mirrorlist
+
+            # Avoid these mirrors due to varying degree of problems
             # i3d.net: Known to peer out-of-date mirrors despite being considered otherwise
             # jingk.ai: Random files keep getting missing on the otherwise up-to-date mirror
             sed '/i3d.net/d;/jingk.ai/d' -i /tmp/arch-mirrorlist
+
+            # Add CachyOS mirror into server list
+            echo 'Server = https://archlinux.cachyos.org/repo/$repo/os/$arch' >>/tmp/arch-mirrorlist
+
             # Prefer rankmirrors script provided by pacman-contrib, as _rank_mirrors() is still too
             # slow even when almost a third have been filtered out. This also allows interrupting
             # the ranking process without ended up having no listed servers; something currently not
@@ -142,24 +175,31 @@ updMirrorlist() {
                     _rank_mirrors core /tmp/arch-mirrorlist
                 fi
             } >/etc/pacman.d/mirrorlist
+
+            # Done processing all mirrors, so delete the temporary file
             rm -f /tmp/arch-mirrorlist
         else
             _pr_warn "Unable to retrieve mirrorlist to rank, skipping."
         fi
         ;;
-    # Use official pacman-mirrors tool installed by default on Manjaro
-    manjaro) pacman-mirrors --fasttrack -q ;;
+    manjaro)
+        _pr_info "Updating Manjaro Linux mirrorlist..."
+        # Use official pacman-mirrors tool installed by default on Manjaro
+        pacman-mirrors --fasttrack -q
+        ;;
     esac
 
     # CachyOS - discard R2 "mirror"
-    for REPO in cachyos{,-v{3,4}}; do
-        if _check_mirrorlist "$REPO"; then
-            _pr_info "Updating CachyOS mirrorlist ($REPO)..."
-            curl -s "https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/$REPO-mirrorlist/$REPO-mirrorlist" |
-                sed -e /##/d -e /cdn.cachyos/d |
-                _rank_mirrors "$REPO" - >"/etc/pacman.d/$REPO-mirrorlist"
-        fi
-    done
+    if [[ $ID != cachyos || -n $COS_UPDATE_LATER ]]; then
+        for REPO in cachyos{,-v{3,4}}; do
+            if _check_mirrorlist "$REPO"; then
+                _pr_info "Updating CachyOS mirrorlist ($REPO)..."
+                curl -s "https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/$REPO-mirrorlist/$REPO-mirrorlist" |
+                    sed -e /##/d -e /cdn.cachyos/d |
+                    _rank_mirrors "$REPO" - >"/etc/pacman.d/$REPO-mirrorlist"
+            fi
+        done
+    fi
 
     # Chaotic-AUR - discard both geo-located and CDN mirrors
     if _check_mirrorlist chaotic; then

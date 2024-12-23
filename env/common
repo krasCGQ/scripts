@@ -78,7 +78,7 @@ if [[ -z $TERMUX_VERSION ]]; then
 fi
 
 # Include Arch Linux-specific snippets for Arch-based distros
-[[ $ID == arch || $ID == manjaro ]] && source "$SCRIPT_DIR/snippets/archlinux"
+[[ $ID == arch || $ID == cachyos || $ID == manjaro ]] && source "$SCRIPT_DIR/snippets/archlinux"
 
 #
 # Download MIUI full OTA or fastboot firmware from multiple sources using aria2.
