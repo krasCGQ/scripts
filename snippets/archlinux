@@ -152,7 +152,7 @@ updMirrorlist() {
         _pr_info "Updating Arch Linux mirrorlist..."
         if curl -s https://archlinux.org/mirrorlist/\?protocol=https\&use_mirror_status=on >/tmp/arch-mirrorlist; then
             # Delete every single comment then uncomment all server lists
-            sed -e /##/d -e s/#Server/Server/g -i /tmp/arch-mirrorlist
+            sed -e '/##/d' -e 's/#Server/Server/g' -i /tmp/arch-mirrorlist
 
             # Avoid these mirrors due to varying degree of problems
             # i3d.net: Known to peer out-of-date mirrors despite being considered otherwise
@@ -217,7 +217,7 @@ updMirrorlist() {
     if _check_mirrorlist archlinuxcn; then
         _pr_info "Updating Arch Linux CN mirrorlist..."
         curl -s https://raw.githubusercontent.com/archlinuxcn/mirrorlist-repo/master/archlinuxcn-mirrorlist |
-            sed -e s/#\ Server/Server/g -e /repo.archlinuxcn/d -e /##/d |
+            sed -e 's/# Server/Server/g' -e /repo.archlinuxcn/d -e '/##/d' |
             _filter_by_mirror_status https://repo.archlinuxcn.org - |
             _rank_mirrors archlinuxcn - >/etc/pacman.d/archlinuxcn-mirrorlist
     fi
