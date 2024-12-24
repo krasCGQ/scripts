@@ -108,7 +108,7 @@ _filter_by_mirror_status() {
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
-    local COS_UPDATE_LATER ID REPO
+    local COS_UPDATE_LATER ID LEVEL
     _assert_arch x86_64 || exit 1
     ID=$(get_distid)
     readonly ID
@@ -131,10 +131,10 @@ updMirrorlist() {
 
             _pr_info "Updating CachyOS mirrorlist..."
             if cachyos-rate-mirrors &>/dev/null; then
-                for REPO in 3 4; do
+                for LEVEL in 3 4; do
                     # Only keep level-specific mirrorlist(s) if they are actually installed
-                    pacman -Qq cachyos-v$REPO-mirrorlist &>/dev/null ||
-                        rm -f /etc/pacman.d/cachyos-v$REPO-mirrorlist
+                    pacman -Qq cachyos-v$LEVEL-mirrorlist &>/dev/null ||
+                        rm -f /etc/pacman.d/cachyos-v$LEVEL-mirrorlist
                 done
             else
                 _pr_warn "cachyos-rate-mirrors failed to execute properly. Trying again later..."
@@ -189,14 +189,17 @@ updMirrorlist() {
         ;;
     esac
 
-    # CachyOS - discard R2 "mirror"
-    if [[ $ID != cachyos || -n $COS_UPDATE_LATER ]]; then
-        for REPO in cachyos{,-v{3,4}}; do
-            if _check_mirrorlist "$REPO"; then
-                _pr_info "Updating CachyOS mirrorlist ($REPO)..."
-                curl -s "https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/$REPO-mirrorlist/$REPO-mirrorlist" |
-                    sed -e /##/d -e /cdn.cachyos/d |
-                    _rank_mirrors "$REPO" - >"/etc/pacman.d/$REPO-mirrorlist"
+    # CachyOS, if repos are used on other Arch-based distros or when native method above fails
+    if [[ -n $COS_UPDATE_LATER ]] || ( [[ $ID != cachyos ]] && _check_mirrorlist cachyos ); then
+        _pr_info "Updating CachyOS mirrorlist${COS_UPDATE_LATER:+ (trying again)}..."
+        curl -s https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/cachyos-mirrorlist/cachyos-mirrorlist |
+             sed '/##/d' | _rank_mirrors cachyos - >/etc/pacman.d/cachyos-mirrorlist
+
+        for LEVEL in 3 4; do
+            if _check_mirrorlist cachyos-v$LEVEL; then
+                sed "s/\$arch/\$arch_v$LEVEL/g" /etc/pacman.d/cachyos-mirrorlist \
+                    >/etc/pacman.d/cachyos-v$LEVEL-mirrorlist
+                _pr_info "Found and updated cachyos-v$LEVEL-mirrorlist."
             fi
         done
     fi
