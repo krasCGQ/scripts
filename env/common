@@ -1,6 +1,6 @@
 #!/hint/bash
 #
-# SPDX-FileCopyrightText: 2017-2024 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2017-2025 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Common environment setup
@@ -100,8 +100,12 @@ if command -v aria2c >/dev/null; then
         # A fixed list of available mirrors
         OTA_URL_LIST=(
             'bigota.d.miui.com'
+            'bkt-sgp-miui-ota-update-alisgp.oss-ap-southeast-1.aliyuncs.com'
             'bn.d.miui.com'
+            'cdnorg.d.miui.com'
             'hugeota.d.miui.com'
+            'superota.d.miui.com'
+            'ultimateota.d.miui.com'
         )
 
         # Construct download links from available mirrors
