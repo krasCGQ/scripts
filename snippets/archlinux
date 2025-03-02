@@ -1,6 +1,6 @@
 #!/hint/bash
 #
-# SPDX-FileCopyrightText: 2021-2024 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2021-2025 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Arch Linux-specific snippets
@@ -149,16 +149,33 @@ updMirrorlist() {
         fi
         ;&
     arch)
+        #
+        # Regardless of which method ends up being used to fetch latest mirrorlist, these mirrors
+        # are always avoided due to varying degree of problems:
+        # * i3d.net : Known to peer out-of-date mirrors despite being considered otherwise
+        # * jingk.ai: Random files keep getting missing on the otherwise up-to-date mirror
+        #
+        # Reflector can be instructed to exclude these mirrors when filtering available mirrors,
+        # while for the old school method we have to do it ourselves later on.
+        #
         _pr_info "Updating Arch Linux mirrorlist..."
-        if curl -s https://archlinux.org/mirrorlist/\?protocol=https\&use_mirror_status=on >/tmp/arch-mirrorlist; then
-            # Delete every single comment then uncomment all server lists
-            sed -e '/##/d' -e 's/#Server/Server/g' -i /tmp/arch-mirrorlist
 
-            # Avoid these mirrors due to varying degree of problems
-            # i3d.net: Known to peer out-of-date mirrors despite being considered otherwise
-            # jingk.ai: Random files keep getting missing on the otherwise up-to-date mirror
+        # Use Reflector when available
+        if pacman -Qq reflector &>/dev/null || command -v reflector >/dev/null; then
+            reflector --save /tmp/arch-mirrorlist --delay 1 -x 'i3d.net|jingk.ai' -p https
+            # Remove all comments and empty lines, otherwise rankmirrors will pass them through
+            sed '/^#/d;/^$/d' -i /tmp/arch-mirrorlist
+
+        # This is obviously the old school method and what most people will end up with
+        elif curl -s 'https://archlinux.org/mirrorlist/?protocol=https&use_mirror_status=on' \
+            -o /tmp/arch-mirrorlist; then
+            # Delete all comments and empty lines, then uncomment all server lists
+            sed '/^##/d;/^$/d;s/#Server/Server/g' -i /tmp/arch-mirrorlist
+            # See comments above on why these mirrors are filtered out
             sed '/i3d.net/d;/jingk.ai/d' -i /tmp/arch-mirrorlist
+        fi
 
+        if [[ -f /tmp/arch-mirrorlist ]] && grep -q '^Server = ' /tmp/arch-mirrorlist; then
             # Add CachyOS mirror into server list
             echo 'Server = https://archlinux.cachyos.org/repo/$repo/os/$arch' >>/tmp/arch-mirrorlist
 
@@ -170,17 +187,17 @@ updMirrorlist() {
                 if pacman -Qq pacman-contrib &>/dev/null || command -v rankmirrors >/dev/null; then
                     rankmirrors /tmp/arch-mirrorlist
                 else
-                    _pr_warn "Continuing with rankMirrors() (most likely very slow)..."
-                    # core repository has the smallest database size
+                    _pr_warn "Falling back to built-in function (warning: very slow)..."
+                    # [core] has the smallest database size, so test against that
                     _rank_mirrors core /tmp/arch-mirrorlist
                 fi
             } >/etc/pacman.d/mirrorlist
-
-            # Done processing all mirrors, so delete the temporary file
-            rm -f /tmp/arch-mirrorlist
         else
-            _pr_warn "Unable to retrieve mirrorlist to rank, skipping."
+            _pr_warn "Unable to fetch latest mirrorlist, skipping."
         fi
+
+        # Always delete temporary file created even when function bailed out early
+        rm -f /tmp/arch-mirrorlist
         ;;
     manjaro)
         _pr_info "Updating Manjaro Linux mirrorlist..."
