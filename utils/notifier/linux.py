@@ -45,6 +45,9 @@ def compare_release(previous_file: str, current: str):
             if new_candidate > old_candidate:
                 return True
 
+        elif 'rc' in previous and 'rc' not in current:
+            return True  # this is final release for stable branching
+
     elif 'next' in previous_file:
         # compare timestamp for linux-next
         old_date: int = previous.split('-')[1]
