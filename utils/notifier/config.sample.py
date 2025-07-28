@@ -17,10 +17,10 @@ linux_notify_next: bool = True
 
 # notifier.project
 # List of projects it should monitor in format of <project-name>:<service-name>.
-# Valid options for <service-name> are (only so far) sourceforge and osdn.
+# Valid option for <service-name> is (only so far) sourceforge.
+# osdn will stop be accepted in the future, so please remove affected projects as soon as possible.
 projects_list: list[str] = [
     'aimroms:sourceforge',
-    'kudproject:osdn'
 ]
 
 # notifier.utils
