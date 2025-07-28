@@ -13,7 +13,7 @@ git clone --recurse-submodules https://github.com/krasCGQ/scripts.git
 
 * Python 3.9+ is required to execute the notifier's main part (`notifier.py`) in `utils` folder.
 
-* Modules written for the notifier script however, might require even newer version of Python depending on when they were introduced or last modified. As of December 2023, the notifier script and all of their currently present modules are known to work on both Python 3.11 (on Arch Linux) and 3.12 (on Void Linux).
+* Modules written for the notifier script however, might require even newer version of Python depending on when they were introduced or last modified. As of July 2025, the notifier script and all of their currently present modules are known to work with Python versions up to 3.13.5.
 
 * All explicitly listed dependencies are pinned to ensure stability of all scripts.
 
@@ -23,6 +23,12 @@ Installation of dependencies via PyPI is the only officially supported option, a
 python -m venv .venv --upgrade-deps
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+```
+
+When developing Python scripts, also install additional dependencies:
+
+```bash
+python -m pip install -r requirements-devel.txt
 ```
 
 

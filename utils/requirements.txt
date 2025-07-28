@@ -1,4 +1,12 @@
-GitPython==3.1.40
-feedparser==6.0.10
-requests==2.31.0
-yapf==0.40.2
+gitdb==4.0.12
+smmap==5.0.2
+GitPython==3.1.45
+
+sgmllib3k==1.0.0
+feedparser==6.0.11
+
+certifi==2025.7.14
+charset_normalizer==3.4.2
+idna==3.10
+urllib3==2.5.0
+requests==2.32.4
