@@ -177,6 +177,7 @@ updMirrorlist() {
 
         if [[ -f /tmp/arch-mirrorlist ]] && grep -q '^Server = ' /tmp/arch-mirrorlist; then
             # Add CachyOS mirror into server list
+            # shellcheck disable=SC2016
             echo 'Server = https://archlinux.cachyos.org/repo/$repo/os/$arch' >>/tmp/arch-mirrorlist
 
             # Prefer rankmirrors script provided by pacman-contrib, as _rank_mirrors() is still too
