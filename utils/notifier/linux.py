@@ -56,9 +56,14 @@ def compare_release(previous_file: str, current: str, release_type: str):
             return True
 
     else:  # stable or longterm
-        # compare only kernel sublevel for stable and longterm releases
-        old_sublevel: int = previous.split('.')[2]
+        try:
+            # attempt to extract sublevel if possible
+            old_sublevel: int = previous.split('.')[2]
+        except IndexError:
+            # otherwise hardcode sublevel to 0
+            old_sublevel: int = 0
         new_sublevel: int = current.split('.')[2]
+        # compare only kernel sublevel for stable and longterm releases
         if new_sublevel > old_sublevel:
             return True
 
