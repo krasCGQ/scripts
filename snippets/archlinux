@@ -29,8 +29,8 @@ _rank_mirrors() {
         if [[ $STATUS =~ 30[12378]{1} ]]; then
             # Handle redirections here as tracking can't be done while following it
             OLD_URL=$(echo "$REPO_URL" | cut -d'/' -f3)
-            NEW_URL=$(curl -s -I "$REPO_URL" | grep -i -w location: | cut -d' ' -f2 |
-                sed -e 's|http[s?]://||' -e "s|/$REPO||" -e "s|/$ARCH||" -e 's/[[:space:]]//g')
+            NEW_URL=$(curl -s -L -I "$REPO_URL" | grep -i -w location: | cut -d \  -f 2 | tail -1 |
+                sed -e 's|\(https*\)://||' -e "s|/$REPO||" -e "s|/$ARCH||" -e 's/[[:space:]]//g')
             REPO_URL=${REPO_URL/$OLD_URL/$NEW_URL}
         elif [[ $STATUS != 200 ]]; then
             # Server is either unreachable, has internal problem, or we're not allowed to use it
