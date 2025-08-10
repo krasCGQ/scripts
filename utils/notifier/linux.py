@@ -10,7 +10,7 @@ from feedparser import parse as feedparser_parse
 from notifier import config, utils
 
 
-def compare_release(previous_file: str, current: str):
+def compare_release(previous_file: str, current: str, release_type: str):
     """
     Compare between two different release versions to determine if we need to announce.
     :param previous_file: Path to cached file containing exactly the previous version string.
@@ -22,7 +22,7 @@ def compare_release(previous_file: str, current: str):
     if previous is None:  # this is new to us
         return True
 
-    if 'mainline' in previous_file:
+    if 'mainline' in previous_file or 'mainline' in release_type:
         # compare major version first
         old_version: int = previous.split('.')[0]
         new_version: int = current.split('.')[0]
@@ -119,8 +119,25 @@ def announce(path: str, dry_run: bool):
         version_file: str  # declare it first
 
         # mainline and linux-next must be treated differently
-        if release_type == 'mainline' or release_type == 'linux-next':
+        if release_type == 'linux-next':
             version_file = path_join('{}/{}-version'.format(path, release_type))
+
+        elif release_type == 'mainline':
+            version_file = path_join('{}/{}-version'.format(path, release_type))
+
+            # We need to handle case where it simultaneously advertises two mainline versions
+            saved_version: str = utils.read_from_file(version_file)
+            if saved_version is not None:
+                saved_major: int
+                saved_minor: int
+                version_major: int
+                version_minor: int
+                [saved_major, saved_minor, *_] = saved_version.replace('-', '.').split('.')
+                [version_major, version_minor, *_] = version.replace('-', '.').split('.')
+                if saved_major > version_major or saved_minor > version_minor:
+                    # This should have been treated as stable release, unfortunately
+                    version_file = path_join('{}/{}.{}-version'.format(
+                        path, version_major, version_minor))
 
         else:
             version_major: int
@@ -131,7 +148,7 @@ def announce(path: str, dry_run: bool):
             version_file = path_join('{}/{}.{}-version'.format(path, version_major, version_minor))
 
         # announce new version
-        if compare_release(version_file, version):
+        if compare_release(version_file, version, release_type):
             # use time value sequence converted into ISO 8601 format instead
             release_date: str = utils.date_from_struct_time(releases.entries[i].published_parsed)
 
