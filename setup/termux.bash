@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 #
-# SPDX-FileCopyrightText: 2019-2020, 2022, 2024 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2019-2020, 2022, 2024-2025 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Termux environment setup
@@ -41,7 +41,9 @@ trap clean_up ERR EXIT INT
 cd "$HOME" || exit 1
 
 pr_info "Executing system update..."
-pkg upgrade -o Dpkg::Options::='--force-confnew' -y
+[[ $TERMUX_VERSION =~ googleplay. ]] || _fdroid=true
+pkg ${_fdroid:+'--check-mirror'} upgrade -o Dpkg::Options::='--force-confnew' -y
+unset _fdroid
 
 pr_info "Installing basic packages..."
 pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
