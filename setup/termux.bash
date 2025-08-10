@@ -34,6 +34,49 @@ clean_up() {
     exit ${_status}
 }
 
+install_yt-dlp_pot_provider() {
+    local _repo_name _repo_url _latest
+    _repo_name=bgutil-ytdlp-pot-provider
+    _repo_url="https://github.com/Brainicism/${_repo_name}"
+    _latest=$(curl -s -I ${_repo_url}/releases/latest | grep '^l' | cut -d / -f 8 | tr -d '[:space:]')
+
+    if PATH="$HOME/.local/bin:$PATH" command -v yt-dlp >/dev/null; then
+        pr_info "Installing build dependencies for ${_repo_name}..."
+        pkg install --no-install-recommends -y nodejs pango xorgproto
+
+        if [[ -d ${_repo_name} ]]; then
+            pr_info "Updating the provider server..."
+            git -C ${_repo_name} fetch origin "${_latest}"
+            git -C ${_repo_name} reset --hard FETCH_HEAD
+        else
+            pr_info "Initializing the provider server..."
+            git clone --single-branch -b "${_latest}" ${_repo_url}.git
+        fi
+
+        pr_info "Building the provider server..."
+        cd ${_repo_name}/server || true
+        git clean -d -f -x
+        GYP_DEFINES="android_ndk_path=''" npm install && npx tsc
+        cd ../.. || true
+
+        if [[ -f ${_repo_name}/server/build/main.js ]]; then
+            pr_info "Downloading the provider plugin..."
+            # If yt-dlp is installed using pipx, we must use one of recognized plugin folders
+            test -d .config/yt-dlp/plugins || mkdir -p .config/yt-dlp/plugins
+            rm -f .config/yt-dlp/plugins/${_repo_name}.zip
+            wget -O .config/yt-dlp/plugins/${_repo_name}.zip -nc \
+                "${_repo_url}/releases/download/${_latest}/${_repo_name}.zip"
+
+            # Print informational message to keep things distinct
+            pr_info "Done installing ${_repo_name}."
+        else
+            pr_info "Failed to install ${_repo_name}."
+            printf 'Hint: You can try again by running the install script again, or manually by '
+            printf 'following instructions on %s?tab=readme-ov-file#installation.\n' "${_repo_url}"
+        fi
+    fi
+}
+
 trap clean_up ERR EXIT INT
 
 
@@ -60,6 +103,9 @@ else
     python -m pipx install --pip-args='--pre' yt-dlp
     pkg install --no-install-recommends -y ffmpeg
 fi
+
+# Install POT provider if yt-dlp is present
+install_yt-dlp_pot_provider
 
 pr_info "Updating nano-syntax-highlighting..."
 wget --https-only -O nano-syntax-highlighting-master.zip -nc \
