@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: 2021-2024 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2021-2025 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
