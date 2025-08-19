@@ -24,14 +24,14 @@ def compare_release(previous_file: str, current: str, release_type: str):
 
     if 'mainline' in previous_file or 'mainline' in release_type:
         # compare major version first
-        old_version: int = previous.split('.')[0]
-        new_version: int = current.split('.')[0]
+        old_version = int(previous.split('.')[0])
+        new_version = int(current.split('.')[0])
         if new_version > old_version:
             return True
 
         # compare patchlevel changes next if major version remains the same
-        old_patchlevel: int = previous.split('.')[1].split('-')[0]
-        new_patchlevel: int = current.split('.')[1].split('-')[0]
+        old_patchlevel = int(previous.split('.')[1].split('-')[0])
+        new_patchlevel = int(current.split('.')[1].split('-')[0])
         if new_patchlevel > old_patchlevel:
             return True
 
@@ -40,8 +40,8 @@ def compare_release(previous_file: str, current: str, release_type: str):
                 return True  # this is a new release candidate
 
             # compare changes to release candidate number if possible
-            old_candidate: str = previous.split('-')[1].replace('rc', '')
-            new_candidate: str = current.split('-')[1].replace('rc', '')
+            old_candidate = int(previous.split('-')[1].replace('rc', ''))
+            new_candidate = int(current.split('-')[1].replace('rc', ''))
             if new_candidate > old_candidate:
                 return True
 
@@ -50,19 +50,19 @@ def compare_release(previous_file: str, current: str, release_type: str):
 
     elif 'next' in previous_file:
         # compare timestamp for linux-next
-        old_date: int = previous.split('-')[1]
-        new_date: int = current.split('-')[1]
+        old_date = int(previous.split('-')[1])
+        new_date = int(current.split('-')[1])
         if new_date > old_date:
             return True
 
     else:  # stable or longterm
         try:
             # attempt to extract sublevel if possible
-            old_sublevel: int = previous.split('.')[2]
+            old_sublevel = int(previous.split('.')[2])
         except IndexError:
             # otherwise hardcode sublevel to 0
             old_sublevel: int = 0
-        new_sublevel: int = current.split('.')[2]
+        new_sublevel = int(current.split('.')[2])
         # compare only kernel sublevel for stable and longterm releases
         if new_sublevel > old_sublevel:
             return True
@@ -91,7 +91,7 @@ Date: {}"""
     # currently specific to stable or longterm releases
     if 'stable' in release_type or 'longterm' in release_type:
         # extract the major version out so we can link to plain text changelog
-        version_major: int = version.split('.')[0]
+        version_major = int(version.split('.')[0])
 
         message += """
 
@@ -133,13 +133,9 @@ def announce(path: str, dry_run: bool):
             # We need to handle case where it simultaneously advertises two mainline versions
             saved_version: str = utils.read_from_file(version_file)
             if saved_version is not None:
-                saved_major: int
-                saved_minor: int
-                version_major: int
-                version_minor: int
                 [saved_major, saved_minor, *_] = saved_version.replace('-', '.').split('.')
                 [version_major, version_minor, *_] = version.replace('-', '.').split('.')
-                if saved_major > version_major or saved_minor > version_minor:
+                if int(saved_major) > int(version_major) or int(saved_minor) > int(version_minor):
                     # This should have been treated as stable release, unfortunately
                     version_file = path_join('{}/{}.{}-version'.format(
                         path, version_major, version_minor))
