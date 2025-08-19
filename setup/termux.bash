@@ -30,7 +30,7 @@ clean_up() {
     _status=$?
     test -f .config/sheldon/plugins.toml || rm -rf .config/sheldon
     test -d .files/.git || rm -rf .files
-    rm -f nano-syntax-highlighting-master.zip
+    rm -f nano-syntax-highlighting-master.tar.gz
     exit ${_status}
 }
 
@@ -62,11 +62,12 @@ else
 fi
 
 pr_info "Updating nano-syntax-highlighting..."
-wget --https-only -O nano-syntax-highlighting-master.zip -nc \
-    https://github.com/galenguyer/nano-syntax-highlighting/archive/refs/heads/master.zip
+wget -O nano-syntax-highlighting-master.tar.gz -nc \
+    https://github.com/galenguyer/nano-syntax-highlighting/archive/refs/heads/master.tar.gz
 test -d .config/nano/syntax-highlighting || mkdir -p .config/nano/syntax-highlighting
 rm -f .config/nano/syntax-highlighting/*.nanorc  # always clean prior installs
-unzip -j nano-syntax-highlighting-master.zip '*/*.nanorc' -d .config/nano/syntax-highlighting
+tar -C .config/nano/syntax-highlighting -xvf nano-syntax-highlighting-master.tar.gz \
+    --strip-components 1 --wildcards '*/*.nanorc'
 
 if [[ -d .files/.git ]]; then
     pr_info "Updating dotfiles repo..."
