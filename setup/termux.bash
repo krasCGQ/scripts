@@ -55,10 +55,11 @@ python -m pipx ensurepath  # affects Bash only
 if command -v yt-dlp >/dev/null; then
     pr_info "Updating yt-dlp..."
     python -m pipx upgrade --pip-args='--pre' yt-dlp
+    python -m pipx reinstall 'yt-dlp[default]'
 else
     pr_info "Installing yt-dlp..."
-    python -m pipx install --pip-args='--pre' yt-dlp
-    pkg install --no-install-recommends -y ffmpeg
+    python -m pipx install --pip-args='--pre' 'yt-dlp[default]'
+    pkg install --no-install-recommends -y deno ffmpeg
 fi
 
 pr_info "Updating nano-syntax-highlighting..."
