@@ -97,6 +97,9 @@ pr_info "Installing / updating pipx..."
 python -m pip install -U pipx
 pipx ensurepath  # affects Bash only
 
+pr_info "Installing external dependencies for yt-dlp..."
+pkg install --no-install-recommends -y deno ffmpeg
+
 if command -v yt-dlp >/dev/null; then
     pr_info "Updating yt-dlp..."
     pipx reinstall 'yt-dlp[default]'
@@ -104,7 +107,6 @@ if command -v yt-dlp >/dev/null; then
 else
     pr_info "Installing yt-dlp..."
     pipx install --pip-args='--pre' 'yt-dlp[default]'
-    pkg install --no-install-recommends -y deno ffmpeg
 fi
 
 # Install POT provider if yt-dlp is present
