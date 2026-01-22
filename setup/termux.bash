@@ -28,10 +28,55 @@ pr_info() { echo "[-] $*"; }
 # This is triggered upon completion or failure
 clean_up() {
     _status=$?
+    cd "$HOME" || true
     test -f .config/sheldon/plugins.toml || rm -rf .config/sheldon
     test -d .files/.git || rm -rf .files
     rm -f nano-syntax-highlighting-master.tar.gz
+    if [[ -n "${_bgutil_version}" ]]; then
+        test -f bgutil-ytdlp-pot-provider/server/build/main.js ||
+            rm -rf bgutil-ytdlp-pot-provider{,"${_bgutil_version}"}
+        rm -f "bgutil-ytdlp-pot-provider-${_bgutil_version}.tar.gz"
+    fi
     exit ${_status}
+}
+
+install_yt-dlp_pot_provider() {
+    local _project _repo_url
+    _project=bgutil-ytdlp-pot-provider
+    _repo_url="https://github.com/Brainicism/${_project}"
+    _bgutil_version=$(curl -s -I ${_repo_url}/releases/latest | grep ^l | cut -d / -f 8 | \
+        tr -d '[:space:]')
+    export _bgutil_version  # this needs to be exported for cleanup trigger
+
+    if PATH="$HOME/.local/bin:$PATH" command -v yt-dlp >/dev/null; then
+        pr_info "Installing build dependencies for ${_project}..."
+        pkg install --no-install-recommends -y nodejs pango xorgproto
+
+        if [[ ! -d "${_project}-${_bgutil_version}" ]]; then
+            rm -rf "${_project}"  # remove old version if any exists
+            pr_info "Obtaining latest version of ${_project}..."
+            wget -O "${_project}-${_bgutil_version}.tar.gz" -nc \
+                "${_repo_url}/archive/refs/tags/${_bgutil_version}.tar.gz"
+            tar -xvf "${_project}-${_bgutil_version}.tar.gz"
+        fi
+
+        if [[ ! -f "${_project}-${_bgutil_version}/server/build/main.js" ]]; then
+            pr_info "Building the provider server..."
+            cd "${_project}-${_bgutil_version}/server" || true
+            GYP_DEFINES="android_ndk_path=''" npm install && npx tsc
+
+            # This is retained to avoid possible version conflict
+            rm -f "$HOME/.config/yt-dlp/plugins/${_project}.zip"
+
+            pr_info "Installing the plugin..."
+            cd ../plugin || true
+            pipx inject -f yt-dlp .
+            cd ../.. || true
+
+            # Create symlink so generate_once.js can be found automatically
+            ln -s "${_project}-${_bgutil_version}" "${_project}"
+        fi
+    fi
 }
 
 trap clean_up ERR EXIT INT
@@ -61,6 +106,9 @@ else
     pipx install --pip-args='--pre' 'yt-dlp[default]'
     pkg install --no-install-recommends -y deno ffmpeg
 fi
+
+# Install POT provider if yt-dlp is present
+install_yt-dlp_pot_provider
 
 pr_info "Updating nano-syntax-highlighting..."
 wget -O nano-syntax-highlighting-master.tar.gz -nc \
