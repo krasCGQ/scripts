@@ -95,7 +95,7 @@ pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
 pr_info "Installing / updating pipx..."
 python -m pip install -U pipx
-pipx ensurepath  # affects Bash only
+pipx ensurepath --prepend  # without --all-shells affects only Bash
 
 pr_info "Installing external dependencies for yt-dlp..."
 pkg install --no-install-recommends -y deno ffmpeg
