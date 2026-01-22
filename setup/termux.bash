@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 #
-# SPDX-FileCopyrightText: 2019-2020, 2022, 2024-2025 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2019-2020, 2022, 2024-2026 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Termux environment setup
@@ -50,15 +50,15 @@ pkg install --no-install-recommends -y "${_basic_pkglist[@]}"
 
 pr_info "Installing / updating pipx..."
 python -m pip install -U pipx
-python -m pipx ensurepath  # affects Bash only
+pipx ensurepath  # affects Bash only
 
 if command -v yt-dlp >/dev/null; then
     pr_info "Updating yt-dlp..."
-    python -m pipx upgrade --pip-args='--pre' yt-dlp
-    python -m pipx reinstall 'yt-dlp[default]'
+    pipx upgrade --pip-args='--pre' yt-dlp
+    pipx reinstall 'yt-dlp[default]'
 else
     pr_info "Installing yt-dlp..."
-    python -m pipx install --pip-args='--pre' 'yt-dlp[default]'
+    pipx install --pip-args='--pre' 'yt-dlp[default]'
     pkg install --no-install-recommends -y deno ffmpeg
 fi
 
