@@ -13,7 +13,7 @@ git clone --recurse-submodules https://github.com/krasCGQ/scripts.git
 
 * Python 3.9+ is required to execute the notifier's main part (`notifier.py`) in `utils` folder.
 
-* Modules written for the notifier script however, might require even newer version of Python depending on when they were introduced or last modified. As of July 2025, the notifier script and all of their currently present modules are known to work with Python versions up to 3.13.5.
+* Modules written for the notifier script however, might require even newer version of Python depending on when they were introduced or last modified. As of January 2026, the notifier script and all of their currently present modules are known to work with Python versions up to 3.14.2.
 
 * All explicitly listed dependencies are pinned to ensure stability of all scripts.
 
