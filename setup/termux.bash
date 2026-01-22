@@ -54,8 +54,8 @@ pipx ensurepath  # affects Bash only
 
 if command -v yt-dlp >/dev/null; then
     pr_info "Updating yt-dlp..."
-    pipx upgrade --pip-args='--pre' yt-dlp
     pipx reinstall 'yt-dlp[default]'
+    pipx upgrade --pip-args='--pre' yt-dlp
 else
     pr_info "Installing yt-dlp..."
     pipx install --pip-args='--pre' 'yt-dlp[default]'
