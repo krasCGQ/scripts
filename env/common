@@ -1,6 +1,6 @@
 #!/hint/bash
 #
-# SPDX-FileCopyrightText: 2017-2025 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2017-2026 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Common environment setup
@@ -38,7 +38,7 @@ mk_alias sort 'LC_ALL= LC_COLLATE=C sort'
 mk_alias_self optipng '-backup -fix -preserve -o7 -zm1-9 -zw32k'
 
 # Any other aliases, mostly to stick together all parameters I personally use
-mk_alias_self cjxl '--brotli_effort 10 --lossless_jpeg 1 --num_threads 0 -d 0 -e 10'
+mk_alias_self cjxl '-d 0 -e 9 -m 1 -j 1 --num_threads -1'
 mk_alias_self flac '--keep-foreign-metadata-if-present -V -e -f -p -8'
 
 #
