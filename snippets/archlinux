@@ -252,8 +252,19 @@ updMirrorlist() {
         _pr_info "Updating Chaotic-AUR mirrorlist..."
         curl -s https://raw.githubusercontent.com/chaotic-aur/packages/main/chaotic-mirrorlist/mirrorlist |
             sed -e /geo-mirror/d -e '/https:\/\/[a-z][a-z]-mirror./d' -e '/# /d' |
-            _filter_by_mirror_status https://cdn-mirror.chaotic.cx/no-failover/chaotic-aur - |
-            _rank_mirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
+            _filter_by_mirror_status https://cdn-mirror.chaotic.cx/no-failover/chaotic-aur - \
+            >/tmp/chaotic-mirrorlist
+
+       # Like Arch Linux mirrorlist above, prefer rankmirrors script over built-in _rank_mirrors()
+       {
+           if pacman -Qq pacman-contrib &>/dev/null || command -v rankmirrors >/dev/null; then
+               rankmirrors -n 0 -r chaotic-aur /tmp/chaotic-mirrorlist
+           else
+               _rank_mirrors chaotic-aur /tmp/chaotic-mirrorlist
+           fi
+       } >/etc/pacman.d/chaotic-mirrorlist
+
+       rm -f /tmp/chaotic-mirrorlist
     fi
 
     # Arch Linux CN
