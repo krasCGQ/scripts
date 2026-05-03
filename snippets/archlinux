@@ -201,7 +201,7 @@ updMirrorlist() {
             # implemented by the latter.
             {
                 if pacman -Qq pacman-contrib &>/dev/null || command -v rankmirrors >/dev/null; then
-                    rankmirrors /tmp/arch-mirrorlist
+                    rankmirrors -p /tmp/arch-mirrorlist
                 else
                     _pr_warn "Falling back to built-in function (warning: very slow)..."
                     # [core] has the smallest database size, so test against that
@@ -248,7 +248,7 @@ updMirrorlist() {
        # Like Arch Linux mirrorlist above, prefer rankmirrors script over built-in _rank_mirrors()
        {
            if pacman -Qq pacman-contrib &>/dev/null || command -v rankmirrors >/dev/null; then
-               rankmirrors -n 0 -r chaotic-aur /tmp/chaotic-mirrorlist
+               rankmirrors -n 0 -p -r chaotic-aur /tmp/chaotic-mirrorlist
            else
                _rank_mirrors chaotic-aur /tmp/chaotic-mirrorlist
            fi
