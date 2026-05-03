@@ -1,6 +1,6 @@
 #!/hint/bash
 #
-# SPDX-FileCopyrightText: 2021-2025 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2021-2026 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Arch Linux-specific snippets
@@ -82,26 +82,51 @@ _filter_by_mirror_status() {
     while IFS= read -r MIRROR; do
         # Sanitize output by skipping empty lines
         [[ -n $MIRROR ]] || continue
+        # Grab base domain name for printing informational response later
+        BASE_DOMAIN=$(echo "$MIRROR" | cut -d/ -f3)
         # Set flag if this mirror has "$repo" placeholder
-        [[ $MIRROR =~ "\$repo" ]] && HAS_REPO_PLACEHOLDER=1
+        # shellcheck disable=SC2016
+        [[ $MIRROR =~ $'repo' ]] && HAS_REPO_PLACEHOLDER=1
         # Add directly to filtered output if we encounter the main mirror
-        if ! [[ $MIRROR =~ $REFERENCE_URL ]]; then
+        if [[ $BASE_DOMAIN != $(echo "$REFERENCE_URL" | cut -d/ -f3) ]]; then
             # This is stupid since $(basename) built-in shell command is meant to get file name from
             # a defined path, but it always works on anything as long as it contains slashes
             SANITIZED_MIRROR=${HAS_REPO_PLACEHOLDER:+${MIRROR/\$repo/"$(basename "$REFERENCE_URL")"}}
             # Just copy MIRROR to SANITIZED_MIRROR if this is empty so we don't bail out
             SANITIZED_MIRROR=${SANITIZED_MIRROR:-$MIRROR}
-            # Fetch the mirror's Unix timestamp
-            MIRROR_TIMESTAMP=$(curl -s -L "${SANITIZED_MIRROR/\$arch/lastupdate}")
-            # Skip this mirror if it's either inaccessible or returns an invalid value
-            [[ -n $MIRROR_TIMESTAMP && -z ${MIRROR_TIMESTAMP//[0-9]/} ]] || continue
-            # Also do the same if the mirror is older than reference
-            [[ $MIRROR_TIMESTAMP -ge $LAST_UPDATED ]] || continue
+            # Unset flag immediately after handling the mirror entry
+            unset HAS_REPO_PLACEHOLDER
+
+            # Fetch the mirror's Unix timestamp and print info based on the response
+            MIRROR_TIMESTAMP=$(curl -s -L --connect-timeout 1 "${SANITIZED_MIRROR/\$arch/lastupdate}")
+            case "${MIRROR_TIMESTAMP}" in
+                "Mirror unhealthy!")  # Chaotic-AUR specific
+                    echo "Skipping $BASE_DOMAIN: mirror status reported as unhealthy" >&2
+                    continue
+                    ;;
+                "No mirror available!")  # Chaotic-AUR specific
+                    echo "Skipping $BASE_DOMAIN: no healthy mirror(s) found for this region" >&2
+                    continue
+                    ;;
+                *[[:alpha:]]*)
+                    echo "Skipping $BASE_DOMAIN: non-numerical characters found in response" >&2
+                    continue
+                    ;;
+                "")
+                    echo "Skipping $BASE_DOMAIN: unable to connect or has timed out" >&2
+                    continue
+                    ;;
+                *)
+                    if [[ $MIRROR_TIMESTAMP -lt $LAST_UPDATED ]]; then
+                        echo "Skipping $BASE_DOMAIN: mirror is older than reference mirror" >&2
+                        continue
+                    fi
+                    echo "Mirror $BASE_DOMAIN is OK" >&2
+                    ;;
+            esac
         fi
         # Print this latest mirror to stdout
         echo "Server = $MIRROR"
-        # Unset flag before moving to next mirror entry
-        unset HAS_REPO_PLACEHOLDER
     done < <(cut -d' ' -f3 "$MIRRORLIST" 2>/dev/null)
 }
 
