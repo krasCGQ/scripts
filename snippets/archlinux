@@ -247,11 +247,11 @@ updMirrorlist() {
         done
     fi
 
-    # Chaotic-AUR - discard both geo-located and CDN mirrors
+    # Chaotic-AUR - discard both geo-located and country-select mirrors
     if _check_mirrorlist chaotic; then
         _pr_info "Updating Chaotic-AUR mirrorlist..."
-        curl -s https://aur.chaotic.cx/mirrorlist.txt |
-            sed -e /geo-mirror/d -e /cdn-mirror/d -e '/# /d' |
+        curl -s https://raw.githubusercontent.com/chaotic-aur/packages/main/chaotic-mirrorlist/mirrorlist |
+            sed -e /geo-mirror/d -e '/https:\/\/[a-z][a-z]-mirror./d' -e '/# /d' |
             _filter_by_mirror_status https://cdn-mirror.chaotic.cx/no-failover/chaotic-aur - |
             _rank_mirrors chaotic-aur - >/etc/pacman.d/chaotic-mirrorlist
     fi
