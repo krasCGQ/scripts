@@ -133,7 +133,7 @@ _filter_by_mirror_status() {
 # sudo: Update Arch Linux (CN) mirrorlist, sorted by the fastest
 alias updMirrorlist &>/dev/null && unalias updMirrorlist
 updMirrorlist() {
-    local COS_UPDATE_LATER ID LEVEL
+    local ID LEVEL
     _assert_arch x86_64 || exit 1
     ID=$(get_distid)
     readonly ID
@@ -146,33 +146,27 @@ updMirrorlist() {
     ## Official repositories:
     case $ID in
     cachyos)
-        if pacman -Qq cachyos-rate-mirrors &>/dev/null; then
-            # Pretend that we are currently on Live ISO so only CachyOS mirrors will be updated
-            mkdir /run/archiso
-
-            # Ensure we have updated mirrorlist to rank
-            curl -s https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/cachyos-mirrorlist/cachyos-mirrorlist \
-                 -o /etc/pacman.d/cachyos-mirrorlist
-
-            _pr_info "Updating CachyOS mirrorlist..."
-            if cachyos-rate-mirrors &>/dev/null; then
-                for LEVEL in 3 4; do
-                    # Only keep level-specific mirrorlist(s) if they are actually installed
-                    pacman -Qq cachyos-v$LEVEL-mirrorlist &>/dev/null ||
-                        rm -f /etc/pacman.d/cachyos-v$LEVEL-mirrorlist
-                done
-            else
-                _pr_warn "cachyos-rate-mirrors failed to execute properly. Trying again later..."
-                COS_UPDATE_LATER=1
-            fi
-
-            # Script execution done, so remove the bogus directory
-            rm -r -f /run/archiso
-        else
-            _pr_warn "CachyOS detected, but cachyos-rate-mirrors is not installed. Continuing..."
-            COS_UPDATE_LATER=1
+        if ! pacman -Qq cachyos-rate-mirrors &>/dev/null; then
+            _pr_warn "CachyOS detected, but cachyos-rate-mirrors is not installed. Aborting."
+            exit 1
         fi
-        ;&
+
+        _pr_info "Updating Arch Linux and CachyOS mirrorlists..."
+        RATE_MIRRORS_DISABLE_COMMENTS=true cachyos-rate-mirrors >/dev/null
+
+        #
+        # By default, cachyos-rate-mirrors will insert CachyOS' own mirror on top of Arch Linux's
+        # mirrorlist. We consider this as an undesirable feature because we want it to be treated
+        # similarly with that of other mirrors - no exceptions are allowed
+        #
+        sed '0,/archlinux.cachyos.org/d' -i /etc/pacman.d/mirrorlist
+
+        # Only keep level-specific mirrorlist(s) if they are actually installed
+        for LEVEL in 3 4; do
+            pacman -Qq cachyos-v$LEVEL-mirrorlist &>/dev/null ||
+                rm -f /etc/pacman.d/cachyos-v$LEVEL-mirrorlist
+        done
+        ;;
     arch)
         #
         # Regardless of which method ends up being used to fetch latest mirrorlist, these mirrors
@@ -201,10 +195,6 @@ updMirrorlist() {
         fi
 
         if [[ -f /tmp/arch-mirrorlist ]] && grep -q '^Server = ' /tmp/arch-mirrorlist; then
-            # Add CachyOS mirror into server list
-            # shellcheck disable=SC2016
-            echo 'Server = https://archlinux.cachyos.org/repo/$repo/os/$arch' >>/tmp/arch-mirrorlist
-
             # Prefer rankmirrors script provided by pacman-contrib, as _rank_mirrors() is still too
             # slow even when almost a third have been filtered out. This also allows interrupting
             # the ranking process without ended up having no listed servers; something currently not
@@ -232,9 +222,9 @@ updMirrorlist() {
         ;;
     esac
 
-    # CachyOS, if repos are used on other Arch-based distros or when native method above fails
-    if [[ -n $COS_UPDATE_LATER ]] || ( [[ $ID != cachyos ]] && _check_mirrorlist cachyos ); then
-        _pr_info "Updating CachyOS mirrorlist${COS_UPDATE_LATER:+ (trying again)}..."
+    # CachyOS, only if repos are used on other Arch-based distros
+    if [[ $ID != cachyos ]] && _check_mirrorlist cachyos; then
+        _pr_info "Updating CachyOS mirrorlist..."
         curl -s https://raw.githubusercontent.com/CachyOS/CachyOS-PKGBUILDS/master/cachyos-mirrorlist/cachyos-mirrorlist |
              sed '/##/d' | _rank_mirrors cachyos - >/etc/pacman.d/cachyos-mirrorlist
 
