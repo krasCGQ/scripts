@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: 2019-2023 Albert I (krasCGQ)
+# SPDX-FileCopyrightText: 2019-2023, 2026 Albert I (krasCGQ)
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
@@ -8,6 +8,22 @@ from os.path import join as path_join
 from git import cmd as git_cmd
 
 from notifier import config, utils
+
+
+def fetch_tags(git_url: str, refs_only: bool = False):
+    """
+    Get list of all tags from a remote repository.
+    :param git_url: Remote Git repository from which tags are to be fetched from.
+    :param refs_only: Whether to fetch only referenced tags. Defaults to false.
+    :return: A list of tags from specified remote repository, which can be empty.
+    """
+    git = git_cmd.Git()
+    tags: list[str]
+    if refs_only:
+        tags = git.ls_remote('--refs', '--tags', git_url).split('\n')
+    else:
+        tags = git.ls_remote('--tags', git_url).split('\n')
+    return tags
 
 
 def prepare_message():
@@ -25,16 +41,13 @@ Commit: `{}`"""
 
 
 def announce(path: str, dry_run: bool):
-    # initialize GitPython
-    git = git_cmd.Git()
-
     # repeat process for each url...
     for i in range(0, len(config.git_urls)):
         git_url: str = config.git_urls[i]
         # this is the repository name
         git_repo: str = git_url.split('/')[-1]
         # get list of tags
-        tags: list[str] = git.ls_remote('--tags', git_url).split('\n')
+        tags: list[str] = fetch_tags(git_url)
 
         repo_path: str = path_join('{}/{}'.format(path, git_repo))
         utils.create_dir_if_not_exist(repo_path)
