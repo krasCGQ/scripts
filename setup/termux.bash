@@ -70,6 +70,7 @@ install_yt-dlp_pot_provider() {
 
             pr_info "Installing the plugin..."
             cd ../plugin || true
+            cp -f ../README.md .  # pyproject.toml wants this
             pipx inject -f yt-dlp .
             cd ../.. || true
 
