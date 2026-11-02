@@ -119,6 +119,59 @@ if command -v aria2c >/dev/null; then
 fi
 
 #
+# This updates local installation of Brave Browser to latest version available.
+#
+# The function assumes Origin Nightly as variant to install.
+#
+update_brave() {
+    local _apiver _arch _install _pkg _pkgname _pkgver _repo _response
+    _apiver=2026-03-10  # https://docs.github.com/en/rest/about-the-rest-api/api-versions
+    _pkgname=brave-origin-nightly
+    _install=$HOME/.local/lib/${_pkgname}
+    _repo=brave/brave-browser
+    _response=/tmp/brave-releases.json
+
+    # Brave Browser on Linux supports x86_64 and arm64 architectures only
+    case "$(uname -m)" in
+        arm64)  _arch=arm64 ;;
+        x86_64) _arch=amd64 ;;
+        *) _pr_warn "Unsupported host architecture!" && return 1 ;;
+    esac
+
+    # Fetch latest releases (defaults should be enough)
+    curl -L -H 'Accept: application/vnd.github+json' -H "X-GitHub-Api-Version: ${_apiver}" \
+        -s -o ${_response} https://api.github.com/repos/${_repo}/releases
+
+    # Search for latest version available and download it
+    # shellcheck disable=SC2030
+    grep "e\": \"N" ${_response} | grep -E -o 'v[0-9\.]+' | while IFS= read -r _pkgver; do
+        _pkg=$(grep -m 1 -o "${_pkgname}-${_pkgver/v/}-linux-${_arch}.zip" ${_response})
+        if [[ -n ${_pkg} ]]; then
+            if [[ $(cat "${_install}/version.txt" 2>/dev/null) != "${_pkgver}" ]]; then
+                _pr_info "Found release package for ${_pkgver}"
+                aria2cd "https://github.com/${_repo}/releases/download/${_pkgver}/${_pkg}" \
+                    -d "$HOME" -o ${_pkgname}.zip
+                break
+            else
+                _pr_info "Installed version is up to date: ${_pkgver}"
+                rm -f ${_response}
+                return 0
+            fi
+        fi
+    done
+
+    _pr_info "Updating Brave Browser..."
+    test -d "${_install}" || mkdir -p "${_install}"
+    find "${_install}/" -mindepth 1 -xdev -delete
+    if unzip -d "${_install}" -q "$HOME/${_pkgname}.zip"; then
+        # To be used with further invocation of the function
+        # shellcheck disable=SC2031
+        echo -n "${_pkgver}" >"${_install}"/version.txt
+    fi
+    rm -f "$HOME/${_pkgname}.zip" ${_response}
+}
+
+#
 # This function attempts to cover system update on as many distributions as possible, together
 # with software deployment/distribution tools like Flatpak and Snap.
 #
